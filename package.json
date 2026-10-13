@@ -1,6 +1,6 @@
 {
   "name": "npc-llm",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "An LLM that says whatever you said - after a hardcoded thinking step. Speaks OpenAI, Anthropic, Gemini and Ollama with byte-exact streaming.",
   "keywords": [
     "reasoning",
@@ -20,7 +20,10 @@
   ],
   "license": "MIT",
   "type": "module",
-  "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org/" },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lco117/npc-llm.git"
