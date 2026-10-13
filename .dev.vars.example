@@ -1,0 +1,8 @@
+# Values here are prompted as REQUIRED secrets by the "Deploy to Cloudflare" button.
+# Keep every line commented out so the one-click deploy asks no questions,
+# and uncomment only what you want a deployer to be forced to fill in.
+
+# PARROT_API_KEY=sk-parrot
+# PARROT_TEXT=6
+# PARROT_MODE=fixed
+# PARROT_DELAY_MS=20

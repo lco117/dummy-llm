@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "parrot-llm",
+  "main": "src/adapters/worker.ts",
+  "compatibility_date": "2025-09-01",
+  "observability": {
+    "enabled": true
+  },
+  // Non-secret defaults. Everything can be overridden in the Cloudflare dashboard.
+  "vars": {
+    "PARROT_TEXT": "6",
+    "PARROT_MODE": "fixed",
+    "PARROT_CHUNK": "1",
+    "PARROT_DELAY_MS": "20"
+  }
+}
