@@ -179,6 +179,14 @@ export const CASES: Case[] = [
     config: { reply: "{input|ascii}", chunk: "whole", thinking: [] },
   },
 
+  {
+    name: "dummy-playground",
+    method: "POST",
+    path: "/v1/chat/completions?t=" + encodeURIComponent("{input|upper} ({input|count})"),
+    body: { model: "gpt-4o", messages: [{ role: "user", content: "hello" }] },
+    config: { playground: true, chunk: "whole", thinking: [] },
+  },
+
   // --- OpenAI Responses ---
   { name: "openai-responses-stream", method: "POST", path: "/v1/responses", body: { model: "gpt-4o", input: "hi", stream: true } },
   { name: "openai-responses-sync", method: "POST", path: "/v1/responses", body: { model: "gpt-4o", input: "abc" } },

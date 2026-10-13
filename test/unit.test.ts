@@ -5,7 +5,7 @@ import { FILTER_NAMES } from "../src/filters.ts";
 import { NOT_A_MODEL_REPLIES } from "../src/personas.ts";
 import { mulberry32, randomId } from "../src/random.ts";
 import { parseFaultSpec } from "../src/errors.ts";
-import { DEFAULT_THINKING_POOL, parseReply, resolveConfig } from "../src/config.ts";
+import { DEFAULT_THINKING_POOL, PLAYGROUND_MAX_REPLY, parseReply, playgroundOverride, resolveConfig } from "../src/config.ts";
 import { makeApp } from "./cases.ts";
 import type { CanonRequest } from "../src/types.ts";
 
@@ -262,6 +262,34 @@ test("the model id selects a persona", () => {
   const art = plan({ ...base, model: "dummy-ascii-1" }, custom, mulberry32(1));
   assert.equal(art.reply.split("\n").length, 5, "the ASCII banner has five rows");
   assert.equal(art.thinking, null, "and this persona silences the thinking channel");
+});
+
+test("the playground override is opt-in, length-limited and one-request-only", () => {
+  const url = new URL("http://x/v1/chat/completions?t=" + encodeURIComponent("{input|upper}"));
+  assert.equal(playgroundOverride(resolveConfig({}), url).reply, "{input}", "?t= is ignored unless the operator opts in");
+
+  const on = playgroundOverride(resolveConfig({ DUMMY_PLAYGROUND: "1" }), url);
+  assert.equal(on.reply, "{input|upper}");
+  assert.equal(on.maxReplyChars, PLAYGROUND_MAX_REPLY);
+  assert.equal(resolveConfig({ DUMMY_PLAYGROUND: "1" }).playground, true);
+
+  assert.throws(
+    () => playgroundOverride(resolveConfig({ DUMMY_PLAYGROUND: "1" }), new URL("http://x/?t=" + "x".repeat(2001))),
+    /limited to 2000/,
+  );
+
+  const capped = resolveConfig({ DUMMY_PLAYGROUND: "1" }, { maxReplyChars: 10 });
+  assert.equal(plan(canon("abcdefghijklmnop"), { ...capped, reply: "{input}" }, mulberry32(1)).reply, "abcdefghij");
+});
+
+test("the landing page only offers the editor when the playground is on", async () => {
+  const off = await (await makeApp()(new Request("http://localhost/"))).text();
+  assert.match(off, /id="editor" hidden/);
+  const on = await (await makeApp({ playground: true })(new Request("http://localhost/"))).text();
+  assert.match(on, /id="editor"/);
+  assert.doesNotMatch(on, /id="editor" hidden/);
+  assert.match(on, /Edit the reply template/);
+  assert.match(on, /not by this site's owner/);
 });
 
 test("token estimate is never zero for non-empty text", () => {
