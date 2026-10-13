@@ -4,6 +4,7 @@ import { buildText, chunkText, estimateTokens, phases, plan, renderThinking, str
 import { mulberry32, randomId } from "../src/random.ts";
 import { parseFaultSpec } from "../src/errors.ts";
 import { DEFAULT_THINKING, resolveConfig } from "../src/config.ts";
+import { makeApp } from "./cases.ts";
 import type { CanonRequest } from "../src/types.ts";
 
 const canon = (content: string): CanonRequest => ({
@@ -94,6 +95,42 @@ test("buildText modes", () => {
   assert.equal(buildText(canon("how is the WEATHER"), canned, rand), "it is raining");
   const random = resolveConfig({}, { mode: "random", lines: ["a", "b"] });
   assert.ok(["a", "b"].includes(buildText(canon("x"), random, rand)));
+});
+
+test("tokens per second drive the delay, and PARROT_DELAY_MS still wins", () => {
+  assert.equal(resolveConfig({}).tps, 100);
+  assert.equal(resolveConfig({}).delayMs, 10);
+  assert.equal(resolveConfig({ PARROT_TPS: "10" }).delayMs, 100);
+  assert.equal(resolveConfig({ PARROT_TPS: "0" }).delayMs, 0, "0 tps means no artificial delay");
+  assert.equal(resolveConfig({ PARROT_TPS: "5", PARROT_DELAY_MS: "50" }).delayMs, 50, "explicit delay overrides tps");
+});
+
+test("log level parses", () => {
+  assert.equal(resolveConfig({}).log, "off");
+  assert.equal(resolveConfig({ PARROT_LOG: "summary" }).log, "summary");
+  assert.equal(resolveConfig({ PARROT_LOG: "1" }).log, "summary");
+  assert.equal(resolveConfig({ PARROT_LOG: "full" }).log, "full");
+  assert.equal(resolveConfig({ PARROT_LOG: "nonsense" }).log, "off");
+});
+
+test("fixed mode replies with a template that can contain the user's words", () => {
+  const cfg = resolveConfig({}, { mode: "fixed", text: "{input} — 你说得对" });
+  assert.equal(buildText(canon("abc"), cfg, mulberry32(1)), "abc — 你说得对");
+  const plain = resolveConfig({}, { mode: "fixed", text: "6" });
+  assert.equal(buildText(canon("abc"), plain, mulberry32(1)), "6");
+  const withModel = resolveConfig({}, { mode: "fixed", text: "{model} says {input}" });
+  assert.equal(buildText(canon("hi"), withModel, mulberry32(1)), "gpt-4o says hi");
+});
+
+test("the landing page is a live demo, not a giant 6", async () => {
+  const app = makeApp({ mode: "echo" });
+  const response = await app(new Request("http://localhost/"));
+  const html = await response.text();
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") ?? "", /text\/html/);
+  assert.match(html, /says whatever you said/);
+  assert.match(html, /v1\/chat\/completions/);
+  assert.match(html, /parrot-1-mini/);
 });
 
 test("harness reminder blocks are stripped before deciding what the user said", () => {
