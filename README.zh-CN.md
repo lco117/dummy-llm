@@ -13,8 +13,9 @@
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/lco117/npc-llm)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/lco117/npc-llm&project-name=npc-llm&repository-name=npc-llm)
+[![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run/?git_repo=https://github.com/lco117/npc-llm)
 
-*点一下按钮、授权 Cloudflare，一分钟内 Worker 就部署好了——免费额度、无冷启动、无需构建。本模板默认**关闭** `workers.dev` 和 Preview URL，请自行绑定域名（或把 `wrangler.jsonc` 里的 `"workers_dev"` 改成 `true`）后再访问。*
+*三种一键部署。**Cloudflare Workers** 是免费且无冷启动的那个——本模板默认关闭 `workers.dev` 和 Preview URL，请自行绑域名（或把 `"workers_dev"` 改成 `true`）。**Vercel** 会部署 edge function 加一条 catch-all rewrite。**Google Cloud Run** 用仓库里的 Dockerfile 构建，但需要已开通计费的 GCP 账号。*
 
 </div>
 

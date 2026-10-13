@@ -22,6 +22,18 @@ docker compose up -d       # VPS (edit NPC_DOMAIN in .env first)
 vercel deploy              # Vercel
 ```
 
+### One-click buttons
+
+| button | what it provisions | what it needs |
+| --- | --- | --- |
+| **Deploy to Cloudflare** | the Worker, its `vars`, and any `kv_namespaces` / `d1_databases` declared **without an id** (Cloudflare provisions them and binds them automatically) | a Cloudflare account |
+| **Deploy with Vercel** | an edge function plus the catch-all rewrite | a Vercel account |
+| **Run on Google Cloud** | a Cloud Run service built from the Dockerfile | a GCP account **with billing enabled** |
+
+Cloudflare Access is **not** provisioned by the button — it is account-level Zero Trust configuration,
+not a Worker resource. Add it in the dashboard (Access → Applications → Add → Self-hosted, path
+`/admin`, policy = your email); it takes about two minutes.
+
 ## Which target should you pick?
 
 | Target | Free tier? | Streaming (SSE) | Cold start | Real limitation | Verdict |

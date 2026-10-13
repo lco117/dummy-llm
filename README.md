@@ -19,8 +19,9 @@ Zero runtime dependencies. Byte-exact streaming. Runs on a VPS, a Raspberry Pi, 
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/lco117/npc-llm)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/lco117/npc-llm&project-name=npc-llm&repository-name=npc-llm)
+[![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run/?git_repo=https://github.com/lco117/npc-llm)
 
-*Click the button and authorize Cloudflare: your own Worker is deployed in about a minute — free plan, no cold start, no build step. This template ships with `workers.dev` and preview URLs **disabled**, so bind a custom domain (or set `"workers_dev": true` in `wrangler.jsonc`) to reach it.*
+*One click gets you a running instance. **Cloudflare Workers** is the free, no-cold-start one — it ships with `workers.dev` and preview URLs disabled, so bind a custom domain (or set `"workers_dev": true` in `wrangler.jsonc`) to reach it. **Vercel** deploys the edge function and its catch-all rewrite. **Google Cloud Run** builds the Dockerfile, but needs a GCP account with billing enabled.*
 
 </div>
 

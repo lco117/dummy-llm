@@ -13,7 +13,7 @@ npx wrangler deploy           # publishes the Worker
 
 - If `wrangler whoami` fails, **do not** try to log in on the user's behalf. Ask the human to run `npx wrangler login` (interactive) or to export `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`. Then retry `npx wrangler deploy`.
 - `wrangler.jsonc` ships with `workers_dev: false` and `preview_urls: false`, so a fresh deploy has **no public URL**. Bind a domain in the Cloudflare dashboard (Worker → Settings → Domains & Routes), or flip `workers_dev` to `true` first. Then verify with `curl <url>/healthz` and one streaming request (see "Smoke test" below).
-- The repo must be **public** for the README deploy button to work.
+- The repo must be **public** for the README deploy buttons to work. There are three: Cloudflare (the primary), Vercel and Google Cloud Run.
 
 ## What this project is
 
