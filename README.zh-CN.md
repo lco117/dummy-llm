@@ -2,7 +2,7 @@
 
 # 🦜 parrot-llm
 
-**一个永远只回同一句话的"大模型"——但它说的是 OpenAI、Anthropic、Gemini、Ollama 的原生协议。**
+**一个你说什么它就说什么的"大模型"——只不过它会先"思考"一会儿。**
 
 零运行时依赖 · 字节级精准的流式输出 · VPS / 树莓派 / Cloudflare Workers / Vercel 都能跑
 
@@ -16,7 +16,7 @@
 
 ## 这是什么
 
-你问它任何问题，它回答 `6`。永远如此。
+你说 `abc`，它先"思考"一下，然后回你 `abc`。
 
 真正的重点在于：它**严格按真实厂商的线格式**回答。相同的 SSE 帧、相同的 `data: [DONE]` 哨兵、相同的 Anthropic 事件顺序、相同的 Ollama NDJSON。官方 SDK 原样接入，在读到那一个字之前根本分辨不出来。
 
@@ -83,8 +83,8 @@ curl -N http://localhost:8080/v1/chat/completions \
 
 | 环境变量 | 默认 | 说明 |
 | --- | --- | --- |
-| `PARROT_TEXT` | `6` | 永远输出的那句话 |
-| `PARROT_MODE` | `fixed` | `fixed` / `echo`（复读用户）/ `random` / `canned` |
+| `PARROT_TEXT` | `6` | 用户什么都没说时的兜底，以及 `fixed` 模式的回答 |
+| `PARROT_MODE` | `echo` | `echo`（复读用户）/ `fixed` / `random` / `canned` |
 | `PARROT_CHUNK` | `1` | 每帧几个字符，或 `word` / `line` / `whole` |
 | `PARROT_DELAY_MS` | `20` | 帧间隔（模拟打字） |
 | `PARROT_TTFT_MS` | `0` | 首 token 延迟 |
@@ -94,9 +94,46 @@ curl -N http://localhost:8080/v1/chat/completions \
 | `PARROT_CORS` | `*` | 允许的跨域来源 |
 | `PARROT_MODELS` | 一组像样的模型名 | 逗号分隔 |
 | `PARROT_TOOLCALL` | — | 需要时返回固定 function call |
-| `PARROT_THINKING` | — | 先输出一个 Anthropic thinking 块 |
+| `PARROT_THINKING` | 内置模板 | 硬编码的思考模板，支持 `{input}`、`{reply}` 占位符；`off` 关闭 |
 
 全部同时是 CLI 参数：`parrot-llm --help`。
+
+## 思考
+
+它回答问题前会先"推理"——当然也是硬编码的模板：
+
+```bash
+curl -s http://localhost:8080/v1/chat/completions -H 'content-type: application/json' \
+  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"abc"}]}'
+```
+
+```json
+{
+  "role": "assistant",
+  "content": "abc",
+  "reasoning_content": "We need answer to user. User just said \"abc\". Need infer? Probably minimal. We need respond maybe \"abc\"."
+}
+```
+
+各协议用**自己的原生字段**承载这段思考：
+
+| 协议 | 思考出现的位置 |
+| --- | --- |
+| OpenAI Chat Completions | `delta.reasoning_content` / `message.reasoning_content`（DeepSeek、vLLM 的通行约定） |
+| OpenAI Responses | 一个 `reasoning` output item，以 `response.reasoning_summary_text.delta` 流式输出 `summary_text` |
+| Anthropic | 真正的 `thinking` content block：`thinking_delta` 加一个收尾的 `signature_delta` |
+| Gemini | `thought: true` 的 `Part` |
+| Ollama | `message.thinking` |
+
+模式速查：
+
+```bash
+parrot-llm                             # echo   - 你说什么它说什么（默认）
+parrot-llm --mode fixed --text "6"     # fixed  - 永远同一句
+parrot-llm --no-thinking               # 不输出思考
+```
+
+用 `PARROT_THINKING` 改词（占位符 `{input}`、`{reply}`、`{model}`）。
 
 ## 故障注入
 

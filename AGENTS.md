@@ -17,7 +17,7 @@ npx wrangler deploy           # publishes the Worker
 
 ## What this project is
 
-A fake LLM server. Every request returns a fixed string (`PARROT_TEXT`, default `6`), streamed in the exact wire format of OpenAI, Anthropic, Gemini or Ollama. It is used for (a) comedy and (b) deterministic LLM testing in CI.
+A fake LLM server. It **says whatever the user said** (`PARROT_MODE=echo`, the default) after emitting a **hardcoded "thinking"** template (`PARROT_THINKING`, with `{input}` and `{reply}` placeholders), all in the exact wire format of OpenAI, Anthropic, Gemini or Ollama. It is used for (a) comedy and (b) deterministic LLM testing in CI.
 
 ## Golden rules
 
@@ -51,15 +51,15 @@ You want: a `200` with `text/event-stream`, several `delta` frames, and a final 
 
 ## Changing the answer
 
-- One-off: `parrot-llm --text "your text"` or `PARROT_TEXT`.
+- **What it says back.** Default `PARROT_MODE=echo` repeats the last user message verbatim. `fixed` answers `PARROT_TEXT` forever, `random` picks from `PARROT_LINES`, `canned` matches keywords via `PARROT_CANNED`.
+- **What it "thinks".** `PARROT_THINKING` is a template rendered into every protocol's native reasoning channel; `{input}` is the user's message and `{reply}` is the answer. `--no-thinking` (or `PARROT_THINKING=off`) removes the channel entirely.
 - Permanent on a deployed Worker: edit the `vars` block in `wrangler.jsonc` and redeploy, or set the variable in the Cloudflare dashboard.
-- Funnier modes: `PARROT_MODE=echo` repeats the user; `PARROT_MODE=canned` with `PARROT_CANNED` returns keyword-matched replies.
 
 ## Adding a new protocol (recipe)
 
 1. Create `src/protocols/<name>.ts` exporting a handler `(body: unknown, ctx: Ctx) => Response`.
 2. Parse the request into a `CanonRequest`; reuse `normalizeContent` from `openai-chat.ts` for message shapes.
-3. Render frames with `sse()` / `ndjson()` from `src/sse.ts` and return `streamResponse(frames(), HEADERS)`.
+3. Render frames with `sse()` / `ndjson()` from `src/sse.ts` and return `streamResponse(frames(), HEADERS)`. Iterate `plan()` + `phasesFor()` (or `phases()`) so both the `thinking` and `text` channels are handled; call `plan()` once and pass the result to `phasesFor()` when your framing needs the answer up front, because calling `plan()` twice consumes the seeded PRNG twice.
 4. Wrap the piece loop in `try/catch` and re-emit `FaultError` with `streamErrorFrame()` so mid-stream fault injection still works.
 5. Wire it in `src/http.ts` and add a case to `test/cases.ts`.
 6. `npm run golden`, then `npm test`, then `npm run typecheck`.

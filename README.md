@@ -2,7 +2,7 @@
 
 # 🦜 parrot-llm
 
-**An LLM that always says the same thing — and speaks fluent OpenAI, Anthropic, Gemini and Ollama.**
+**An LLM that says whatever you said — after thinking about it for a while.**
 
 Zero runtime dependencies. Byte-exact streaming. Runs on a VPS, a Raspberry Pi, Cloudflare Workers or Vercel.
 
@@ -21,7 +21,7 @@ Zero runtime dependencies. Byte-exact streaming. Runs on a VPS, a Raspberry Pi, 
 
 ## What is this?
 
-Ask it anything. It answers `6`. Every time. Forever.
+You say `abc`. It thinks about it, and then it says `abc`.
 
 But here is the part that makes it more than a joke: it answers **in the exact wire format** a real provider uses. Same SSE frames, same `data: [DONE]` sentinel, same Anthropic event order, same Ollama NDJSON. An unmodified official SDK cannot tell the difference until it reads the words.
 
@@ -109,8 +109,8 @@ Unknown routes return a 404 **in the error shape of the protocol you were speaki
 
 | Env | Default | Meaning |
 | --- | --- | --- |
-| `PARROT_TEXT` | `6` | The one thing it ever says |
-| `PARROT_MODE` | `fixed` | `fixed` · `echo` (repeat the user) · `random` · `canned` |
+| `PARROT_TEXT` | `6` | Fallback when the user says nothing, and the answer in `fixed` mode |
+| `PARROT_MODE` | `echo` | `echo` (repeat the user) · `fixed` · `random` · `canned` |
 | `PARROT_LINES` | — | `a\|b\|c` replies for `random` mode |
 | `PARROT_CANNED` | — | JSON map of keyword → reply for `canned` mode |
 | `PARROT_CHUNK` | `1` | `1`, `2` … code points per frame, or `word` / `line` / `whole` |
@@ -123,19 +123,49 @@ Unknown routes return a 404 **in the error shape of the protocol you were speaki
 | `PARROT_CORS` | `*` | `Access-Control-Allow-Origin` |
 | `PARROT_MODELS` | a plausible list | Comma separated model ids to advertise |
 | `PARROT_TOOLCALL` | — | Function name, or JSON `{"name":…,"arguments":…}` |
-| `PARROT_THINKING` | — | Emit an Anthropic `thinking` block first |
+| `PARROT_THINKING` | a hardcoded template | The "reasoning", with `{input}` and `{reply}` placeholders; `off` disables it |
 
 Every one of them is also a CLI flag: `parrot-llm --help`.
 
 ## Modes
 
 ```bash
-parrot-llm --text "6"                  # fixed  - one answer, forever  (default)
-parrot-llm --mode echo                 # echo   - a genuine parrot
+parrot-llm                             # echo   - says whatever you said  (default)
+parrot-llm --mode fixed --text "6"     # fixed  - one answer, forever
 parrot-llm --mode random --lines "6|7|maybe"
 parrot-llm --mode canned --text "I do not know"
+parrot-llm --no-thinking               # skip the hardcoded reasoning
 # PARROT_CANNED='{"weather":"It is raining.","name":"I am a parrot."}'
 ```
+
+## Thinking
+
+It "reasons" before it answers — through a hardcoded template, obviously:
+
+```bash
+curl -s http://localhost:8080/v1/chat/completions -H 'content-type: application/json' \
+  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"abc"}]}'
+```
+
+```json
+{
+  "role": "assistant",
+  "content": "abc",
+  "reasoning_content": "We need answer to user. User just said \"abc\". Need infer? Probably minimal. We need respond maybe \"abc\"."
+}
+```
+
+Each protocol carries it the way that protocol really does:
+
+| Protocol | Where the thinking appears |
+| --- | --- |
+| OpenAI Chat Completions | `delta.reasoning_content` / `message.reasoning_content` (the DeepSeek / vLLM convention) |
+| OpenAI Responses | a `reasoning` output item with a `summary_text` summary, streamed as `response.reasoning_summary_text.delta` |
+| Anthropic | a real `thinking` content block: `thinking_delta` frames plus a `signature_delta` |
+| Gemini | a `Part` with `thought: true` |
+| Ollama | `message.thinking` |
+
+Rewrite the words with `PARROT_THINKING` (placeholders `{input}`, `{reply}`, `{model}`) or drop them with `--no-thinking`.
 
 ## Fault injection
 

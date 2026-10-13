@@ -2,9 +2,10 @@
 
 Each milestone is a mergeable, shippable slice. "Done when" is the acceptance bar.
 
-> **v0.1.0 status:** M0–M5 are implemented. The Worker is live on Cloudflare, the golden suite
-> covers 24 wire-format cases across five protocols, and Docker/Caddy/Nginx/Vercel/Deno configs
-> ship in the repo. Remaining M6 work: npm publish and a docs site (the Chinese README exists).
+> **v0.1.0 status:** M0–M5 are implemented **plus the echo + hardcoded-thinking behaviour** (the
+> default: it says whatever you said, after "thinking"). The Worker is live on Cloudflare, the
+> golden suite covers 30 wire-format cases across five protocols, and Docker/Caddy/Nginx/Vercel/Deno
+> configs ship in the repo. Remaining M6 work: npm publish and a docs site (the Chinese README exists).
 
 ## M0 — Design (current)
 

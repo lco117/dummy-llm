@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     environment:
       PARROT_TEXT: "6"
-      PARROT_MODE: fixed
+      PARROT_MODE: echo
       PARROT_CHUNK: "1"
       PARROT_DELAY_MS: "20"
       # PARROT_API_KEY: sk-parrot

@@ -76,8 +76,8 @@ Each protocol module has exactly two jobs: `parse(body, headers) -> CanonRequest
 
 | mode | behaviour |
 | --- | --- |
-| `fixed` (default) | always `PARROT_TEXT` |
-| `echo` | repeat the last user message verbatim (a real parrot) |
+| `echo` (default) | repeat the last user message verbatim (a real parrot) |
+| `fixed` | always `PARROT_TEXT` |
 | `random` | pick one line from a list |
 | `canned` | keyword -> canned reply map from a JSON file (turns the joke into a usable stub) |
 
@@ -104,12 +104,37 @@ Timers are wall-clock, not CPU — this matters for the Workers free tier (secti
 | switch | effect |
 | --- | --- |
 | `PARROT_FAIL=429` / `500` / `503` | fail before streaming, correctly shaped |
-| `PARROT_FAIL_AFTER=3` | stream 3 frames, then error mid-stream |
+| `PARROT_FAIL=500:after=3` | stream 3 pieces (thinking included), then error mid-stream |
 | `PARROT_HANG_MS=30000` | open the stream and send nothing |
 | `?fail=rate_limit` | per-request override, no restart |
 
 A **mid-stream** failure is the most valuable one: it is exactly what every client's
 retry logic gets wrong, and no mock server does it.
+
+### 3.6 Hardcoded thinking
+
+Before the reply, the engine yields a second channel: the "reasoning". It is a template
+(`PARROT_THINKING`) with the user's own words interpolated — `{input}`, `{reply}`,
+`{model}`, `{text}`. The default is:
+
+```
+We need answer to user. User just said "{input}". Need infer? Probably minimal. We need respond maybe "{reply}".
+```
+
+`phases()` / `phasesFor()` yield `{ channel: "thinking" | "text", text, index }`, and every renderer
+maps those channels onto its own protocol's native carrier:
+
+| protocol | carrier |
+| --- | --- |
+| openai-chat | `delta.reasoning_content` / `message.reasoning_content` (the DeepSeek / vLLM convention) |
+| openai-responses | a `reasoning` output item, streamed as `response.reasoning_summary_text.delta` frames |
+| anthropic | a `thinking` content block: `thinking_delta` frames plus a closing `signature_delta` |
+| gemini | a `Part` with `thought: true` |
+| ollama | `message.thinking`, and a top-level `thinking` field on `/api/generate` |
+
+A renderer that needs the answer up front (for output indices) calls `plan()` once and hands the
+result to `phasesFor()`; calling `plan()` twice would consume the seeded PRNG twice.
+`PARROT_FAIL=...:after=N` counts every streamed piece, thinking included.
 
 ## 4. Wire formats
 
