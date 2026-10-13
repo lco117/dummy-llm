@@ -1,8 +1,6 @@
 # status: 200
 # content-type: text/event-stream; charset=utf-8
-data: {"id":"cmpl-ID","object":"text_completion","created":1786000000,"model":"gpt-3.5-turbo-instruct","choices":[{"text":"h","index":0,"logprobs":null,"finish_reason":null}]}
-
-data: {"id":"cmpl-ID","object":"text_completion","created":1786000000,"model":"gpt-3.5-turbo-instruct","choices":[{"text":"i","index":0,"logprobs":null,"finish_reason":null}]}
+data: {"id":"cmpl-ID","object":"text_completion","created":1786000000,"model":"gpt-3.5-turbo-instruct","choices":[{"text":"hi","index":0,"logprobs":null,"finish_reason":null}]}
 
 data: {"id":"cmpl-ID","object":"text_completion","created":1786000000,"model":"gpt-3.5-turbo-instruct","choices":[{"text":"","index":0,"logprobs":null,"finish_reason":"stop"}]}
 

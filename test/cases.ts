@@ -15,7 +15,8 @@ export interface Case {
 
 export function makeApp(overrides: Partial<Config> = {}) {
   const env = { PARROT_TEXT: "6", PARROT_DELAY_MS: "0", PARROT_TTFT_MS: "0" };
-  return createApp(resolveConfig(env, { now: () => FIXED_NOW, ...overrides }));
+  // seed 1 makes the run deterministic: ids, random lines and the thinking template
+  return createApp(resolveConfig(env, { seed: 1, now: () => FIXED_NOW, ...overrides }));
 }
 
 /** Ids and durations are the only non-deterministic parts of a response. */
@@ -44,7 +45,7 @@ export async function runCase(testCase: Case): Promise<string> {
 const USER = { role: "user", content: "hi" };
 const ABC = { role: "user", content: "abc" };
 const ANTHROPIC_HEADERS = { "anthropic-version": "2023-06-01", "x-api-key": "sk-ant-test" };
-const NO_THINKING: Partial<Config> = { thinking: null };
+const NO_THINKING: Partial<Config> = { thinking: [] };
 
 export const CASES: Case[] = [
   // --- OpenAI Chat Completions ---
@@ -58,20 +59,20 @@ export const CASES: Case[] = [
     body: { model: "gpt-4o", messages: [USER], stream: true, stream_options: { include_usage: true } },
   },
   { name: "openai-chat-no-thinking", method: "POST", path: "/v1/chat/completions", body: { model: "gpt-4o", messages: [USER], stream: true }, config: NO_THINKING },
-  { name: "openai-chat-fixed", method: "POST", path: "/v1/chat/completions", body: { model: "gpt-4o", messages: [USER], stream: true }, config: { mode: "fixed", thinking: null } },
+  { name: "openai-chat-fixed", method: "POST", path: "/v1/chat/completions", body: { model: "gpt-4o", messages: [USER], stream: true }, config: { mode: "fixed", thinking: [] } },
   {
     name: "openai-chat-custom-thinking",
     method: "POST",
     path: "/v1/chat/completions",
     body: { model: "gpt-4o", messages: [ABC], stream: true },
-    config: { thinking: 'They said "{input}". I will say "{reply}". That is all I do.' },
+    config: { thinking: ['They said "{input}". I will say "{reply}". That is all I do.'] },
   },
   {
     name: "openai-chat-toolcall",
     method: "POST",
     path: "/v1/chat/completions",
     body: { model: "gpt-4o", messages: [USER], stream: true, tools: [{ type: "function", function: { name: "get_weather" } }] },
-    config: { toolCall: "get_weather", thinking: null },
+    config: { toolCall: "get_weather", thinking: [] },
   },
   { name: "openai-completions", method: "POST", path: "/v1/completions", body: { model: "gpt-3.5-turbo-instruct", prompt: "hi", stream: true } },
   { name: "openai-embeddings", method: "POST", path: "/v1/embeddings", body: { model: "text-embedding-3-small", input: ["hi"], dimensions: 4 } },

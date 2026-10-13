@@ -13,20 +13,17 @@ event: response.content_part.added
 data: {"type":"response.content_part.added","sequence_number":3,"item_id":"msg_ID","output_index":0,"content_index":0,"part":{"type":"output_text","text":"","annotations":[]}}
 
 event: response.output_text.delta
-data: {"type":"response.output_text.delta","sequence_number":4,"item_id":"msg_ID","output_index":0,"content_index":0,"delta":"h","logprobs":[]}
-
-event: response.output_text.delta
-data: {"type":"response.output_text.delta","sequence_number":5,"item_id":"msg_ID","output_index":0,"content_index":0,"delta":"i","logprobs":[]}
+data: {"type":"response.output_text.delta","sequence_number":4,"item_id":"msg_ID","output_index":0,"content_index":0,"delta":"hi","logprobs":[]}
 
 event: response.output_text.done
-data: {"type":"response.output_text.done","sequence_number":6,"item_id":"msg_ID","output_index":0,"content_index":0,"text":"hi","logprobs":[]}
+data: {"type":"response.output_text.done","sequence_number":5,"item_id":"msg_ID","output_index":0,"content_index":0,"text":"hi","logprobs":[]}
 
 event: response.content_part.done
-data: {"type":"response.content_part.done","sequence_number":7,"item_id":"msg_ID","output_index":0,"content_index":0,"part":{"type":"output_text","text":"hi","annotations":[]}}
+data: {"type":"response.content_part.done","sequence_number":6,"item_id":"msg_ID","output_index":0,"content_index":0,"part":{"type":"output_text","text":"hi","annotations":[]}}
 
 event: response.output_item.done
-data: {"type":"response.output_item.done","sequence_number":8,"output_index":0,"item":{"id":"msg_ID","type":"message","status":"completed","role":"assistant","content":[{"type":"output_text","text":"hi","annotations":[]}]}}
+data: {"type":"response.output_item.done","sequence_number":7,"output_index":0,"item":{"id":"msg_ID","type":"message","status":"completed","role":"assistant","content":[{"type":"output_text","text":"hi","annotations":[]}]}}
 
 event: response.completed
-data: {"type":"response.completed","sequence_number":9,"response":{"id":"resp_ID","object":"response","created_at":1786000000,"status":"completed","background":false,"error":null,"incomplete_details":null,"instructions":null,"max_output_tokens":null,"model":"gpt-4o","output":[{"id":"msg_ID","type":"message","status":"completed","role":"assistant","content":[{"type":"output_text","text":"hi","annotations":[]}]}],"parallel_tool_calls":true,"previous_response_id":null,"reasoning":{"effort":null,"summary":null},"store":false,"temperature":1,"text":{"format":{"type":"text"}},"tool_choice":"auto","tools":[],"top_p":1,"truncation":"disabled","usage":{"input_tokens":1,"input_tokens_details":{"cached_tokens":0},"output_tokens":1,"output_tokens_details":{"reasoning_tokens":0},"total_tokens":2},"user":null,"metadata":{}}}
+data: {"type":"response.completed","sequence_number":8,"response":{"id":"resp_ID","object":"response","created_at":1786000000,"status":"completed","background":false,"error":null,"incomplete_details":null,"instructions":null,"max_output_tokens":null,"model":"gpt-4o","output":[{"id":"msg_ID","type":"message","status":"completed","role":"assistant","content":[{"type":"output_text","text":"hi","annotations":[]}]}],"parallel_tool_calls":true,"previous_response_id":null,"reasoning":{"effort":null,"summary":null},"store":false,"temperature":1,"text":{"format":{"type":"text"}},"tool_choice":"auto","tools":[],"top_p":1,"truncation":"disabled","usage":{"input_tokens":1,"input_tokens_details":{"cached_tokens":0},"output_tokens":1,"output_tokens_details":{"reasoning_tokens":0},"total_tokens":2},"user":null,"metadata":{}}}
 

@@ -1,3 +1,3 @@
 # status: 200
 # content-type: application/json; charset=utf-8
-{"candidates":[{"content":{"parts":[{"text":"We need answer to user. User just said \"abc\". Need infer? Probably minimal. We need respond maybe \"abc\".","thought":true},{"text":"abc"}],"role":"model"},"finishReason":"STOP","index":0,"safetyRatings":[]}],"usageMetadata":{"promptTokenCount":1,"candidatesTokenCount":1,"totalTokenCount":2},"modelVersion":"gemini-2.5-flash"}
+{"candidates":[{"content":{"parts":[{"text":"Parsing \"abc\". No inference engine found. Falling back to a well-known technique: \"abc\".","thought":true},{"text":"abc"}],"role":"model"},"finishReason":"STOP","index":0,"safetyRatings":[]}],"usageMetadata":{"promptTokenCount":1,"candidatesTokenCount":1,"totalTokenCount":2},"modelVersion":"gemini-2.5-flash"}

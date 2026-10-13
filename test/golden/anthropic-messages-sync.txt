@@ -1,3 +1,3 @@
 # status: 200
 # content-type: application/json; charset=utf-8
-{"id":"msg_ID","type":"message","role":"assistant","model":"claude-sonnet-4-20250514","content":[{"type":"thinking","thinking":"We need answer to user. User just said \"abc\". Need infer? Probably minimal. We need respond maybe \"abc\".","signature":"parrot-mAg88Rlsa9ceIZPJ"},{"type":"text","text":"abc"}],"stop_reason":"end_turn","stop_sequence":null,"usage":{"input_tokens":1,"output_tokens":1}}
+{"id":"msg_ID","type":"message","role":"assistant","model":"claude-sonnet-4-20250514","content":[{"type":"thinking","thinking":"Parsing \"abc\". No inference engine found. Falling back to a well-known technique: \"abc\".","signature":"parrot-Ag88Rlsa9ceIZPJe"},{"type":"text","text":"abc"}],"stop_reason":"end_turn","stop_sequence":null,"usage":{"input_tokens":1,"output_tokens":1}}

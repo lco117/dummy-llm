@@ -1,3 +1,3 @@
 # status: 200
 # content-type: application/json; charset=utf-8
-{"ok":true,"status":"ok","mode":"echo","text":"6","thinking":true,"tps":100,"delayMs":0,"log":"off","uptime":0,"version":"0.1.0"}
+{"ok":true,"status":"ok","mode":"echo","text":"6","thinking":10,"tps":100,"delayMs":0,"log":"off","uptime":0,"version":"0.1.0"}
