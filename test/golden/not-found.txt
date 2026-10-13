@@ -1,0 +1,3 @@
+# status: 404
+# content-type: application/json; charset=utf-8
+{"error":{"message":"Unknown endpoint GET /nope. Try GET / for the joke, or POST /v1/chat/completions for the API.","type":"not_found_error","param":null,"code":null}}
