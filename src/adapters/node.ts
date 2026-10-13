@@ -1,9 +1,12 @@
 import { createServer } from "node:http";
 import type { IncomingMessage } from "node:http";
 import { Readable } from "node:stream";
+import { readFileSync } from "node:fs";
 import { processEnv, resolveConfig } from "../config.ts";
 import type { Env } from "../config.ts";
 import { createApp, version } from "../index.ts";
+import { describeReply } from "../engine.ts";
+import { BUILTIN_PERSONAS } from "../personas.ts";
 
 const HELP = `
 dummy-llm ${version} - an LLM that always says the same thing.
@@ -14,10 +17,14 @@ Usage:
 Options:
   -p, --port <n>          Port to listen on                 (default 8080)
       --host <address>    Address to bind                   (default 0.0.0.0)
-  -t, --text <string>     The one thing it always says      (default "6")
-      --mode <mode>       fixed | echo | random | canned    (default fixed)
-      --lines <a|b|c>     Replies for random mode
-      --chunk <n|word|line|whole>                          (default 1)
+      --reply <value>     What it answers with. The shape IS the behaviour:
+                            "{input}"                one template (default; this is "echo")
+                            "6"                      always the same thing
+                            '["6","7","maybe"]'      drawn at random
+                            '{"weather":"raining"}'  keyword -> template, "*" is the fallback
+      --reply-file <path> Read that value from a file (Node only) — best for long templates
+      --persona <id>      Start from a built-in persona's reply
+      --chunk <n|word|line|whole>                          (default 4, ~one token)
       --tps <n>           Streamed pieces per second      (default 100)
       --delay <ms>        Delay between pieces, overrides --tps
       --ttft <ms>         Time to first token               (default 0)
@@ -99,9 +106,11 @@ function apply(target: string, ...names: string[]): void {
 
 apply("PORT", "port", "p");
 apply("HOST", "host");
-apply("DUMMY_TEXT", "text", "t");
+apply("DUMMY_REPLY", "reply", "text", "t");
+// the pre-0.4 quartet still works for one release; config.ts maps it onto the reply
 apply("DUMMY_MODE", "mode");
 apply("DUMMY_LINES", "lines");
+apply("DUMMY_CANNED", "canned");
 apply("DUMMY_CHUNK", "chunk");
 apply("DUMMY_TPS", "tps");
 apply("DUMMY_DELAY_MS", "delay");
@@ -119,6 +128,18 @@ apply("DUMMY_TOOLCALL", "tools");
 apply("DUMMY_THINKING", "thinking");
 if (flags["no-thinking"] === true) env.DUMMY_THINKING = "off";
 if (flags["echo-raw"] === true) env.DUMMY_ECHO_RAW = "1";
+
+const replyFile = take("reply-file");
+if (replyFile !== undefined) env.DUMMY_REPLY = readFileSync(replyFile, "utf8");
+const personaStart = take("persona");
+if (personaStart !== undefined) {
+  const persona = BUILTIN_PERSONAS[personaStart];
+  if (!persona) {
+    console.error("unknown persona: " + personaStart + " (known: " + Object.keys(BUILTIN_PERSONAS).join(", ") + ")");
+    process.exit(1);
+  }
+  env.DUMMY_REPLY = JSON.stringify(persona.reply ?? "{input}");
+}
 
 const config = resolveConfig(env);
 const app = createApp(config);
@@ -177,7 +198,7 @@ const server = createServer(async (request, response) => {
 server.listen(port, host, () => {
   console.log(`\u{1F99C}  dummy-llm ${version}`);
   console.log(`    listening on http://localhost:${port}`);
-  console.log(`    it will always say: ${JSON.stringify(config.text)} (mode: ${config.mode}, ${config.chunk} chunk(s), ${config.delayMs}ms apart)`);
+  console.log(`    it will answer with: ${JSON.stringify(describeReply(config.reply))} (${config.chunk} chunk(s), ${config.delayMs}ms apart, ${config.tps} tps)`);
   console.log(`    point any SDK at http://localhost:${port} and use any API key`);
 });
 

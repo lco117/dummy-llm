@@ -1,4 +1,4 @@
-import { stripReminders } from "./engine.ts";
+import { describeReply, stripReminders } from "./engine.ts";
 import { errorResponse, HttpError } from "./errors.ts";
 import { landingPage } from "./landing.ts";
 import { LOGO_SVG } from "./logo.ts";
@@ -141,8 +141,7 @@ async function route(request: Request, ctx: Ctx): Promise<Response> {
     return json({
       ok: true,
       status: "ok",
-      mode: ctx.cfg.mode,
-      text: ctx.cfg.text,
+      reply: describeReply(ctx.cfg.reply),
       thinking: ctx.cfg.thinking.length,
       tps: ctx.cfg.tps,
       delayMs: ctx.cfg.delayMs,

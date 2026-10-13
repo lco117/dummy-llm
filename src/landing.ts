@@ -1,3 +1,4 @@
+import { describeReply } from "./engine.ts";
 import type { Ctx } from "./types.ts";
 
 function escapeHtml(value: string): string {
@@ -81,12 +82,11 @@ const STYLE = `
 export function landingPage(ctx: Ctx): Response {
   const cfg = ctx.cfg;
   const models = cfg.models.map((id) => `<span class="chip dim">${escapeHtml(id)}</span>`).join("");
-  const modeChip = `<span class="chip">mode: ${escapeHtml(cfg.mode)}</span>`;
+  const replyChip = `<span class="chip">reply: ${escapeHtml(describeReply(cfg.reply).slice(0, 32))}</span>`;
   const tpsChip = `<span class="chip">${cfg.tps} tps</span>`;
   const thinkingChip = cfg.thinking.length > 0
     ? `<span class="chip">thinking: ${cfg.thinking.length} template${cfg.thinking.length === 1 ? "" : "s"}</span>`
     : `<span class="chip dim">thinking: off</span>`;
-  const textChip = cfg.mode === "fixed" ? `<span class="chip dim">text: ${escapeHtml(cfg.text)}</span>` : "";
   const logChip = cfg.log === "off" ? "" : `<span class="chip dim">log: ${escapeHtml(cfg.log)}</span>`;
 
   const html = `<!doctype html>
@@ -107,7 +107,7 @@ export function landingPage(ctx: Ctx): Response {
       <h1>dummy-llm</h1>
     </div>
     <p class="tagline">It says whatever you said — after thinking about it. No model, no weights, no GPU: one template, four protocols, byte-exact streaming.</p>
-    <div class="chips">${modeChip}${tpsChip}${thinkingChip}${textChip}${logChip}</div>
+    <div class="chips">${replyChip}${tpsChip}${thinkingChip}${logChip}</div>
   </header>
 
   <section>

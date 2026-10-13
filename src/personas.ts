@@ -29,10 +29,18 @@ export const NOT_A_MODEL_THOUGHTS: string[] = [
 ];
 
 /**
- * A persona is a named override of the answer settings, selected by the model id the
- * client sends. `dummy-echo-1` is the default behaviour; everything else is a character.
+ * A persona is a named answer profile, selected by the model id a client sends.
+ * `dummy-echo-1` is the project's namesake behaviour — and it is literally one template.
+ * GET /v1/models is derived from this map, so adding an entry adds a model.
  */
 export const BUILTIN_PERSONAS: Record<string, Persona> = {
-  "dummy-echo-1": { mode: "echo" },
-  "definitely-not-a-model": { mode: "random", lines: NOT_A_MODEL_REPLIES, thinking: NOT_A_MODEL_THOUGHTS },
+  "dummy-echo-1": {
+    reply: "{input}",
+    description: "Repeats whatever you send, after a hardcoded thought.",
+  },
+  "definitely-not-a-model": {
+    reply: NOT_A_MODEL_REPLIES,
+    thinking: NOT_A_MODEL_THOUGHTS,
+    description: "Refuses to be a language model, ten ways.",
+  },
 };

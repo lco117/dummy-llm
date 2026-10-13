@@ -1,7 +1,7 @@
 import { BUILTIN_PERSONAS } from "./personas.ts";
 import type { Persona } from "./types.ts";
 import { parseFaultSpec } from "./errors.ts";
-import type { ChunkMode, Config, LogLevel, Mode } from "./types.ts";
+import type { ChunkMode, Config, LogLevel, Reply } from "./types.ts";
 
 /**
  * Ten hardcoded "reasonings". In echo mode one is picked at random per request,
@@ -29,8 +29,8 @@ export interface Env {
 export const DEFAULT_THINKING = DEFAULT_THINKING_POOL[0];
 
 export const DEFAULTS = {
-  text: "6",
-  mode: "echo" as Mode,
+  // Echo is not a mode: it is this template. That is the whole idea.
+  reply: "{input}" as Reply,
   // ~4 characters is roughly one token for English text, so TPS means tokens/s.
   chunk: 4 as ChunkMode,
   tps: 100,
@@ -42,7 +42,6 @@ export const DEFAULTS = {
   thinking: DEFAULT_THINKING_POOL as string[],
 };
 
-const MODES: Mode[] = ["fixed", "echo", "random", "canned"];
 const OFF = new Set(["", "off", "none", "false", "no", "0", "disable", "disabled"]);
 
 function hasValue(value: string | undefined): boolean {
@@ -99,6 +98,58 @@ function personaOverrides(value: string | undefined): Record<string, Persona> {
   }
 }
 
+/**
+ * DUMMY_REPLY is parsed as JSON when it can be, and treated as a single template otherwise.
+ * One rule, no ambiguity — a "|" is always a filter pipe, never a separator:
+ *   "6"                     one template
+ *   "{input|upper|box}"     still one template, filters compose
+ *   '["6","7","maybe"]'     a pool, drawn at random
+ *   '{"weather":"raining","*":"no idea"}'   keyword -> template, "*" is the fallback
+ */
+export function parseReply(value: string | undefined): Reply | undefined {
+  if (value === undefined || value.trim() === "") return undefined;
+  const trimmed = value.trim();
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    if (typeof parsed === "string") return parsed;
+    if (Array.isArray(parsed)) {
+      const items = parsed.map((item) => String(item)).filter((item) => item !== "");
+      if (items.length > 0) return items;
+    } else if (parsed !== null && typeof parsed === "object") {
+      const map: Record<string, string> = {};
+      for (const [key, item] of Object.entries(parsed as Record<string, unknown>)) map[key] = String(item);
+      if (Object.keys(map).length > 0) return map;
+    }
+  } catch {
+    // not JSON — fall through to the pipe-separated form
+  }
+  return value;
+}
+
+/** The pre-0.4 DUMMY_MODE / _TEXT / _LINES / _CANNED quartet, kept working for one release. */
+function legacyReply(env: Env): Reply | undefined {
+  switch (env.DUMMY_MODE?.trim()) {
+    case "echo":
+      return "{input}";
+    case "fixed":
+      return env.DUMMY_TEXT ?? "";
+    case "random": {
+      const items = (env.DUMMY_LINES ?? "").split("|").map((item) => item.trim()).filter(Boolean);
+      return items.length > 0 ? items : (env.DUMMY_TEXT ?? "");
+    }
+    case "canned": {
+      try {
+        const parsed = JSON.parse(env.DUMMY_CANNED ?? "{}") as Record<string, string>;
+        return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+      } catch {
+        return {};
+      }
+    }
+    default:
+      return undefined;
+  }
+}
+
 function thinkingPool(value: string | undefined): string[] {
   if (value === undefined) return DEFAULTS.thinking;
   if (OFF.has(value.trim().toLowerCase())) return [];
@@ -111,22 +162,7 @@ function thinkingPool(value: string | undefined): string[] {
  * Node passes `process.env`, a Worker passes the `env` binding.
  */
 export function resolveConfig(env: Env = {}, overrides: Partial<Config> = {}): Config {
-  const mode = (env.DUMMY_MODE as Mode | undefined) ?? DEFAULTS.mode;
-  const text = env.DUMMY_TEXT ?? DEFAULTS.text;
-  const lines = env.DUMMY_LINES
-    ? env.DUMMY_LINES.split("|").map((line) => line.trim()).filter(Boolean)
-    : [text];
-
-  let canned: Record<string, string> = {};
-  if (env.DUMMY_CANNED) {
-    try {
-      const parsed = JSON.parse(env.DUMMY_CANNED) as Record<string, string>;
-      if (parsed && typeof parsed === "object") canned = parsed;
-    } catch {
-      canned = {};
-    }
-  }
-
+  const reply = parseReply(env.DUMMY_REPLY) ?? legacyReply(env) ?? DEFAULTS.reply;
   const tps = wholeNumber(env.DUMMY_TPS, DEFAULTS.tps);
   const personas = { ...BUILTIN_PERSONAS, ...personaOverrides(env.DUMMY_PERSONAS) };
   const seedProvided = hasValue(env.DUMMY_SEED);
@@ -135,10 +171,7 @@ export function resolveConfig(env: Env = {}, overrides: Partial<Config> = {}): C
 
   return {
     deterministic,
-    text,
-    mode: MODES.includes(mode) ? mode : DEFAULTS.mode,
-    lines: lines.length > 0 ? lines : [text],
-    canned,
+    reply,
     chunk: chunkMode(env.DUMMY_CHUNK),
     tps,
     delayMs: explicitDelay ? wholeNumber(env.DUMMY_DELAY_MS, tpsToDelay(tps)) : tpsToDelay(tps),

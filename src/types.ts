@@ -1,18 +1,26 @@
 export type ProtocolId = "openai-chat" | "openai-responses" | "anthropic" | "gemini" | "ollama";
 
-export type Mode = "fixed" | "echo" | "random" | "canned";
-
 export type LogLevel = "off" | "summary" | "full";
 
 export type ChunkMode = number | "word" | "line" | "whole";
 
+/**
+ * What a persona answers with. The **shape carries the behaviour**, so there is no
+ * separate "mode" to keep in sync with it:
+ *
+ *   "{input}"            one template  (echo is just the template "{input}")
+ *   ["a", "b", "c"]      draw one at random
+ *   { "*": "hi", ... }   keyword -> template; "*" is the fallback
+ */
+export type Reply = string | string[] | Record<string, string>;
+
 /** A named answer profile, selected by the model id the client sends. */
 export interface Persona {
-  mode?: Mode;
-  text?: string;
-  lines?: string[];
-  /** Overrides the thinking pool. An empty array silences the thinking channel. */
+  reply?: Reply;
+  /** Thinking templates. An empty array silences the reasoning channel. */
   thinking?: string[];
+  /** Shown on the landing page and in the docs. */
+  description?: string;
 }
 
 export interface CanonMessage {
@@ -39,10 +47,12 @@ export interface Fault {
 }
 
 export interface Config {
-  text: string;
-  mode: Mode;
-  lines: string[];
-  canned: Record<string, string>;
+  /** The default persona's answer. */
+  reply: Reply;
+  /** The default persona's thinking pool. */
+  thinking: string[];
+  /** Answer profiles keyed by model id. An unknown model falls through to the two fields above. */
+  personas: Record<string, Persona>;
   chunk: ChunkMode;
   /** Streamed pieces (tokens) per second. delayMs is derived from this unless set explicitly. */
   tps: number;
@@ -57,9 +67,7 @@ export interface Config {
   cors: string;
   models: string[];
   toolCall: string | null;
-  /** Thinking templates. Empty array = no thinking channel. */
-  thinking: string[];
-  /** Echo the user's message untouched, without stripping <system-reminder> blocks. */
+  /** Repeat the user's message untouched, without stripping harness noise. */
   echoRaw: boolean;
   /** Log every received request (visible via "wrangler tail" on Cloudflare). */
   log: LogLevel;
@@ -67,8 +75,6 @@ export interface Config {
   maxBodyBytes: number;
   /** Extra regexes removed from user messages before echoing (on top of the built-in rules). */
   strip: string[];
-  /** Answer profiles keyed by model id. An unknown model falls through to the settings above. */
-  personas: Record<string, Persona>;
   now: () => number;
 }
 

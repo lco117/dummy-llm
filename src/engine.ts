@@ -1,7 +1,7 @@
 import { applyFilters } from "./filters.ts";
 import { pick } from "./random.ts";
 import { FaultError } from "./errors.ts";
-import type { CanonRequest, Config, Piece } from "./types.ts";
+import type { CanonRequest, Config, Piece, Reply } from "./types.ts";
 
 export function sleep(ms: number): Promise<void> {
   if (!Number.isFinite(ms) || ms <= 0) return Promise.resolve();
@@ -104,38 +104,43 @@ export function renderTemplate(template: string, vars: TemplateVars): string {
   });
 }
 
-export function templateVars(canon: CanonRequest, cfg: Config, reply?: string): TemplateVars {
-  return { input: userInput(canon, cfg), raw: lastUserMessage(canon), model: canon.model, reply, text: cfg.text };
+export function templateVars(canon: CanonRequest, cfg: Config, reply?: string, text?: string): TemplateVars {
+  return { input: userInput(canon, cfg), raw: lastUserMessage(canon), model: canon.model, reply, text };
 }
 
-/** The entire "intelligence" of this project. */
-export function buildText(canon: CanonRequest, cfg: Config, rand: () => number): string {
-  const vars = templateVars(canon, cfg);
-  switch (cfg.mode) {
-    case "echo":
-      // It says whatever you said. That is the whole trick.
-      return vars.input || cfg.text;
-    case "random":
-      return renderTemplate(pick(rand, cfg.lines.length > 0 ? cfg.lines : [cfg.text]), vars);
-    case "canned": {
-      const haystack = canon.messages.map((message) => message.content).join(" ").toLowerCase();
-      for (const [keyword, reply] of Object.entries(cfg.canned)) {
-        if (keyword !== "" && haystack.includes(keyword.toLowerCase())) return renderTemplate(reply, vars);
-      }
-      return renderTemplate(cfg.text, vars);
-    }
-    default:
-      // fixed: the same template every time, with the user's words dropped in.
-      return renderTemplate(cfg.text, vars);
+/**
+ * The whole "intelligence": pick a template out of the reply value, then fill it in.
+ * The *shape* of the value is the behaviour, so there is nothing else to switch on.
+ */
+export function selectReply(reply: Reply, canon: CanonRequest, rand: () => number): string {
+  if (typeof reply === "string") return reply;
+  if (Array.isArray(reply)) return reply.length > 0 ? pick(rand, reply) : "";
+  const haystack = canon.messages.map((message) => message.content).join(" ").toLowerCase();
+  for (const [keyword, template] of Object.entries(reply)) {
+    if (keyword === "" || keyword === "*") continue;
+    if (haystack.includes(keyword.toLowerCase())) return template;
   }
+  return reply["*"] ?? "";
 }
 
-/** The "reasoning" is a template too. */
-/** One template per request, picked from the pool — the dummy keeps changing its mind. */
-export function renderThinking(canon: CanonRequest, cfg: Config, reply: string, rand: () => number): string | null {
-  if (!cfg.thinking || cfg.thinking.length === 0) return null;
-  const template = cfg.thinking.length === 1 ? cfg.thinking[0] : pick(rand, cfg.thinking);
-  return renderTemplate(template, templateVars(canon, cfg, reply));
+export function buildText(canon: CanonRequest, cfg: Config, rand: () => number): string {
+  const effective = withPersona(cfg, canon.model);
+  const template = selectReply(effective.reply, canon, rand);
+  return renderTemplate(template, templateVars(canon, effective, undefined, template));
+}
+
+/** The "reasoning" is a template pool too: one is drawn per request. */
+export function renderThinking(pool: string[], vars: TemplateVars, rand: () => number): string | null {
+  if (!pool || pool.length === 0) return null;
+  return renderTemplate(pool.length === 1 ? pool[0] : pick(rand, pool), vars);
+}
+
+/** A short human-readable summary of a reply value, for /healthz and the landing page. */
+export function describeReply(reply: Reply): string {
+  if (typeof reply === "string") return reply;
+  if (Array.isArray(reply)) return "random of " + reply.length;
+  const keys = Object.keys(reply).filter((key) => key !== "*");
+  return "canned, " + keys.length + " key" + (keys.length === 1 ? "" : "s");
 }
 
 export interface Answer {
@@ -149,17 +154,17 @@ export function withPersona(cfg: Config, model: string): Config {
   if (!persona) return cfg;
   return {
     ...cfg,
-    mode: persona.mode ?? cfg.mode,
-    text: persona.text ?? cfg.text,
-    lines: persona.lines ?? cfg.lines,
+    reply: persona.reply ?? cfg.reply,
     thinking: persona.thinking ?? cfg.thinking,
   };
 }
 
 export function plan(canon: CanonRequest, cfg: Config, rand: () => number): Answer {
   const effective = withPersona(cfg, canon.model);
-  const reply = buildText(canon, effective, rand);
-  return { reply, thinking: renderThinking(canon, effective, reply, rand) };
+  const template = selectReply(effective.reply, canon, rand);
+  const vars = templateVars(canon, effective, undefined, template);
+  const reply = renderTemplate(template, vars);
+  return { reply, thinking: renderThinking(effective.thinking, { ...vars, reply }, rand) };
 }
 
 /** Splits by code point, never by UTF-16 unit, so emoji and CJK survive intact. */
