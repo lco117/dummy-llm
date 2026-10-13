@@ -1,6 +1,6 @@
 {
   "name": "npc-llm",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "An LLM that says whatever you said - after a hardcoded thinking step. Speaks OpenAI, Anthropic, Gemini and Ollama with byte-exact streaming.",
   "keywords": [
     "reasoning",
