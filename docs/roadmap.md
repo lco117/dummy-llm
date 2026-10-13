@@ -86,3 +86,64 @@ golden `.sse` fixture diff passes in CI.
 - conversation memory, `store`/`previous_response_id`
 - auth beyond a single static key, quotas, billing
 - Realtime/WebSocket API, image and audio generation
+
+## Next: make the template engine the product (proposed, not built)
+
+`echo` is one mode out of four. The centre of the project is the template engine, and it is currently
+under-exposed: it lives in environment variables, has no names, and cannot be shared. In order:
+
+### 1. Named templates, selected through the model field
+
+`/v1/models` already returns a list, and all five protocols carry a model name. Let each advertised id
+resolve to a template:
+
+```
+model: "npc-ascii"     -> the ASCII banner template
+model: "npc-rickroll"  -> the rickroll template
+```
+
+Zero new API surface — the model field already exists everywhere — and the model picker in every chat UI
+becomes a template picker. `/v1/models` stops being decoration.
+
+### 2. Pipes in placeholders
+
+`{input|upper}`, `{input|box}`, `{input|ascii}`, `{input|qr}`, `{input|morse}`,
+`{input|reverse}`, `{reply|repeat:3}`.
+
+This is what makes "an LLM that only answers in ASCII art" a *template* instead of a new mode, and filters
+compose: `{input|upper|box}`.
+
+Rules: filters stay **synchronous and side-effect free** (an async filter would break the absolute
+scheduling in `phasesFor()`), and every filter gets a golden case.
+
+### 3. Shippable packs
+
+```bash
+npc-llm --pack ./packs/rickroll
+```
+
+A pack is a small JSON file (or a directory): templates, a default mode, an optional thinking pool. Ship a
+handful in `packs/` — `ascii-banner`, `rickroll`, `pirate`, `haiku-only`, `adversarial` — and let
+people share their own as an npm package or a URL. A remote `NPC_PACK=https://…` would be the first
+outbound request this server ever makes, so it must be opt-in and documented as such.
+
+### 4. A template editor on the landing page
+
+The landing page already streams from the real API. Put a textarea above the demo: edit the template, watch
+the answer change live, then copy an env var or a deploy link. Cheapest virality this project has.
+
+### 5. Record and replay
+
+```bash
+npc-llm --record --upstream https://api.openai.com/v1   # proxy once, save the frames
+npc-llm --replay ./cassettes                           # serve them forever
+```
+
+VCR for LLMs. A different product tier — it means outbound requests and stored fixtures — so it belongs
+behind its own flag, never in the default path.
+
+### What I would not do
+
+- **A separate ASCII mode.** It is a filter, not a mode; four modes is already plenty.
+- **A full web UI.** The charm is `curl` plus one environment variable.
+- **Any runtime dependency.** ASCII banner font data is a few KB of source, not a package.
