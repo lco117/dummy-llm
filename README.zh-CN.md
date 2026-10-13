@@ -86,7 +86,8 @@ curl -N http://localhost:8080/v1/chat/completions \
 | --- | --- | --- |
 | `PARROT_TEXT` | `6` | `fixed` 模式的回答模板（会替换 `{input}`、`{model}`），也是用户什么都没说时的兜底 |
 | `PARROT_MODE` | `echo` | `echo`（复读用户）/ `fixed` / `random` / `canned` |
-| `PARROT_ECHO_RAW` | — | 原样复读，不剥离 `<system-reminder>` 块 |
+| `PARROT_ECHO_RAW` | — | 原样复读，不做任何噪声剥离 |
+| `PARROT_STRIP` | — | 额外的正则（`\|` 分隔），复读前从用户消息里剔除 |
 | `PARROT_CHUNK` | `4` | 每个流式片段几个字符——4 个字符约等于一个英文 token。也支持 `word` / `line` / `whole` |
 | `PARROT_TPS` | `100` | 每秒输出多少 token，一个片段多大取决于 `PARROT_CHUNK`（`0` 表示不限速） |
 | `PARROT_DELAY_MS` | 由 `PARROT_TPS` 换算 | 显式设置后会覆盖 `PARROT_TPS` |

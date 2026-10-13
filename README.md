@@ -114,7 +114,8 @@ Unknown routes return a 404 **in the error shape of the protocol you were speaki
 | `PARROT_MODE` | `echo` | `echo` (repeat the user) · `fixed` · `random` · `canned` |
 | `PARROT_LINES` | — | `a\|b\|c` replies for `random` mode |
 | `PARROT_CANNED` | — | JSON map of keyword → reply for `canned` mode |
-| `PARROT_ECHO_RAW` | — | Repeat the message verbatim, without stripping `<system-reminder>` blocks |
+| `PARROT_ECHO_RAW` | — | Repeat the message verbatim, without stripping any harness noise |
+| `PARROT_STRIP` | — | Extra regexes (`\|`-separated) removed from user messages before echoing |
 | `PARROT_CHUNK` | `4` | Code points per streamed piece — 4 is about one English token. Also accepts `word` / `line` / `whole` |
 | `PARROT_TPS` | `100` | Tokens per second. What a piece is depends on `PARROT_CHUNK`; `0` means no artificial delay |
 | `PARROT_DELAY_MS` | derived from `PARROT_TPS` | Set explicitly to override `PARROT_TPS` |
@@ -143,11 +144,17 @@ parrot-llm --no-thinking               # skip the hardcoded reasoning
 # PARROT_CANNED='{"weather":"It is raining.","name":"I am a parrot."}'
 ```
 
-In `echo` mode it repeats the last **human** message. Agent harnesses stuff their own
-noise into the conversation as user messages (`<system-reminder>` blocks, for instance), so
-those get stripped first — and if the newest message was nothing but noise, the parrot walks
-back to the previous real one. `--echo-raw` turns the stripping off if you want to see the
-request body byte for byte.
+In `echo` mode it repeats the last **human** message. Agent harnesses stuff their own noise
+into the conversation as user messages, in two flavours:
+
+- **tagged blocks** — `<system-reminder>Updated instructions from: AGENTS.md…</system-reminder>`
+- **bare metadata lines** — `Time sampled while preparing turn 1, step 1: …`,
+  `Browser time zone for this request: …`, `Elapsed since the preceding model-visible message: …`
+
+Both are dropped before deciding what you actually said, and if the newest message was nothing but
+noise the parrot walks back to the previous real one. Add your own rules with `PARROT_STRIP`
+(`|`-separated regexes), or turn all of it off with `--echo-raw` to see the request body byte
+for byte.
 
 ## Thinking
 

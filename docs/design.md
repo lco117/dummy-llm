@@ -144,10 +144,13 @@ Before the reply, the engine yields a second channel: the "reasoning". It is a t
 We need answer to user. User just said "{input}". Need infer? Probably minimal. We need respond maybe "{reply}".
 ```
 
-The `{input}` placeholder is fed by `userInput()`, which strips
-`<system-reminder>…</system-reminder>` blocks (and a trailing unclosed opener) and walks back to
-the previous user message when the newest one was nothing but harness noise. `PARROT_ECHO_RAW=1`
-disables the stripping so the request body can be inspected byte for byte.
+The `{input}` placeholder is fed by `userInput()`, which removes two families of harness
+noise — tagged `<system-reminder>…</system-reminder>` blocks (plus a trailing unclosed opener) and
+bare metadata lines (`Time sampled while preparing turn …`, `Browser time zone for this request: …`,
+`Elapsed since the preceding model-visible message: …`, `Current runtime context.`, `Approval policy:`)
+— then walks back to the previous user message when the newest one was nothing but noise.
+`PARROT_STRIP` adds operator-supplied regexes and `PARROT_ECHO_RAW=1` disables everything, which is
+how you inspect a request body byte for byte.
 
 `phases()` / `phasesFor()` yield `{ channel: "thinking" | "text", text, index }`, and every renderer
 maps those channels onto its own protocol's native carrier:
