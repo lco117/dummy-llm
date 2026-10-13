@@ -51,7 +51,9 @@
     "deploy": "wrangler deploy",
     "deploy:dry": "wrangler deploy --dry-run --outdir dist-worker",
     "set-repo": "node scripts/set-repo.mjs",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "preversion": "npm run typecheck && npm test",
+    "release": "npm version patch && git push --follow-tags"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
