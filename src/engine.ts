@@ -159,11 +159,18 @@ export function withPersona(cfg: Config, model: string): Config {
   };
 }
 
+/** Cuts a string at a code-point boundary, so truncating never splits an emoji. */
+export function truncateCodePoints(value: string, limit: number): string {
+  if (limit <= 0) return value;
+  const points = Array.from(value);
+  return points.length <= limit ? value : points.slice(0, limit).join("");
+}
+
 export function plan(canon: CanonRequest, cfg: Config, rand: () => number): Answer {
   const effective = withPersona(cfg, canon.model);
   const template = selectReply(effective.reply, canon, rand);
   const vars = templateVars(canon, effective, undefined, template);
-  const reply = renderTemplate(template, vars);
+  const reply = truncateCodePoints(renderTemplate(template, vars), effective.maxReplyChars);
   return { reply, thinking: renderThinking(effective.thinking, { ...vars, reply }, rand) };
 }
 

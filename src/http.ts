@@ -1,3 +1,4 @@
+import { playgroundOverride } from "./config.ts";
 import { describeReply, stripReminders } from "./engine.ts";
 import { errorResponse, HttpError } from "./errors.ts";
 import { landingPage } from "./landing.ts";
@@ -207,10 +208,11 @@ export function createApp(config: Config): App {
     // Locked seed (tests, DUMMY_SEED) keeps runs reproducible; otherwise every
     // request gets its own stream of randomness so the thinking template varies.
     const seed = config.deterministic ? config.seed : (Date.now() ^ (requestCounter++ * 0x9e3779b9)) >>> 0;
-    const ctx: Ctx = { cfg: config, url, rand: mulberry32(seed) };
     const protocol = protocolFor(url.pathname);
     let response: Response;
     try {
+      // A caller may hand us a reply template for this one request (?t=), when the operator allows it.
+      const ctx: Ctx = { cfg: playgroundOverride(config, url), url, rand: mulberry32(seed) };
       response = await route(request, ctx);
     } catch (error) {
       if (error instanceof HttpError) {

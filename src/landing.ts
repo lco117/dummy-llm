@@ -48,6 +48,19 @@ const STYLE = `
   .chip.dim { color: var(--dim); border-color: rgba(255,255,255,.08); background: transparent; }
   .panel { border: 1px solid var(--line); border-radius: 16px; background: var(--panel); overflow: hidden; }
   form { display: flex; gap: .5rem; padding: .85rem; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.015); }
+  details.editor { border-bottom: 1px solid var(--line); }
+  details.editor > summary { cursor: pointer; padding: .75rem 1.15rem; color: var(--dim); font-size: .78rem; letter-spacing: .04em; }
+  details.editor > summary:hover { color: var(--green); }
+  details.editor > summary::marker { color: var(--green); }
+  .editor-body { padding: 0 1.15rem 1rem; display: grid; gap: .55rem; }
+  textarea {
+    width: 100%; box-sizing: border-box; resize: vertical; font: inherit; font-size: .82rem;
+    background: rgba(0,0,0,.28); color: var(--text); border: 1px solid var(--line);
+    border-radius: 9px; padding: .6rem .7rem;
+  }
+  textarea:focus { outline: 1px solid var(--green); border-color: transparent; }
+  .hint { margin: 0; color: rgba(124,143,130,.9); font-size: .74rem; line-height: 1.6; }
+  .note { margin: 0 0 .1rem; color: #ffd479; font-size: .74rem; }
   form .prompt { color: var(--green); padding-top: .55rem; }
   input {
     flex: 1; min-width: 0; background: transparent; border: 0; outline: 0;
@@ -113,6 +126,17 @@ export function landingPage(ctx: Ctx): Response {
   <section>
     <h2>Try it — this really calls the API</h2>
     <div class="panel">
+      <details class="editor" id="editor"${cfg.playground ? "" : " hidden"}>
+        <summary>Edit the reply template</summary>
+        <div class="editor-body">
+          <textarea id="template" rows="3" spellcheck="false" placeholder="{input}"></textarea>
+          <p class="hint">
+            Anything you write here is used for your next message and then forgotten — nothing is stored.
+            The address bar keeps a copy, so you can share this exact demonstration as a link.
+            Templates are limited to 2000 characters and answers to 100000.
+          </p>
+        </div>
+      </details>
       <form id="ask" autocomplete="off">
         <span class="prompt">❯</span>
         <input id="prompt" value="hello" spellcheck="false" aria-label="Your message">
@@ -172,6 +196,23 @@ curl -N ${escapeHtml(new URL(ctx.url).origin)}/v1/chat/completions \\
   var input = document.getElementById("prompt");
   var button = document.getElementById("send");
   var stream = document.getElementById("stream");
+  var editor = document.getElementById("template");
+  var playground = ${cfg.playground ? "true" : "false"};
+
+  // The template travels in the address, so a link reproduces this exact demonstration.
+  function currentTemplate() {
+    return playground && editor ? editor.value.trim() : "";
+  }
+  if (playground && editor) {
+    var initial = new URLSearchParams(location.search).get("t");
+    if (initial) editor.value = initial;
+    editor.addEventListener("input", function () {
+      var url = new URL(location.href);
+      var value = editor.value.trim();
+      if (value) url.searchParams.set("t", value); else url.searchParams.delete("t");
+      history.replaceState(null, "", url);
+    });
+  }
 
   function el(tag, className, text) {
     var node = document.createElement(tag);
@@ -191,6 +232,9 @@ curl -N ${escapeHtml(new URL(ctx.url).origin)}/v1/chat/completions \\
     var caret = el("span", "caret");
     answer.appendChild(answerText);
     answer.appendChild(caret);
+    if (currentTemplate()) {
+      stream.appendChild(el("p", "note", "Reply template supplied by you, the visitor — not by this site's owner."));
+    }
     stream.appendChild(thinkWrap);
     stream.appendChild(answer);
     return { thinkWrap: thinkWrap, thinkText: thinkText, answerText: answerText, caret: caret };
@@ -203,7 +247,9 @@ curl -N ${escapeHtml(new URL(ctx.url).origin)}/v1/chat/completions \\
     button.disabled = true;
 
     try {
-      var res = await fetch("/v1/chat/completions", {
+      var template = currentTemplate();
+      var endpoint = "/v1/chat/completions" + (template ? "?t=" + encodeURIComponent(template) : "");
+      var res = await fetch(endpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ model: "${escapeHtml(cfg.models[0] ?? "dummy-1")}", stream: true, messages: [{ role: "user", content: prompt }] }),

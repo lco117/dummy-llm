@@ -37,6 +37,7 @@ Options:
       --tools <name>      Answer with a tool call when tools are offered
       --thinking <text>   Thinking template ({input} {reply}); default repeats your joke back
       --no-thinking       Do not emit a thinking block at all
+      --playground        Let callers pass ?t=<template> to answer one request with it
       --echo-raw          Echo the message verbatim, without stripping harness noise
       --strip <regex|regex>  Extra patterns to strip from user messages, |-separated
       --log <level>       off | summary | full — log what was received (default off)
@@ -116,6 +117,8 @@ apply("DUMMY_TPS", "tps");
 apply("DUMMY_DELAY_MS", "delay");
 apply("DUMMY_LOG", "log");
 apply("DUMMY_MAX_BODY", "max-body");
+apply("DUMMY_PLAYGROUND", "playground");
+apply("DUMMY_MAX_REPLY", "max-reply");
 apply("DUMMY_STRIP", "strip");
 apply("DUMMY_TTFT_MS", "ttft");
 apply("DUMMY_SEED", "seed");
@@ -128,6 +131,7 @@ apply("DUMMY_TOOLCALL", "tools");
 apply("DUMMY_THINKING", "thinking");
 if (flags["no-thinking"] === true) env.DUMMY_THINKING = "off";
 if (flags["echo-raw"] === true) env.DUMMY_ECHO_RAW = "1";
+if (flags.playground === true) env.DUMMY_PLAYGROUND = "1";
 
 const replyFile = take("reply-file");
 if (replyFile !== undefined) env.DUMMY_REPLY = readFileSync(replyFile, "utf8");

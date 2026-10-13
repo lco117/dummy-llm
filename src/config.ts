@@ -1,6 +1,6 @@
 import { BUILTIN_PERSONAS } from "./personas.ts";
 import type { Persona } from "./types.ts";
-import { parseFaultSpec } from "./errors.ts";
+import { HttpError, parseFaultSpec } from "./errors.ts";
 import type { ChunkMode, Config, LogLevel, Reply } from "./types.ts";
 
 /**
@@ -36,6 +36,8 @@ export const DEFAULTS = {
   tps: 100,
   log: "off" as LogLevel,
   maxBodyBytes: 1_000_000,
+  playground: false,
+  maxReplyChars: 0,
   ttftMs: 0,
   seed: 1,
   cors: "*",
@@ -187,11 +189,32 @@ export function resolveConfig(env: Env = {}, overrides: Partial<Config> = {}): C
     echoRaw: boolean(env.DUMMY_ECHO_RAW),
     log: logLevel(env.DUMMY_LOG),
     maxBodyBytes: wholeNumber(env.DUMMY_MAX_BODY, DEFAULTS.maxBodyBytes),
+    playground: boolean(env.DUMMY_PLAYGROUND),
+    maxReplyChars: wholeNumber(env.DUMMY_MAX_REPLY, DEFAULTS.maxReplyChars),
     strip: env.DUMMY_STRIP ? env.DUMMY_STRIP.split("|").map((item) => item.trim()).filter(Boolean) : [],
     personas,
     now: () => Date.now(),
     ...overrides,
   };
+}
+
+/** A visitor-supplied template is capped so a link cannot ask for an enormous render. */
+export const PLAYGROUND_MAX_TEMPLATE = 2000;
+export const PLAYGROUND_MAX_REPLY = 100_000;
+
+/**
+ * DUMMY_PLAYGROUND lets a caller pass ?t=<template> and have that template answer *that one request*.
+ * Nothing is stored, and every other request is unaffected. When the variable is unset the parameter is
+ * ignored entirely, so the surface does not exist.
+ */
+export function playgroundOverride(cfg: Config, url: URL): Config {
+  if (!cfg.playground) return cfg;
+  const raw = url.searchParams.get("t");
+  if (raw === null) return cfg;
+  if (raw.length > PLAYGROUND_MAX_TEMPLATE) {
+    throw new HttpError(400, `the ?t= template is limited to ${PLAYGROUND_MAX_TEMPLATE} characters (got ${raw.length}).`);
+  }
+  return { ...cfg, reply: raw, maxReplyChars: PLAYGROUND_MAX_REPLY };
 }
 
 /** Node helper. Safe to call anywhere: workerd has no `process`. */

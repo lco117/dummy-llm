@@ -75,6 +75,13 @@ export interface Config {
   maxBodyBytes: number;
   /** Extra regexes removed from user messages before echoing (on top of the built-in rules). */
   strip: string[];
+  /**
+   * Let a caller supply the reply template for one request through ?t= (see playgroundOverride).
+   * Off by default: a deployment only exposes this on purpose.
+   */
+  playground: boolean;
+  /** Truncate a rendered reply at this many code points. 0 means no limit. */
+  maxReplyChars: number;
   now: () => number;
 }
 
