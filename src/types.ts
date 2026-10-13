@@ -43,6 +43,8 @@ export interface Config {
   models: string[];
   toolCall: string | null;
   thinking: string | null;
+  /** Echo the user's message untouched, without stripping <system-reminder> blocks. */
+  echoRaw: boolean;
   now: () => number;
 }
 

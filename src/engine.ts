@@ -12,12 +12,39 @@ export function lastUserMessage(canon: CanonRequest): string {
   return lastUser?.content ?? "";
 }
 
+const REMINDER_BLOCK = /<system-reminder>[\s\S]*?<\/system-reminder>/gi;
+const REMINDER_UNCLOSED = /<system-reminder>[\s\S]*$/i;
+
+/**
+ * Agent harnesses append their own noise to the conversation as *user* messages —
+ * DSH, for instance, injects "<system-reminder>Updated instructions from: AGENTS.md…".
+ * A parrot that repeats that is technically correct and completely useless,
+ * so we drop those blocks before deciding what the human actually said.
+ */
+export function stripReminders(text: string): string {
+  return text.replace(REMINDER_BLOCK, "").replace(REMINDER_UNCLOSED, "").trim();
+}
+
+/**
+ * What the human actually said: the last user message that still has content
+ * after stripping harness noise. If the newest one was nothing but a reminder,
+ * we fall back to the one before it.
+ */
+export function userInput(canon: CanonRequest, cfg: Config): string {
+  const users = canon.messages.filter((message) => message.role === "user");
+  for (let i = users.length - 1; i >= 0; i--) {
+    const text = cfg.echoRaw ? users[i].content : stripReminders(users[i].content);
+    if (text !== "") return text;
+  }
+  return "";
+}
+
 /** The entire "intelligence" of this project. */
 export function buildText(canon: CanonRequest, cfg: Config, rand: () => number): string {
   switch (cfg.mode) {
     case "echo":
       // It says whatever you said. That is the whole trick.
-      return lastUserMessage(canon) || cfg.text;
+      return userInput(canon, cfg) || cfg.text;
     case "random":
       return pick(rand, cfg.lines.length > 0 ? cfg.lines : [cfg.text]);
     case "canned": {
@@ -39,7 +66,7 @@ export function buildText(canon: CanonRequest, cfg: Config, rand: () => number):
 export function renderThinking(canon: CanonRequest, cfg: Config, reply: string): string | null {
   if (!cfg.thinking) return null;
   return cfg.thinking
-    .split("{input}").join(lastUserMessage(canon))
+    .split("{input}").join(userInput(canon, cfg))
     .split("{reply}").join(reply)
     .split("{model}").join(canon.model)
     .split("{text}").join(cfg.text);

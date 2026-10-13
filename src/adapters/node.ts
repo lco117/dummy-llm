@@ -29,6 +29,7 @@ Options:
       --tools <name>      Answer with a tool call when tools are offered
       --thinking <text>   Thinking template ({input} {reply}); default repeats your joke back
       --no-thinking       Do not emit a thinking block at all
+      --echo-raw          Echo the message verbatim, without stripping <system-reminder> blocks
   -h, --help              Show this help
   -v, --version           Show the version
 
@@ -109,6 +110,7 @@ apply("PARROT_HANG_MS", "hang");
 apply("PARROT_TOOLCALL", "tools");
 apply("PARROT_THINKING", "thinking");
 if (flags["no-thinking"] === true) env.PARROT_THINKING = "off";
+if (flags["echo-raw"] === true) env.PARROT_ECHO_RAW = "1";
 
 const config = resolveConfig(env);
 const app = createApp(config);

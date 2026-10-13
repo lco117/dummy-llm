@@ -43,6 +43,11 @@ function list(value: string | undefined, fallback: string[]): string[] {
   return items.length > 0 ? items : fallback;
 }
 
+function boolean(value: string | undefined): boolean {
+  if (value === undefined) return false;
+  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+}
+
 function thinkingTemplate(value: string | undefined): string | null {
   if (value === undefined) return DEFAULTS.thinking;
   return OFF.has(value.trim().toLowerCase()) ? null : value;
@@ -85,6 +90,7 @@ export function resolveConfig(env: Env = {}, overrides: Partial<Config> = {}): C
     models: list(env.PARROT_MODELS, DEFAULT_MODELS),
     toolCall: env.PARROT_TOOLCALL && env.PARROT_TOOLCALL.trim() !== "" ? env.PARROT_TOOLCALL : null,
     thinking: thinkingTemplate(env.PARROT_THINKING),
+    echoRaw: boolean(env.PARROT_ECHO_RAW),
     now: () => Date.now(),
     ...overrides,
   };
