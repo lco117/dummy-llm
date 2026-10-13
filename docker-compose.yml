@@ -6,7 +6,6 @@ services:
     environment:
       PARROT_TEXT: "6"
       PARROT_MODE: echo
-      PARROT_CHUNK: "1"
       PARROT_TPS: "100"
       # PARROT_LOG: summary
       # PARROT_API_KEY: sk-parrot

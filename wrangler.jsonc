@@ -15,7 +15,8 @@
   "vars": {
     "PARROT_TEXT": "6",
     "PARROT_MODE": "echo",
-    "PARROT_CHUNK": "1",
+    // PARROT_CHUNK is left unset on purpose: the code default is 4 code points
+    // (~one token), which is what makes PARROT_TPS mean tokens per second.
     "PARROT_TPS": "100",
     // One JSON line per request, visible in Workers Logs / `npx wrangler tail parrot-llm`.
     // Set to "off" (or "full" to include whole request bodies).
