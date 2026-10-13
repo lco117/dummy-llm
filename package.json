@@ -58,6 +58,7 @@
     "set-repo": "node scripts/set-repo.mjs",
     "prepublishOnly": "npm run build",
     "preversion": "npm run typecheck && npm test",
+    "version": "node scripts/sync-version.mjs && git add src/version.ts",
     "release": "npm version patch && git push --follow-tags"
   },
   "devDependencies": {

@@ -4,4 +4,4 @@ export { DEFAULTS, processEnv, resolveConfig } from "./config.ts";
 export type { Env } from "./config.ts";
 export type { CanonMessage, CanonRequest, Config, Ctx, ProtocolId } from "./types.ts";
 
-export const version = "0.1.0";
+export { version } from "./version.ts";

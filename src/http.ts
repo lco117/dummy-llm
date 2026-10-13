@@ -9,6 +9,7 @@ import * as ollama from "./protocols/ollama.ts";
 import * as openaiChat from "./protocols/openai-chat.ts";
 import * as openaiResponses from "./protocols/openai-responses.ts";
 import type { Config, Ctx, ProtocolId } from "./types.ts";
+import { version } from "./version.ts";
 
 export type App = (request: Request) => Promise<Response>;
 
@@ -141,7 +142,7 @@ async function route(request: Request, ctx: Ctx): Promise<Response> {
       delayMs: ctx.cfg.delayMs,
       log: ctx.cfg.log,
       uptime: 0,
-      version: "0.1.0",
+      version,
     });
   }
 
