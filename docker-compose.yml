@@ -7,7 +7,8 @@ services:
       PARROT_TEXT: "6"
       PARROT_MODE: echo
       PARROT_CHUNK: "1"
-      PARROT_DELAY_MS: "20"
+      PARROT_TPS: "100"
+      # PARROT_LOG: summary
       # PARROT_API_KEY: sk-parrot
     expose:
       - "8080"

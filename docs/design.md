@@ -99,6 +99,22 @@ Jitter is drawn from a seeded PRNG (mulberry32) so `PARROT_SEED` makes it reprod
 Timers are wall-clock, not CPU — this matters for the Workers free tier (section 5 of
 [deployment.md](deployment.md)).
 
+### 3.5 Rate, templates and logging
+
+`PARROT_TPS` (default 100) is the primary rate knob: the delay between pieces is
+`round(1000 / tps)`, and `PARROT_DELAY_MS` overrides it when set explicitly. One "piece" is one
+chunk (`PARROT_CHUNK`, default one code point), so "tokens per second" means streamed pieces
+per second — documented rather than pretended.
+
+`PARROT_TEXT` is a template, not a literal, in `fixed` / `random` / `canned` mode: `{input}`
+(the cleaned-up user message) and `{model}` are substituted. `PARROT_THINKING` additionally
+gets `{reply}` and `{text}`. Placeholders never appear in `echo` mode, where the answer is
+the user's own words.
+
+`PARROT_LOG` = `off` | `summary` | `full`. Logging happens in `readJson()` in
+`src/http.ts`, i.e. once per request that carries a body, using the same
+`stripReminders()` the echo mode uses — so the log shows what the parrot actually heard.
+
 ### 3.5 Fault injection
 
 | switch | effect |

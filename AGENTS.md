@@ -53,6 +53,8 @@ You want: a `200` with `text/event-stream`, several `delta` frames, and a final 
 
 - **What it says back.** Default `PARROT_MODE=echo` repeats the last user message after `stripReminders()` removes `<system-reminder>…</system-reminder>` blocks; if the newest user message was pure harness noise it walks back to the previous real one. `PARROT_ECHO_RAW=1` disables both. `fixed` answers `PARROT_TEXT` forever, `random` picks from `PARROT_LINES`, `canned` matches keywords via `PARROT_CANNED`.
 - **What it "thinks".** `PARROT_THINKING` is a template rendered into every protocol's native reasoning channel; `{input}` is the user's message and `{reply}` is the answer. `--no-thinking` (or `PARROT_THINKING=off`) removes the channel entirely.
+- **How fast.** `PARROT_TPS` (default 100) sets streamed pieces per second; `PARROT_DELAY_MS` overrides it. `PARROT_TPS=0` streams as fast as the runtime allows.
+- **What it logs.** `PARROT_LOG=summary` (enabled in `wrangler.jsonc`) prints one JSON line per request; read it with `npx wrangler tail parrot-llm`. `full` includes bodies, `off` is silent.
 - Permanent on a deployed Worker: edit the `vars` block in `wrangler.jsonc` and redeploy, or set the variable in the Cloudflare dashboard.
 
 ## Adding a new protocol (recipe)

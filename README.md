@@ -109,19 +109,21 @@ Unknown routes return a 404 **in the error shape of the protocol you were speaki
 
 | Env | Default | Meaning |
 | --- | --- | --- |
-| `PARROT_TEXT` | `6` | Fallback when the user says nothing, and the answer in `fixed` mode |
+| `PARROT_TEXT` | `6` | The `fixed` mode answer template — `{input}` and `{model}` are substituted — and the fallback when the user says nothing |
 | `PARROT_MODE` | `echo` | `echo` (repeat the user) · `fixed` · `random` · `canned` |
 | `PARROT_LINES` | — | `a\|b\|c` replies for `random` mode |
 | `PARROT_CANNED` | — | JSON map of keyword → reply for `canned` mode |
 | `PARROT_ECHO_RAW` | — | Repeat the message verbatim, without stripping `<system-reminder>` blocks |
 | `PARROT_CHUNK` | `1` | `1`, `2` … code points per frame, or `word` / `line` / `whole` |
-| `PARROT_DELAY_MS` | `20` | Delay between frames (simulated typing) |
+| `PARROT_TPS` | `100` | Streamed pieces per second; the inter-piece delay is derived from it (`0` = no delay) |
+| `PARROT_DELAY_MS` | derived from `PARROT_TPS` | Set explicitly to override `PARROT_TPS` |
 | `PARROT_TTFT_MS` | `0` | Time to first token |
 | `PARROT_HANG_MS` | `0` | Delay before the first byte |
 | `PARROT_SEED` | `1` | Seeds ids and jitter, so runs are reproducible |
 | `PARROT_FAIL` | — | `429` · `429:after=3` · `rate_limit` · `off` |
 | `PARROT_API_KEY` | — | If set, API routes require this key |
 | `PARROT_CORS` | `*` | `Access-Control-Allow-Origin` |
+| `PARROT_LOG` | `off` | `off` / `summary` / `full` — log every request that arrives |
 | `PARROT_MODELS` | `parrot-1, parrot-1-mini, definitely-not-a-model` | Comma separated model ids to advertise |
 | `PARROT_TOOLCALL` | — | Function name, or JSON `{"name":…,"arguments":…}` |
 | `PARROT_THINKING` | a hardcoded template | The "reasoning", with `{input}` and `{reply}` placeholders; `off` disables it |
@@ -186,6 +188,24 @@ curl "localhost:8080/v1/chat/completions?fail=overloaded"   # per-request, no re
 ```
 
 Mid-stream failure is the interesting one: the client gets a valid stream that dies halfway, which is exactly the case that makes production code hang forever.
+
+## Logging
+
+`PARROT_LOG=summary` prints one JSON line per request — the path, the model, how many messages
+arrived and the last user message after reminder stripping. `full` adds the whole body.
+
+```bash
+parrot-llm --log summary         # locally
+npx wrangler tail parrot-llm     # live from the deployed Worker
+```
+
+This is the fastest way to answer "what is my client actually sending?":
+
+```json
+{"parrot":"request","path":"/v1/chat/completions","model":"parrot-1","stream":true,"messages":2,"lastUser":"hwfaeouheaw"}
+```
+
+It is off by default; `wrangler.jsonc` enables `summary` for the deployed Worker.
 
 ## Deployment
 

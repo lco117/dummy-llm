@@ -83,16 +83,18 @@ curl -N http://localhost:8080/v1/chat/completions \
 
 | 环境变量 | 默认 | 说明 |
 | --- | --- | --- |
-| `PARROT_TEXT` | `6` | 用户什么都没说时的兜底，以及 `fixed` 模式的回答 |
+| `PARROT_TEXT` | `6` | `fixed` 模式的回答模板（会替换 `{input}`、`{model}`），也是用户什么都没说时的兜底 |
 | `PARROT_MODE` | `echo` | `echo`（复读用户）/ `fixed` / `random` / `canned` |
 | `PARROT_ECHO_RAW` | — | 原样复读，不剥离 `<system-reminder>` 块 |
 | `PARROT_CHUNK` | `1` | 每帧几个字符，或 `word` / `line` / `whole` |
-| `PARROT_DELAY_MS` | `20` | 帧间隔（模拟打字） |
+| `PARROT_TPS` | `100` | 每秒输出多少个流式片段，帧间隔由它换算（`0` 表示不限速） |
+| `PARROT_DELAY_MS` | 由 `PARROT_TPS` 换算 | 显式设置后会覆盖 `PARROT_TPS` |
 | `PARROT_TTFT_MS` | `0` | 首 token 延迟 |
 | `PARROT_SEED` | `1` | 让 id 和抖动可复现 |
 | `PARROT_FAIL` | — | `429` / `429:after=3` / `rate_limit` |
 | `PARROT_API_KEY` | — | 设置后 API 路由需要该密钥 |
 | `PARROT_CORS` | `*` | 允许的跨域来源 |
+| `PARROT_LOG` | `off` | `off` / `summary` / `full`，记录收到的每个请求 |
 | `PARROT_MODELS` | `parrot-1, parrot-1-mini, definitely-not-a-model` | 逗号分隔 |
 | `PARROT_TOOLCALL` | — | 需要时返回固定 function call |
 | `PARROT_THINKING` | 内置模板 | 硬编码的思考模板，支持 `{input}`、`{reply}` 占位符；`off` 关闭 |
@@ -149,6 +151,24 @@ parrot-llm --hang 30000          # 建连后什么都不发
 ```
 
 **流中途断流**最有价值：客户端会拿到一个中途死掉的合法流，这正是让线上代码永远卡住的场景。
+
+## 日志
+
+`PARROT_LOG=summary` 会对每个请求打一行 JSON：路径、模型、收到几条消息，以及剥离后的最后一条用户消息。
+`full` 还会带上完整请求体。
+
+```bash
+parrot-llm --log summary         # 本地
+npx wrangler tail parrot-llm     # 线上 Worker 的实时日志
+```
+
+想知道"客户端到底发了什么"，这是最快的办法：
+
+```json
+{"parrot":"request","path":"/v1/chat/completions","model":"parrot-1","stream":true,"messages":2,"lastUser":"hwfaeouheaw"}
+```
+
+默认关闭；`wrangler.jsonc` 里给部署好的 Worker 开了 `summary`。
 
 ## 部署
 
