@@ -3,6 +3,11 @@
   "name": "parrot-llm",
   "main": "src/adapters/worker.ts",
   "compatibility_date": "2025-09-01",
+  // No *.workers.dev route and no preview URLs: bind your own domain instead
+  // (Cloudflare dashboard -> the Worker -> Settings -> Domains & Routes).
+  // Flip either to true (or delete the line) to get the free workers.dev URL back.
+  "workers_dev": false,
+  "preview_urls": false,
   "observability": {
     "enabled": true
   },
