@@ -167,6 +167,23 @@ A renderer that needs the answer up front (for output indices) calls `plan()` on
 result to `phasesFor()`; calling `plan()` twice would consume the seeded PRNG twice.
 `NPC_FAIL=...:after=N` counts every streamed piece, thinking included.
 
+### 3.7 The template language
+
+A template is any string in `NPC_TEXT`, `NPC_LINES`, `NPC_CANNED` or `NPC_THINKING`. Placeholders
+are ```{name|filter:arg|filter}```; unknown names are left untouched and unknown filters are ignored, so a
+typo degrades to text instead of throwing mid-stream.
+
+Filters are **synchronous and side-effect free by construction** — `phasesFor()` slices a rendered string
+into timed pieces and cannot await a transform, so an async filter would break pacing. `ascii` embeds a
+3×5 block font (~1 KB of source) rather than a package, keeping §"zero runtime dependencies" true.
+
+### 3.8 Personas
+
+`Config.personas` maps a model id to a partial override (`mode`, `text`, `lines`, `thinking`).
+`plan()` resolves `withPersona(cfg, canon.model)` once per request, so every renderer keeps using the
+global config for chunking and pacing while the *content* follows the persona. `/v1/models` is derived
+from the same map, which is what turns a model picker into a persona picker.
+
 ## 4. Wire formats
 
 These are the contracts the tests will assert byte-for-byte.

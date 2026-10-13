@@ -44,7 +44,7 @@ A fake LLM server. It **says whatever the user said** (`NPC_MODE=echo`, the defa
 curl -s https://<your-worker-url>/healthz
 curl -sN https://<your-worker-url>/v1/chat/completions \
   -H 'content-type: application/json' \
-  -d '{"model":"npc-1","messages":[{"role":"user","content":"hi"}],"stream":true}'
+  -d '{"model":"npc-echo-1","messages":[{"role":"user","content":"hi"}],"stream":true}'
 ```
 
 You want: a `200` with `text/event-stream`, several `delta` frames, and a final `data: [DONE]`.
@@ -52,6 +52,8 @@ You want: a `200` with `text/event-stream`, several `delta` frames, and a final 
 ## Changing the answer
 
 - **What it says back.** Default `NPC_MODE=echo` repeats the last user message after `stripReminders()` removes harness noise — tagged `<system-reminder>…</system-reminder>` blocks **and** bare metadata lines such as `Time sampled while preparing turn 1, step 1: …`, `Browser time zone for this request: …`, `Elapsed since the preceding model-visible message: …`. If the newest user message was pure noise it walks back to the previous real one. `NPC_STRIP` adds operator regexes; `NPC_ECHO_RAW=1` disables all of it. New harness noise belongs in `HARNESS_LINE` in `src/engine.ts`, with a golden case in `test/cases.ts`. `fixed` answers `NPC_TEXT` forever, `random` picks from `NPC_LINES`, `canned` matches keywords via `NPC_CANNED`.
+- **Personas.** The model id selects an answer profile (see `src/personas.ts`): `npc-echo-1` repeats you, `definitely-not-a-model` refuses to be a model. An unknown model falls through to `NPC_MODE`/`NPC_TEXT`. Adding a persona means adding one entry there — `DEFAULT_MODELS` is derived from it.
+- **Templates and filters.** `{input|upper|box}`. Filters live in `src/filters.ts` and **must stay synchronous and side-effect free**, because `phasesFor()` renders a piece without awaiting. Every new filter needs a unit case in `test/unit.test.ts` plus, if it changes a wire-visible default, a golden.
 - **What it "thinks".** `NPC_THINKING` is a `\|`-separated pool (ten templates ship by default) rendered into every protocol's native reasoning channel; one is drawn per request unless the seed is pinned. `{input}` is the user's message, `{reply}` is the answer. `--no-thinking` (or `NPC_THINKING=off`) removes the channel entirely.
 - **How fast.** `NPC_TPS` (default 100) sets tokens per second. A token is `NPC_CHUNK` code points (default 4, i.e. one English token); `NPC_DELAY_MS` overrides the pacing. Pacing targets an absolute schedule, so this is the long-run rate, not a per-frame sleep.
 - **What it logs.** `NPC_LOG=summary` (enabled in `wrangler.jsonc`) prints one JSON line per request; read it with `npx wrangler tail npc-llm`. `full` includes bodies, `off` is silent.
@@ -83,7 +85,7 @@ That rewrites `README.md`, `AGENTS.md` and `package.json` in one shot.
 
 ## Publishing to npm
 
-The package name `npc-llm` was free when this repo was created; as of v0.1.1 it is **not yet published**.
+The package is published as `npc-llm` (first release 0.2.0). Anyone with publish rights can ship the next one; the tag-driven workflow in `.github/workflows/release.yml` publishes automatically once `NPM_TOKEN` exists.
 
 ```bash
 npm login --registry=https://registry.npmjs.org/   # interactive: the human must do this

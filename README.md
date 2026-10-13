@@ -132,11 +132,25 @@ Unknown routes return a 404 **in the error shape of the protocol you were speaki
 | `NPC_CORS` | `*` | `Access-Control-Allow-Origin` |
 | `NPC_LOG` | `off` | `off` / `summary` / `full` — log every request that arrives |
 | `NPC_MAX_BODY` | `1000000` | Reject request bodies larger than this (`0` = unlimited) |
-| `NPC_MODELS` | `npc-1, npc-1-mini, definitely-not-a-model` | Comma separated model ids to advertise |
+| `NPC_MODELS` | every persona | Comma separated model ids to advertise |
+| `NPC_PERSONAS` | — | JSON map of extra personas: `{"npc-ascii-1":{"mode":"fixed","text":"{input\|ascii}","thinking":[]}}` |
 | `NPC_TOOLCALL` | — | Function name, or JSON `{"name":…,"arguments":…}` |
 | `NPC_THINKING` | a pool of 10 | The "reasoning". `\|`-separated templates, one picked at random per request; `{input}` and `{reply}` are substituted; `off` disables it |
 
 Every one of them is also a CLI flag: `npc-llm --help`.
+
+## Personas: the model id picks the answer
+
+`/v1/models` is not decoration. Every advertised id is a persona, and the model a client sends
+selects how the answer is written:
+
+| model id | what it does |
+| --- | --- |
+| `npc-echo-1` | repeats you back (the default persona) |
+| `definitely-not-a-model` | refuses to be a language model, ten ways, each with its own ten-way "reasoning" |
+
+Any **other** model string falls through to the server's own `NPC_MODE` / `NPC_TEXT`, so a client
+that hardcodes `gpt-4o` still gets sensible behaviour.
 
 ## Modes
 
@@ -160,6 +174,28 @@ Both are dropped before deciding what you actually said, and if the newest messa
 noise it walks back to the previous real one. Add your own rules with `NPC_STRIP`
 (`|`-separated regexes), or turn all of it off with `--echo-raw` to see the request body byte
 for byte.
+
+## Templates and filters
+
+Templates live in `NPC_TEXT`, `NPC_LINES`, `NPC_CANNED` and `NPC_THINKING`. Placeholders:
+`{input}` (the cleaned-up user message), `{raw}` (untouched), `{reply}` (the answer being built),
+`{model}` and `{text}`.
+
+Filters compose with `|`:
+
+```bash
+npc-llm --text '{input|upper}'        # SHOUT BACK
+npc-llm --text '{input|ascii}'        # render the message as a 3x5 block banner
+npc-llm --text '{input|box}'          # put it in an ASCII box
+npc-llm --text '{input|upper|box}'    # filters compose
+npc-llm --text 'you said {input} ({input|count} chars)'
+```
+
+Available: `upper` `lower` `title` `reverse` `spongebob` `leet` `truncate:N` `repeat:N`
+`wrap:N` `indent:N` `box` `ascii` `morse` `base64` `hex` `json` `count` `hash`.
+
+An unknown placeholder is left alone; an unknown filter is ignored. Filters are synchronous and
+side-effect free on purpose — the streaming scheduler renders a piece without awaiting anything.
 
 ## Thinking
 

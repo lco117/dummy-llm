@@ -102,7 +102,8 @@ curl -N http://localhost:8080/v1/chat/completions \
 | `NPC_CORS` | `*` | 允许的跨域来源 |
 | `NPC_LOG` | `off` | `off` / `summary` / `full`，记录收到的每个请求 |
 | `NPC_MAX_BODY` | `1000000` | 超过这个字节数的请求体直接拒绝（`0` 表示不限制） |
-| `NPC_MODELS` | `npc-1, npc-1-mini, definitely-not-a-model` | 逗号分隔 |
+| `NPC_MODELS` | 全部 persona | 逗号分隔 |
+| `NPC_PERSONAS` | — | 额外 persona 的 JSON 映射：`{"npc-ascii-1":{"mode":"fixed","text":"{input\|ascii}","thinking":[]}}` |
 | `NPC_TOOLCALL` | — | 需要时返回固定 function call |
 | `NPC_THINKING` | 内置 10 个模板 | 硬编码的思考。用 `\|` 分隔多个模板，每次请求随机取一个；会替换 `{input}`、`{reply}`；`off` 关闭 |
 
@@ -117,6 +118,40 @@ curl -N http://localhost:8080/v1/chat/completions \
 
 两种都会先被剥掉；如果最新那条除了噪声什么都没有，就往上找上一条真正有人话的消息。可以用
 `NPC_STRIP`（`|` 分隔的正则）加自己的规则，或者用 `--echo-raw` 全部关掉，一个字节不差地看请求体。
+
+## Persona：用 model id 选回答方式
+
+`/v1/models` 不是装饰品。每个列出的 id 都是一个 persona，客户端发来的 model 决定了回答怎么写：
+
+| model id | 行为 |
+| --- | --- |
+| `npc-echo-1` | 把你说的话复读回来（默认 persona） |
+| `definitely-not-a-model` | 拒绝承认自己是语言模型，十种说法，每一种都配一段同样有十种写法的"推理" |
+
+**其他任何** model 字符串都会落回服务端自己的 `NPC_MODE` / `NPC_TEXT`，所以写死 `gpt-4o` 的客户端
+依然能正常工作。
+
+## 模板与过滤器
+
+模板可以写在 `NPC_TEXT`、`NPC_LINES`、`NPC_CANNED`、`NPC_THINKING` 里。占位符：
+`{input}`（清洗过的用户消息）、`{raw}`（原始未处理）、`{reply}`（正在生成的回答）、`{model}`、
+`{text}`。
+
+过滤器用 `|` 串联：
+
+```bash
+npc-llm --text '{input|upper}'        # 大声复读
+npc-llm --text '{input|ascii}'        # 把消息渲染成 3x5 点阵横幅
+npc-llm --text '{input|box}'          # 套一个 ASCII 方框
+npc-llm --text '{input|upper|box}'    # 可以叠加
+npc-llm --text 'you said {input} ({input|count} chars)'
+```
+
+可用过滤器：`upper` `lower` `title` `reverse` `spongebob` `leet` `truncate:N` `repeat:N`
+`wrap:N` `indent:N` `box` `ascii` `morse` `base64` `hex` `json` `count` `hash`。
+
+未知占位符原样保留，未知过滤器直接忽略。过滤器刻意设计成**同步且无副作用**——流式调度器渲染每个片段时
+不允许 await。
 
 ## 思考
 

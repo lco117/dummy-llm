@@ -87,12 +87,12 @@ golden `.sse` fixture diff passes in CI.
 - auth beyond a single static key, quotas, billing
 - Realtime/WebSocket API, image and audio generation
 
-## Next: make the template engine the product (proposed, not built)
+## The template engine (items 1 and 2 shipped in v0.3.0)
 
 `echo` is one mode out of four. The centre of the project is the template engine, and it is currently
 under-exposed: it lives in environment variables, has no names, and cannot be shared. In order:
 
-### 1. Named templates, selected through the model field
+### 1. Named templates, selected through the model field — **shipped**
 
 `/v1/models` already returns a list, and all five protocols carry a model name. Let each advertised id
 resolve to a template:
@@ -105,7 +105,7 @@ model: "npc-rickroll"  -> the rickroll template
 Zero new API surface — the model field already exists everywhere — and the model picker in every chat UI
 becomes a template picker. `/v1/models` stops being decoration.
 
-### 2. Pipes in placeholders
+### 2. Pipes in placeholders — **shipped**
 
 `{input|upper}`, `{input|box}`, `{input|ascii}`, `{input|qr}`, `{input|morse}`,
 `{input|reverse}`, `{reply|repeat:3}`.
