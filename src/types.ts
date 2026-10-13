@@ -35,8 +35,10 @@ export interface Config {
   lines: string[];
   canned: Record<string, string>;
   chunk: ChunkMode;
-  /** Streamed pieces per second. delayMs is derived from this unless set explicitly. */
+  /** Streamed pieces (tokens) per second. delayMs is derived from this unless set explicitly. */
   tps: number;
+  /** True when PARROT_SEED was given (or a test pinned one): ids and picks stop being random. */
+  deterministic: boolean;
   delayMs: number;
   ttftMs: number;
   seed: number;
@@ -46,7 +48,8 @@ export interface Config {
   cors: string;
   models: string[];
   toolCall: string | null;
-  thinking: string | null;
+  /** Thinking templates. Empty array = no thinking channel. */
+  thinking: string[];
   /** Echo the user's message untouched, without stripping <system-reminder> blocks. */
   echoRaw: boolean;
   /** Log every received request (visible via "wrangler tail" on Cloudflare). */

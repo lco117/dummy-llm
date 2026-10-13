@@ -83,8 +83,8 @@ export function landingPage(ctx: Ctx): Response {
   const models = cfg.models.map((id) => `<span class="chip dim">${escapeHtml(id)}</span>`).join("");
   const modeChip = `<span class="chip">mode: ${escapeHtml(cfg.mode)}</span>`;
   const tpsChip = `<span class="chip">${cfg.tps} tps</span>`;
-  const thinkingChip = cfg.thinking
-    ? `<span class="chip">thinking: on</span>`
+  const thinkingChip = cfg.thinking.length > 0
+    ? `<span class="chip">thinking: ${cfg.thinking.length} template${cfg.thinking.length === 1 ? "" : "s"}</span>`
     : `<span class="chip dim">thinking: off</span>`;
   const textChip = cfg.mode === "fixed" ? `<span class="chip dim">text: ${escapeHtml(cfg.text)}</span>` : "";
   const logChip = cfg.log === "off" ? "" : `<span class="chip dim">log: ${escapeHtml(cfg.log)}</span>`;

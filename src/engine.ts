@@ -87,9 +87,11 @@ export function buildText(canon: CanonRequest, cfg: Config, rand: () => number):
 }
 
 /** The "reasoning" is a template too. */
-export function renderThinking(canon: CanonRequest, cfg: Config, reply: string): string | null {
-  if (!cfg.thinking) return null;
-  return renderTemplate(cfg.thinking, templateVars(canon, cfg, reply));
+/** One template per request, picked from the pool — the parrot keeps changing its mind. */
+export function renderThinking(canon: CanonRequest, cfg: Config, reply: string, rand: () => number): string | null {
+  if (!cfg.thinking || cfg.thinking.length === 0) return null;
+  const template = cfg.thinking.length === 1 ? cfg.thinking[0] : pick(rand, cfg.thinking);
+  return renderTemplate(template, templateVars(canon, cfg, reply));
 }
 
 export interface Answer {
@@ -99,7 +101,7 @@ export interface Answer {
 
 export function plan(canon: CanonRequest, cfg: Config, rand: () => number): Answer {
   const reply = buildText(canon, cfg, rand);
-  return { reply, thinking: renderThinking(canon, cfg, reply) };
+  return { reply, thinking: renderThinking(canon, cfg, reply, rand) };
 }
 
 /** Splits by code point, never by UTF-16 unit, so emoji and CJK survive intact. */
@@ -159,14 +161,20 @@ export async function* phasesFor(
   await sleep(cfg.hangMs);
   await sleep(cfg.ttftMs);
 
+  // Absolute schedule rather than "sleep(delay) per piece": timers in Workers and
+  // Node overshoot a little every time, and the error compounds until a 100 tps
+  // stream is really running at 50. Targeting "piece i is due at start + i * interval"
+  // makes the long-run rate equal PARROT_TPS even when individual timers are late.
+  const interval = cfg.delayMs;
+  const started = Date.now();
   let emitted = 0;
   for (const [channel, parts] of channels) {
     let index = 0;
     for (const part of parts) {
       if (cfg.fail && cfg.fail.after !== undefined && emitted === cfg.fail.after) throw new FaultError(cfg.fail);
-      if (emitted > 0 && cfg.delayMs > 0) {
-        const jitter = cfg.delayMs * 0.5;
-        await sleep(Math.max(0, Math.round(cfg.delayMs + (rand() * 2 - 1) * jitter)));
+      if (emitted > 0 && interval > 0) {
+        const wait = started + emitted * interval - Date.now();
+        if (wait > 0) await sleep(wait);
       }
       yield { channel, text: part, index };
       index++;

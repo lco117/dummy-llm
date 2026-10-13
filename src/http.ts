@@ -12,6 +12,8 @@ import type { Config, Ctx, ProtocolId } from "./types.ts";
 
 export type App = (request: Request) => Promise<Response>;
 
+let requestCounter = 0;
+
 /** Which error envelope should an unknown path use? */
 export function protocolFor(pathname: string): ProtocolId {
   if (pathname.startsWith("/v1/messages")) return "anthropic";
@@ -123,7 +125,7 @@ async function route(request: Request, ctx: Ctx): Promise<Response> {
       status: "ok",
       mode: ctx.cfg.mode,
       text: ctx.cfg.text,
-      thinking: ctx.cfg.thinking !== null,
+      thinking: ctx.cfg.thinking.length,
       tps: ctx.cfg.tps,
       delayMs: ctx.cfg.delayMs,
       log: ctx.cfg.log,
@@ -185,7 +187,10 @@ function withCors(response: Response, request: Request, config: Config): Respons
 export function createApp(config: Config): App {
   return async function app(request: Request): Promise<Response> {
     const url = new URL(request.url);
-    const ctx: Ctx = { cfg: config, url, rand: mulberry32(config.seed) };
+    // Locked seed (tests, PARROT_SEED) keeps runs reproducible; otherwise every
+    // request gets its own stream of randomness so the thinking template varies.
+    const seed = config.deterministic ? config.seed : (Date.now() ^ (requestCounter++ * 0x9e3779b9)) >>> 0;
+    const ctx: Ctx = { cfg: config, url, rand: mulberry32(seed) };
     const protocol = protocolFor(url.pathname);
     let response: Response;
     try {
