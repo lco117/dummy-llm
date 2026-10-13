@@ -81,15 +81,15 @@ That rewrites `README.md`, `AGENTS.md` and `package.json` in one shot.
 
 ## Publishing to npm
 
-The package name @@parrot-llm@@ was free when this repo was created; as of v0.1.0 it is **not yet published**.
+The package name `parrot-llm` was free when this repo was created; as of v0.1.0 it is **not yet published**.
 
-@@@bash
+```bash
 npm login --registry=https://registry.npmjs.org/   # interactive: the human must do this
 npm test && npm run typecheck
 npm publish --access public --registry=https://registry.npmjs.org/
-@@@
+```
 
-@@prepublishOnly@@ already runs the build, so @@npx parrot-llm@@ works as soon as the publish lands.
+`prepublishOnly` already runs the build, so `npx parrot-llm` works as soon as the publish lands.
 
 ## Commit conventions
 
