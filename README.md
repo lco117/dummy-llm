@@ -113,6 +113,7 @@ Unknown routes return a 404 **in the error shape of the protocol you were speaki
 | `PARROT_MODE` | `echo` | `echo` (repeat the user) · `fixed` · `random` · `canned` |
 | `PARROT_LINES` | — | `a\|b\|c` replies for `random` mode |
 | `PARROT_CANNED` | — | JSON map of keyword → reply for `canned` mode |
+| `PARROT_ECHO_RAW` | — | Repeat the message verbatim, without stripping `<system-reminder>` blocks |
 | `PARROT_CHUNK` | `1` | `1`, `2` … code points per frame, or `word` / `line` / `whole` |
 | `PARROT_DELAY_MS` | `20` | Delay between frames (simulated typing) |
 | `PARROT_TTFT_MS` | `0` | Time to first token |
@@ -121,7 +122,7 @@ Unknown routes return a 404 **in the error shape of the protocol you were speaki
 | `PARROT_FAIL` | — | `429` · `429:after=3` · `rate_limit` · `off` |
 | `PARROT_API_KEY` | — | If set, API routes require this key |
 | `PARROT_CORS` | `*` | `Access-Control-Allow-Origin` |
-| `PARROT_MODELS` | a plausible list | Comma separated model ids to advertise |
+| `PARROT_MODELS` | `parrot-1, parrot-1-mini, definitely-not-a-model` | Comma separated model ids to advertise |
 | `PARROT_TOOLCALL` | — | Function name, or JSON `{"name":…,"arguments":…}` |
 | `PARROT_THINKING` | a hardcoded template | The "reasoning", with `{input}` and `{reply}` placeholders; `off` disables it |
 
@@ -137,6 +138,12 @@ parrot-llm --mode canned --text "I do not know"
 parrot-llm --no-thinking               # skip the hardcoded reasoning
 # PARROT_CANNED='{"weather":"It is raining.","name":"I am a parrot."}'
 ```
+
+In `echo` mode it repeats the last **human** message. Agent harnesses stuff their own
+noise into the conversation as user messages (`<system-reminder>` blocks, for instance), so
+those get stripped first — and if the newest message was nothing but noise, the parrot walks
+back to the previous real one. `--echo-raw` turns the stripping off if you want to see the
+request body byte for byte.
 
 ## Thinking
 

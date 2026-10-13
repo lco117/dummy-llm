@@ -85,6 +85,7 @@ curl -N http://localhost:8080/v1/chat/completions \
 | --- | --- | --- |
 | `PARROT_TEXT` | `6` | 用户什么都没说时的兜底，以及 `fixed` 模式的回答 |
 | `PARROT_MODE` | `echo` | `echo`（复读用户）/ `fixed` / `random` / `canned` |
+| `PARROT_ECHO_RAW` | — | 原样复读，不剥离 `<system-reminder>` 块 |
 | `PARROT_CHUNK` | `1` | 每帧几个字符，或 `word` / `line` / `whole` |
 | `PARROT_DELAY_MS` | `20` | 帧间隔（模拟打字） |
 | `PARROT_TTFT_MS` | `0` | 首 token 延迟 |
@@ -92,11 +93,15 @@ curl -N http://localhost:8080/v1/chat/completions \
 | `PARROT_FAIL` | — | `429` / `429:after=3` / `rate_limit` |
 | `PARROT_API_KEY` | — | 设置后 API 路由需要该密钥 |
 | `PARROT_CORS` | `*` | 允许的跨域来源 |
-| `PARROT_MODELS` | 一组像样的模型名 | 逗号分隔 |
+| `PARROT_MODELS` | `parrot-1, parrot-1-mini, definitely-not-a-model` | 逗号分隔 |
 | `PARROT_TOOLCALL` | — | 需要时返回固定 function call |
 | `PARROT_THINKING` | 内置模板 | 硬编码的思考模板，支持 `{input}`、`{reply}` 占位符；`off` 关闭 |
 
 全部同时是 CLI 参数：`parrot-llm --help`。
+
+`echo` 模式复读的是最后一条**人说的**消息。但 agent 框架会把自己的噪声当成 user
+消息塞进对话（比如 `<system-reminder>` 块），所以这些块会先被剥掉；如果最新那条除了噪声什么都没有，
+就往上找上一条真正有人话的消息。想一个字节不差地看请求体，加 `--echo-raw`。
 
 ## 思考
 
