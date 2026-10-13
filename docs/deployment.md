@@ -4,6 +4,24 @@
 > them regularly. Check the links in each section before you publish a claim. The
 > architecture advice below does not depend on the exact numbers.
 
+## Already configured in this repository
+
+Everything below is implemented; you only have to pick a host.
+
+| File | Host |
+| --- | --- |
+| [wrangler.jsonc](../wrangler.jsonc) + [src/adapters/worker.ts](../src/adapters/worker.ts) | Cloudflare Workers (the README button uses these) |
+| [Dockerfile](../Dockerfile) + [docker-compose.yml](../docker-compose.yml) + [deploy/Caddyfile](../deploy/Caddyfile) | VPS with automatic HTTPS |
+| [deploy/nginx.conf](../deploy/nginx.conf) | VPS behind Nginx (note `proxy_buffering off`) |
+| [vercel.json](../vercel.json) + [api/index.ts](../api/index.ts) | Vercel Edge |
+| [src/adapters/deno.ts](../src/adapters/deno.ts) | Deno Deploy |
+
+```bash
+npx wrangler deploy        # Cloudflare
+docker compose up -d       # VPS (edit PARROT_DOMAIN in .env first)
+vercel deploy              # Vercel
+```
+
 ## Which target should you pick?
 
 | Target | Free tier? | Streaming (SSE) | Cold start | Real limitation | Verdict |
