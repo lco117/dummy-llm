@@ -154,9 +154,13 @@ about fifteen lines.
 ```
 
 ```bash
-npx wrangler deploy
-# -> https://parrot-llm.<your-subdomain>.workers.dev
+npx wrangler deploy        # no public route: wrangler.jsonc sets workers_dev/preview_urls to false
 ```
+
+The template ships with both routes **disabled**, because a joke endpoint that anyone can hit
+is a joke endpoint that anyone can burn through your free quota. Bind your own domain under
+Worker → Settings → Domains & Routes, or set `"workers_dev": true` to use the free
+`*.workers.dev` URL.
 
 Why this is the best free host for a streaming fake:
 

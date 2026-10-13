@@ -12,7 +12,7 @@ npx wrangler deploy           # publishes the Worker
 ```
 
 - If `wrangler whoami` fails, **do not** try to log in on the user's behalf. Ask the human to run `npx wrangler login` (interactive) or to export `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`. Then retry `npx wrangler deploy`.
-- The deploy prints a URL like `https://parrot-llm.<subdomain>.workers.dev`. Verify it with `curl <url>/healthz` and one streaming request (see "Smoke test" below).
+- `wrangler.jsonc` ships with `workers_dev: false` and `preview_urls: false`, so a fresh deploy has **no public URL**. Bind a domain in the Cloudflare dashboard (Worker → Settings → Domains & Routes), or flip `workers_dev` to `true` first. Then verify with `curl <url>/healthz` and one streaming request (see "Smoke test" below).
 - The repo must be **public** for the README deploy button to work.
 
 ## What this project is
@@ -44,7 +44,7 @@ A fake LLM server. It **says whatever the user said** (`PARROT_MODE=echo`, the d
 curl -s https://<your-worker-url>/healthz
 curl -sN https://<your-worker-url>/v1/chat/completions \
   -H 'content-type: application/json' \
-  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"hi"}],"stream":true}'
+  -d '{"model":"parrot-1","messages":[{"role":"user","content":"hi"}],"stream":true}'
 ```
 
 You want: a `200` with `text/event-stream`, several `delta` frames, and a final `data: [DONE]`.

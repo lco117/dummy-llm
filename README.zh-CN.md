@@ -8,7 +8,7 @@
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/lco117/parrot-llm)
 
-*点一下按钮、授权 Cloudflare，一分钟内你就有了自己的 LLM 接口——免费额度、无冷启动、无需构建。*
+*点一下按钮、授权 Cloudflare，一分钟内 Worker 就部署好了——免费额度、无冷启动、无需构建。本模板默认**关闭** `workers.dev` 和 Preview URL，请自行绑定域名（或把 `wrangler.jsonc` 里的 `"workers_dev"` 改成 `true`）后再访问。*
 
 </div>
 
@@ -61,7 +61,7 @@ export OLLAMA_HOST=http://localhost:8080
 ```bash
 curl -N http://localhost:8080/v1/chat/completions \
   -H 'content-type: application/json' \
-  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"你是真模型吗"}],"stream":true}'
+  -d '{"model":"parrot-1","messages":[{"role":"user","content":"你是真模型吗"}],"stream":true}'
 ```
 
 ## 接口一览
@@ -104,7 +104,7 @@ curl -N http://localhost:8080/v1/chat/completions \
 
 ```bash
 curl -s http://localhost:8080/v1/chat/completions -H 'content-type: application/json' \
-  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"abc"}]}'
+  -d '{"model":"parrot-1","messages":[{"role":"user","content":"abc"}]}'
 ```
 
 ```json
@@ -160,9 +160,12 @@ parrot-llm --hang 30000          # 建连后什么都不发
 ### 不用按钮，直接命令行部署到 Workers
 
 ```bash
-npx wrangler deploy
-# → https://parrot-llm.<你的子域>.workers.dev
+npx wrangler deploy        # 部署后没有公开路由，见 wrangler.jsonc
 ```
+
+`wrangler.jsonc` 里设了 `workers_dev: false` 和 `preview_urls: false`，所以刚部署完还访问不了，
+需要去 Cloudflare 后台（Worker → Settings → Domains & Routes）绑定域名。想要免费的
+`*.workers.dev` 地址就把这两个开关改回 `true`。
 
 为什么 Workers 特别合适：整个服务就是一个 Web `Request` → `Response` 处理器（`src/adapters/worker.ts` 只有 15 行），wrangler 直接打包 TypeScript。免费版 10ms CPU 限制也不是问题——在帧之间等待属于墙上时间，不消耗 CPU。
 

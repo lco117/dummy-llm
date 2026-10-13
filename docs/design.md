@@ -266,10 +266,12 @@ Ollama UIs show something.
 
 ### 4.6 Model catalogue and embeddings
 
-`GET /v1/models` must return **plausible real ids** (`gpt-4o`, `gpt-4o-mini`,
-`claude-sonnet-4-20250514`, `gemini-2.5-flash`, `llama3.2`) plus joke aliases
-(`parrot-1`, `gpt-6`). Chat UIs such as LibreChat, Open WebUI, Cline and Continue
-populate their model picker from this endpoint and hide or crash on unknown ids.
+`GET /v1/models` advertises exactly three ids: `parrot-1`, `parrot-1-mini` and
+`definitely-not-a-model`. The default is deliberately honest about what this thing is.
+Chat UIs such as LibreChat, Open WebUI, Cline and Continue populate their model picker from
+this endpoint, so a real deployment can set `PARROT_MODELS` to plausible provider ids
+(`gpt-4o`, `claude-sonnet-4-20250514`, …) when a convincing picker matters.
+Requests may name **any** model string; only this endpoint is filtered.
 
 `POST /v1/embeddings` returns a deterministic pseudo-vector derived from a hash of the input
 (same text -> same vector, so vector-search tests are stable), dimension from the request.

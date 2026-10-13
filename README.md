@@ -13,7 +13,7 @@ Zero runtime dependencies. Byte-exact streaming. Runs on a VPS, a Raspberry Pi, 
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/lco117/parrot-llm)
 
-*Click the button, authorize Cloudflare, and you get your own LLM endpoint in about a minute — free plan, no cold start, no build step.*
+*Click the button and authorize Cloudflare: your own Worker is deployed in about a minute — free plan, no cold start, no build step. This template ships with `workers.dev` and preview URLs **disabled**, so bind a custom domain (or set `"workers_dev": true` in `wrangler.jsonc`) to reach it.*
 
 </div>
 
@@ -69,7 +69,7 @@ export OLLAMA_HOST=http://localhost:8080
 ```bash
 curl -N http://localhost:8080/v1/chat/completions \
   -H 'content-type: application/json' \
-  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"are you a real LLM?"}],"stream":true}'
+  -d '{"model":"parrot-1","messages":[{"role":"user","content":"are you a real LLM?"}],"stream":true}'
 ```
 
 ```
@@ -144,7 +144,7 @@ It "reasons" before it answers — through a hardcoded template, obviously:
 
 ```bash
 curl -s http://localhost:8080/v1/chat/completions -H 'content-type: application/json' \
-  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"abc"}]}'
+  -d '{"model":"parrot-1","messages":[{"role":"user","content":"abc"}]}'
 ```
 
 ```json
@@ -196,9 +196,12 @@ Full copy-paste configs, reverse-proxy settings and the SSE gotcha checklist liv
 ### Cloudflare Workers without the button
 
 ```bash
-npx wrangler deploy
-# → https://parrot-llm.<your-subdomain>.workers.dev
+npx wrangler deploy        # deploys with no public route (see wrangler.jsonc)
 ```
+
+`wrangler.jsonc` sets `workers_dev: false` and `preview_urls: false`, so a fresh deployment
+is unreachable until you bind a domain (Worker → Settings → Domains & Routes). Flip either flag
+back to `true` if you would rather have the free `*.workers.dev` URL.
 
 Why Workers fits so well: the whole server is a Web `Request` → `Response` handler (`src/adapters/worker.ts` is 15 lines), so wrangler bundles the TypeScript directly. And the free plan's 10 ms CPU budget is not a problem — waiting between streamed chunks is wall-clock time, not CPU.
 
@@ -213,7 +216,7 @@ const server = spawn("npx", ["parrot-llm", "--delay", "0", "--port", "8080"]);
 const res = await fetch("http://localhost:8080/v1/chat/completions", {
   method: "POST",
   headers: { "content-type": "application/json" },
-  body: JSON.stringify({ model: "gpt-4o", messages: [{ role: "user", content: "hi" }], stream: true }),
+  body: JSON.stringify({ model: "parrot-1", messages: [{ role: "user", content: "hi" }], stream: true }),
 });
 
 // deterministic: no network, no cost, no flakes, same bytes every run
