@@ -1,11 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildText, chunkText, estimateTokens, phases, plan, renderTemplate, renderThinking, stripReminders, userInput } from "../src/engine.ts";
+import { buildText, chunkText, describeReply, estimateTokens, phases, plan, renderTemplate, renderThinking, stripReminders, userInput } from "../src/engine.ts";
 import { FILTER_NAMES } from "../src/filters.ts";
 import { NOT_A_MODEL_REPLIES } from "../src/personas.ts";
 import { mulberry32, randomId } from "../src/random.ts";
 import { parseFaultSpec } from "../src/errors.ts";
-import { DEFAULT_THINKING_POOL, resolveConfig } from "../src/config.ts";
+import { DEFAULT_THINKING_POOL, parseReply, resolveConfig } from "../src/config.ts";
 import { makeApp } from "./cases.ts";
 import type { CanonRequest } from "../src/types.ts";
 
@@ -49,13 +49,12 @@ test("fault specs parse", () => {
 
 test("the defaults are: repeat the user, with hardcoded thinking", () => {
   const config = resolveConfig({});
-  assert.equal(config.mode, "echo");
+  assert.equal(config.reply, "{input}", "echo is not a mode, it is this template");
   assert.equal(config.chunk, 4, "one streamed piece is roughly one token");
   assert.equal(config.thinking.length, DEFAULT_THINKING_POOL.length);
   assert.equal(config.thinking.length, 10);
-  assert.equal(config.text, "6");
   assert.equal(config.apiKey, null);
-  assert.equal(resolveConfig({ DUMMY_MODE: "nonsense" as never }).mode, "echo");
+  assert.equal(describeReply(config.reply), "{input}");
   assert.equal(resolveConfig({ DUMMY_CHUNK: "0" }).chunk, 4);
   assert.deepEqual(resolveConfig({ DUMMY_THINKING: "off" }).thinking, []);
   assert.deepEqual(resolveConfig({ DUMMY_THINKING: "none" }).thinking, []);
@@ -64,11 +63,30 @@ test("the defaults are: repeat the user, with hardcoded thinking", () => {
   assert.equal(resolveConfig({ DUMMY_SEED: "1" }).deterministic, true);
 });
 
+test("the shape of the reply value is the behaviour", () => {
+  assert.equal(parseReply("6"), "6");
+  assert.deepEqual(parseReply('["6","7","maybe"]'), ["6", "7", "maybe"]);
+  assert.equal(parseReply("{input|upper}"), "{input|upper}", "a filter pipe is never a pool separator");
+  assert.deepEqual(parseReply('{"weather":"raining","*":"no idea"}'), { weather: "raining", "*": "no idea" });
+  assert.deepEqual(parseReply('["a|b", "c"]'), ["a|b", "c"], "JSON first, so a literal pipe survives");
+  assert.equal(parseReply(undefined), undefined);
+  assert.equal(parseReply("   "), undefined);
+
+  assert.equal(resolveConfig({ DUMMY_MODE: "fixed", DUMMY_TEXT: "6" }).reply, "6", "the pre-0.4 quartet still maps");
+  assert.equal(resolveConfig({ DUMMY_MODE: "echo" }).reply, "{input}");
+  assert.deepEqual(resolveConfig({ DUMMY_MODE: "random", DUMMY_LINES: "a|b" }).reply, ["a", "b"]);
+  assert.deepEqual(resolveConfig({ DUMMY_MODE: "canned", DUMMY_CANNED: '{"a":"b"}' }).reply, { a: "b" });
+  assert.equal(resolveConfig({ DUMMY_REPLY: "winning" }).reply, "winning", "DUMMY_REPLY beats the legacy quartet");
+
+  assert.equal(describeReply(["a", "b"]), "random of 2");
+  assert.equal(describeReply({ "*": "x", weather: "y" }), "canned, 1 key");
+});
+
 test("it says whatever the user said", () => {
   const config = resolveConfig({});
   const rand = mulberry32(1);
   assert.equal(buildText(canon("abc"), config, rand), "abc");
-  assert.equal(buildText(canon(""), config, rand), "6", "empty input falls back to DUMMY_TEXT");
+  assert.equal(buildText(canon(""), config, rand), "", "no input, no words to give back");
 });
 
 test("thinking comes from a pool of hardcoded templates", () => {
@@ -79,14 +97,14 @@ test("thinking comes from a pool of hardcoded templates", () => {
   const filled = DEFAULT_THINKING_POOL.map((template) => template.split("{input}").join("abc").split("{reply}").join("abc"));
   assert.ok(filled.includes(later.thinking as string), "and it is one of the ten templates");
 
-  const single = resolveConfig({ DUMMY_THINKING: "say {reply} to {input}" });
-  assert.equal(renderThinking(canon("abc"), single, "abc", mulberry32(1)), "say abc to abc");
-  assert.equal(renderThinking(canon("abc"), resolveConfig({ DUMMY_THINKING: "off" }), "abc", mulberry32(1)), null);
+  const vars = { input: "abc", raw: "abc", model: "gpt-4o", reply: "abc" };
+  assert.equal(renderThinking(["say {reply} to {input}"], vars, mulberry32(1)), "say abc to abc");
+  assert.equal(renderThinking(resolveConfig({ DUMMY_THINKING: "off" }).thinking, vars, mulberry32(1)), null);
 
   const pool = resolveConfig({ DUMMY_THINKING: "A {input} | B {reply} | C" });
   assert.deepEqual(pool.thinking, ["A {input}", "B {reply}", "C"]);
   const seen = new Set<string>();
-  for (let seed = 0; seed < 200; seed++) seen.add(renderThinking(canon("x"), pool, "y", mulberry32(seed)) as string);
+  for (let seed = 0; seed < 200; seed++) seen.add(renderThinking(pool.thinking, vars, mulberry32(seed)) as string);
   assert.equal(seen.size, 3, "every template in the pool can be picked");
 });
 
@@ -99,14 +117,15 @@ test("thinking streams before the reply", async () => {
   assert.equal(out[1], "text:abc");
 });
 
-test("buildText modes", () => {
+test("every reply shape answers correctly", () => {
   const rand = mulberry32(1);
-  const fixed = resolveConfig({ DUMMY_TEXT: "6" }, { mode: "fixed" });
-  assert.equal(buildText(canon("what?"), fixed, rand), "6");
-  const canned = resolveConfig({}, { mode: "canned", canned: { weather: "it is raining" } });
+  assert.equal(buildText(canon("what?"), resolveConfig({}, { reply: "6" }), rand), "6");
+  const canned = resolveConfig({}, { reply: { weather: "it is raining", "*": "no idea" } });
   assert.equal(buildText(canon("how is the WEATHER"), canned, rand), "it is raining");
-  const random = resolveConfig({}, { mode: "random", lines: ["a", "b"] });
+  assert.equal(buildText(canon("hello"), canned, rand), "no idea", '"*" is the fallback');
+  const random = resolveConfig({}, { reply: ["a", "b"] });
   assert.ok(["a", "b"].includes(buildText(canon("x"), random, rand)));
+  assert.equal(buildText(canon("hi"), resolveConfig({}, { reply: "{input|upper}" }), rand), "HI");
 });
 
 test("tokens per second drive the delay, and DUMMY_DELAY_MS still wins", () => {
@@ -125,17 +144,16 @@ test("log level parses", () => {
   assert.equal(resolveConfig({ DUMMY_LOG: "nonsense" }).log, "off");
 });
 
-test("fixed mode replies with a template that can contain the user's words", () => {
-  const cfg = resolveConfig({}, { mode: "fixed", text: "{input} — 你说得对" });
+test("a reply template can contain the user's words", () => {
+  const cfg = resolveConfig({}, { reply: "{input} — 你说得对" });
   assert.equal(buildText(canon("abc"), cfg, mulberry32(1)), "abc — 你说得对");
-  const plain = resolveConfig({}, { mode: "fixed", text: "6" });
-  assert.equal(buildText(canon("abc"), plain, mulberry32(1)), "6");
-  const withModel = resolveConfig({}, { mode: "fixed", text: "{model} says {input}" });
+  assert.equal(buildText(canon("abc"), resolveConfig({}, { reply: "6" }), mulberry32(1)), "6");
+  const withModel = resolveConfig({}, { reply: "{model} says {input}" });
   assert.equal(buildText(canon("hi"), withModel, mulberry32(1)), "gpt-4o says hi");
 });
 
 test("the landing page is a live demo, not a giant 6", async () => {
-  const app = makeApp({ mode: "echo" });
+  const app = makeApp();
   const response = await app(new Request("http://localhost/"));
   const html = await response.text();
   assert.equal(response.status, 200);
@@ -239,7 +257,7 @@ test("the model id selects a persona", () => {
   assert.equal(plan({ ...base, model: "dummy-echo-1" }, cfg, mulberry32(1)).reply, "hi");
   assert.equal(plan({ ...base, model: "gpt-4o" }, cfg, mulberry32(1)).reply, "hi", "unknown models fall through");
 
-  const custom = resolveConfig({ DUMMY_PERSONAS: '{"dummy-ascii-1":{"mode":"fixed","text":"{input|ascii}","thinking":[]}}' });
+  const custom = resolveConfig({ DUMMY_PERSONAS: '{"dummy-ascii-1":{"reply":"{input|ascii}","thinking":[]}}' });
   assert.deepEqual(custom.models, ["dummy-echo-1", "definitely-not-a-model", "dummy-ascii-1"], "env personas join the model list");
   const art = plan({ ...base, model: "dummy-ascii-1" }, custom, mulberry32(1));
   assert.equal(art.reply.split("\n").length, 5, "the ASCII banner has five rows");

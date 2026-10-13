@@ -61,7 +61,7 @@ export const CASES: Case[] = [
     body: { model: "gpt-4o", messages: [USER], stream: true, stream_options: { include_usage: true } },
   },
   { name: "openai-chat-no-thinking", method: "POST", path: "/v1/chat/completions", body: { model: "gpt-4o", messages: [USER], stream: true }, config: NO_THINKING },
-  { name: "openai-chat-fixed", method: "POST", path: "/v1/chat/completions", body: { model: "gpt-4o", messages: [USER], stream: true }, config: { mode: "fixed", thinking: [] } },
+  { name: "openai-chat-fixed", method: "POST", path: "/v1/chat/completions", body: { model: "gpt-4o", messages: [USER], stream: true }, config: { reply: "6", thinking: [] } },
   {
     name: "openai-chat-custom-thinking",
     method: "POST",
@@ -147,7 +147,36 @@ export const CASES: Case[] = [
     method: "POST",
     path: "/v1/chat/completions",
     body: { model: "gpt-4o", messages: [{ role: "user", content: "hello world" }] },
-    config: { mode: "fixed", text: "say {input|upper} ({input|count} chars)", chunk: "whole", thinking: [] },
+    config: { reply: "say {input|upper} ({input|count} chars)", chunk: "whole", thinking: [] },
+  },
+
+  {
+    name: "dummy-reply-random",
+    method: "POST",
+    path: "/v1/chat/completions",
+    body: { model: "gpt-4o", messages: [USER] },
+    config: { reply: ["one", "two", "three"], chunk: "whole", thinking: [] },
+  },
+  {
+    name: "dummy-reply-canned",
+    method: "POST",
+    path: "/v1/chat/completions",
+    body: { model: "gpt-4o", messages: [{ role: "user", content: "what is the weather" }] },
+    config: { reply: { weather: "It is raining.", "*": "I have no idea." }, chunk: "whole", thinking: [] },
+  },
+  {
+    name: "dummy-reply-fallback",
+    method: "POST",
+    path: "/v1/chat/completions",
+    body: { model: "gpt-4o", messages: [{ role: "user", content: "hello" }] },
+    config: { reply: { weather: "It is raining.", "*": "I have no idea." }, chunk: "whole", thinking: [] },
+  },
+  {
+    name: "dummy-reply-ascii",
+    method: "POST",
+    path: "/v1/chat/completions",
+    body: { model: "gpt-4o", messages: [{ role: "user", content: "AB" }] },
+    config: { reply: "{input|ascii}", chunk: "whole", thinking: [] },
   },
 
   // --- OpenAI Responses ---
