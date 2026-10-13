@@ -11,9 +11,9 @@
 
 零运行时依赖 · 字节级精准的流式输出 · VPS / 树莓派 / Cloudflare Workers / Vercel 都能跑
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/lco117/dummy-llm)
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/lco117/dummy-llm&project-name=dummy-llm&repository-name=dummy-llm)
-[![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run/?git_repo=https://github.com/lco117/dummy-llm)
+[![Deploy to Cloudflare](https://img.shields.io/badge/Deploy_to-Cloudflare-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://deploy.workers.cloudflare.com/?url=https://github.com/lco117/dummy-llm)
+[![Deploy with Vercel](https://img.shields.io/badge/Deploy_with-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/new/clone?repository-url=https://github.com/lco117/dummy-llm&project-name=dummy-llm&repository-name=dummy-llm)
+[![Run on Google Cloud](https://img.shields.io/badge/Run_on-Google_Cloud-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)](https://deploy.cloud.run/?git_repo=https://github.com/lco117/dummy-llm)
 
 *三种一键部署。**Cloudflare Workers** 是免费且无冷启动的那个——本模板默认关闭 `workers.dev` 和 Preview URL，请自行绑域名（或把 `"workers_dev"` 改成 `true`）。**Vercel** 会部署 edge function 加一条 catch-all rewrite。**Google Cloud Run** 用仓库里的 Dockerfile 构建，但需要已开通计费的 GCP 账号。*
 

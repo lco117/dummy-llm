@@ -8,10 +8,9 @@
   // Flip either to true (or delete the line) to get the free workers.dev URL back.
   "workers_dev": false,
   "preview_urls": false,
-  // Routes are deliberately left unset: the previously deployed Worker still holds
-  // the custom domain, and declaring a domain that is already bound would make
-  // `wrangler deploy` fail. Bind yours in the dashboard, then uncomment:
-  // "routes": [{ "pattern": "llm.example.com", "custom_domain": true }],
+  // The hostname this Worker answers on. Declaring it here keeps the binding across
+  // deploys instead of resetting the Worker to "no routes".
+  "routes": [{ "pattern": "dummy.example.com", "custom_domain": true }],
   "observability": {
     "enabled": true
   },

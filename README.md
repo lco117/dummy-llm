@@ -17,9 +17,9 @@ Zero runtime dependencies. Byte-exact streaming. Runs on a VPS, a Raspberry Pi, 
 [![License: MIT](https://img.shields.io/badge/license-MIT-6ee787.svg)](LICENSE)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-f38020.svg)](https://workers.cloudflare.com/)
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/lco117/dummy-llm)
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/lco117/dummy-llm&project-name=dummy-llm&repository-name=dummy-llm)
-[![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run/?git_repo=https://github.com/lco117/dummy-llm)
+[![Deploy to Cloudflare](https://img.shields.io/badge/Deploy_to-Cloudflare-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://deploy.workers.cloudflare.com/?url=https://github.com/lco117/dummy-llm)
+[![Deploy with Vercel](https://img.shields.io/badge/Deploy_with-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/new/clone?repository-url=https://github.com/lco117/dummy-llm&project-name=dummy-llm&repository-name=dummy-llm)
+[![Run on Google Cloud](https://img.shields.io/badge/Run_on-Google_Cloud-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)](https://deploy.cloud.run/?git_repo=https://github.com/lco117/dummy-llm)
 
 *One click gets you a running instance. **Cloudflare Workers** is the free, no-cold-start one — it ships with `workers.dev` and preview URLs disabled, so bind a custom domain (or set `"workers_dev": true` in `wrangler.jsonc`) to reach it. **Vercel** deploys the edge function and its catch-all rewrite. **Google Cloud Run** builds the Dockerfile, but needs a GCP account with billing enabled.*
 
