@@ -1,149 +1,91 @@
 # Roadmap
 
-Each milestone is a mergeable, shippable slice. "Done when" is the acceptance bar.
+**Current release: v0.3.0.** Everything under "Shipped" is in the repository and covered by the test
+suite. Nothing here is aspirational any more — when it lands, it moves up.
 
-> **v0.1.0 status:** M0–M5 are implemented **plus the echo + hardcoded-thinking behaviour** (the
-> default: it says whatever you said, after "thinking"). The Worker is live on Cloudflare, the
-> golden suite covers 30 wire-format cases across five protocols, and Docker/Caddy/Nginx/Vercel/Deno
-> configs ship in the repo. Remaining M6 work: npm publish and a docs site (the Chinese README exists).
+## Shipped
 
-## M0 — Design (current)
+### M0 — Design
+- [x] repository, MIT licence, README, [AGENTS.md](../AGENTS.md)
+- [x] protocol design ([design.md](design.md)) and deployment guide ([deployment.md](deployment.md))
 
-- [x] repository, license, README
-- [x] protocol design ([docs/design.md](design.md))
-- [x] deployment guide ([docs/deployment.md](deployment.md))
+### M1 — OpenAI Chat Completions on Node
+- [x] `POST /v1/chat/completions`, streaming and not, plus the legacy `/v1/completions`
+- [x] `GET /v1/models` and `/v1/models/{id}`
+- [x] code-point chunking, `NPC_TPS` pacing, `NPC_TTFT_MS`
+- [x] the `data: [DONE]` sentinel and the `stream_options.include_usage` chunk
+- [x] `GET /healthz`, permissive CORS, 404 in the protocol's own error shape
+- [x] Dockerfile, docker compose, Caddyfile, Nginx snippet
 
-## M1 — MVP: OpenAI Chat Completions on Node
+### M2 — Anthropic Messages
+- [x] `POST /v1/messages`, `/v1/messages/count_tokens`, `GET /v1/models`
+- [x] `message_start` → `ping` → `content_block_*` → `message_delta` → `message_stop`
+- [x] `thinking` blocks with a closing `signature_delta`
+- [x] `event: error` for injected faults
 
-Deliverables: `src/{index,config,engine,http,context,sse}.ts`,
-`src/protocols/openai-chat.ts`, `adapters/node.ts`, CLI bin.
+### M3 — Responses API and Ollama
+- [x] `POST /v1/responses` with the named-event sequence and **no** `[DONE]`
+- [x] `reasoning` output items streamed as `response.reasoning_summary_text.delta`
+- [x] `/api/chat`, `/api/generate`, `/api/tags`, `/api/ps`, `/api/version`, `/api/embed`
+- [x] `message.thinking`, and a top-level `thinking` on `/api/generate`
 
-- [ ] `POST /v1/chat/completions` with `stream: true` and `false`
-- [ ] `GET /v1/models` returning plausible ids
-- [ ] fixed text, code-point chunking, `NPC_DELAY_MS`, `NPC_TTFT_MS`
-- [ ] `data: [DONE]` sentinel and `stream_options.include_usage` chunk
-- [ ] `GET /healthz`, permissive CORS, 404 in OpenAI error shape
-- [ ] Dockerfile + `docker run -p 8080:8080`
+### M4 — Gemini, embeddings, faults and modes
+- [x] `:generateContent` and `:streamGenerateContent?alt=sse`
+- [x] `thought: true` parts
+- [x] deterministic pseudo-embeddings
+- [x] `NPC_FAIL`, `NPC_FAIL=…:after=N`, `NPC_HANG_MS`, `?fail=`
+- [x] the `echo` / `fixed` / `random` / `canned` modes
 
-**Done when** the official `openai` Node SDK streams `6` with no parser warnings, and a
-golden `.sse` fixture diff passes in CI.
+### M5 — Edge adapters, deployment and the public demo
+- [x] worker / vercel / deno adapters over one Web-standard handler
+- [x] CI: typecheck, 53 tests, Worker bundle check, live smoke test
+- [x] tag-driven release: npm publish, GHCR image, generated GitHub Release
+- [x] one-click **Deploy to Cloudflare** and **Deploy with Vercel** buttons
+- [x] custom domain declared in `wrangler.jsonc`; `workers.dev` and preview URLs off by default
 
-## M2 — Anthropic Messages
+### M6 — Open-source polish
+- [x] published to npm as `npc-llm`
+- [x] CONTRIBUTING.md, [launch kit](launch.md), [security notes](security.md), [publishing guide](publishing.md)
+- [x] Chinese README
+- [x] landing page that streams from the real API
+- [ ] issue and PR templates
+- [ ] a docs site — the `docs/` folder is probably enough
 
-- [ ] `POST /v1/messages` (stream + non-stream), `count_tokens`
-- [ ] `message_start` / `content_block_*` / `message_delta` / `message_stop` order
-- [ ] `event: error` shape for injected faults
+### Template engine
+- [x] placeholders `{input}` `{raw}` `{reply}` `{model}` `{text}`
+- [x] 18 filters, composable with `|` (`{input|upper|box}`)
+- [x] personas selected by the model id (`npc-echo-1`, `definitely-not-a-model`)
+- [x] `NPC_PERSONAS` adds one from the environment, no code change
+- [x] harness-noise stripping, extensible with `NPC_STRIP`
+- [x] a hardcoded thinking pool, one template drawn per request
 
-**Done when** ```anthropic-ai/sdk` streams and the raw fixture matches.
+## Next
 
-## M3 — Responses API + Ollama
+### 3. Packs — personas as shareable files
 
-- [ ] `POST /v1/responses` with the named-event sequence, no `[DONE]`
-- [ ] `/api/chat`, `/api/generate`, `/api/tags`, `/api/version` (NDJSON)
-- [ ] `NPC_MODE=echo` (repeat the user) — the actual npc joke
+A pack is a JSON file (or a `pack.json` in a directory) holding a partial config plus a map of
+personas: `npc-llm --pack ./packs/rickroll`, or `NPC_PACK` on a Worker. The repository would
+ship `packs/ascii-banner`, `packs/rickroll`, `packs/pirate`, `packs/haiku-only` and
+`packs/adversarial` (for testing agent guardrails). A remote `https://` pack would be the first
+outbound request this server ever makes, so it stays opt-in and documented.
 
-**Done when** the `openai` SDK's `responses.stream()` and an Ollama client both work.
+### 4. Playground editor on the landing page
 
-## M4 — Gemini, embeddings, fault injection, canned replies
-
-- [ ] `:generateContent` and `:streamGenerateContent?alt=sse`
-- [ ] deterministic pseudo-embeddings
-- [ ] `NPC_FAIL` / `NPC_FAIL_AFTER` / `NPC_HANG_MS` / `?fail=` override
-- [ ] `NPC_MODE=canned` with a keyword map
-- [ ] optional fixed `tool_calls` response
-
-**Done when** a test asserts that a mid-stream failure surfaces as a client error, not a hang.
-
-## M5 — Edge adapters and the public demo
-
-- [ ] `adapters/worker.ts` + `wrangler.jsonc`
-- [ ] `adapters/vercel.ts` + `vercel.json`
-- [ ] `adapters/deno.ts`
-- [ ] GitHub Actions: test matrix, GHCR image, optional auto-deploy to Workers
-- [ ] live demo URL in the README, plus a "point your client at it" section per protocol
-
-**Done when** the same commit is live on the VPS and on `*.workers.dev`.
-
-## M6 — Open-source polish
-
-- [ ] publish to npm so `npx npc-llm` works
-- [ ] `CONTRIBUTING.md`, issue templates, "good first issue" labels
-- [ ] Chinese README (`README.zh-CN.md`)
-- [ ] landing page at `/` that renders the fixed string in a big font
-- [ ] docs site (or just the `docs/` folder)
-
-## Good first issues
-
-- Ollama `/api/ps` and `/api/show` stubs
-- Cohere v2 `/v1/chat` adapter
-- `openai`-compatible `/v1/audio/speech` returning a silent WAV
-- a `NPC_LATENCY_PROFILE` flag: `instant` / `dialup` / `sleepy`
-- `curl` examples per protocol in the README
-- a Teapot easter egg on `/v1/brew`
-
-## Explicitly out of scope for v1
-
-- conversation memory, `store`/`previous_response_id`
-- auth beyond a single static key, quotas, billing
-- Realtime/WebSocket API, image and audio generation
-
-## The template engine (items 1 and 2 shipped in v0.3.0)
-
-`echo` is one mode out of four. The centre of the project is the template engine, and it is currently
-under-exposed: it lives in environment variables, has no names, and cannot be shared. In order:
-
-### 1. Named templates, selected through the model field — **shipped**
-
-`/v1/models` already returns a list, and all five protocols carry a model name. Let each advertised id
-resolve to a template:
-
-```
-model: "npc-ascii"     -> the ASCII banner template
-model: "npc-rickroll"  -> the rickroll template
-```
-
-Zero new API surface — the model field already exists everywhere — and the model picker in every chat UI
-becomes a template picker. `/v1/models` stops being decoration.
-
-### 2. Pipes in placeholders — **shipped**
-
-`{input|upper}`, `{input|box}`, `{input|ascii}`, `{input|qr}`, `{input|morse}`,
-`{input|reverse}`, `{reply|repeat:3}`.
-
-This is what makes "an LLM that only answers in ASCII art" a *template* instead of a new mode, and filters
-compose: `{input|upper|box}`.
-
-Rules: filters stay **synchronous and side-effect free** (an async filter would break the absolute
-scheduling in `phasesFor()`), and every filter gets a golden case.
-
-### 3. Shippable packs
-
-```bash
-npc-llm --pack ./packs/rickroll
-```
-
-A pack is a small JSON file (or a directory): templates, a default mode, an optional thinking pool. Ship a
-handful in `packs/` — `ascii-banner`, `rickroll`, `pirate`, `haiku-only`, `adversarial` — and let
-people share their own as an npm package or a URL. A remote `NPC_PACK=https://…` would be the first
-outbound request this server ever makes, so it must be opt-in and documented as such.
-
-### 4. A template editor on the landing page
-
-The landing page already streams from the real API. Put a textarea above the demo: edit the template, watch
-the answer change live, then copy an env var or a deploy link. Cheapest virality this project has.
+The landing page already streams from the real API. Add a template textarea and a mode switch,
+backed by a per-request override (`?template=…&mode=…`, enabled by `NPC_PLAYGROUND=1`), plus a
+shareable `?t=<base64>` link that pre-fills the editor. That link is the growth loop: people share
+a URL that demonstrates a template.
 
 ### 5. Record and replay
 
-```bash
-npc-llm --record --upstream https://api.openai.com/v1   # proxy once, save the frames
-npc-llm --replay ./cassettes                           # serve them forever
-```
+`npc-llm --record --upstream https://api.openai.com/v1` proxies once and writes every response to
+`cassettes/*.sse`; `npc-llm --replay ./cassettes` serves those bytes back deterministically. VCR
+for LLMs — a test suite gets real model output without the network, the cost or the flakes. It makes
+outbound requests and stores data on disk, so it lives behind its own flag and never in the default
+path.
 
-VCR for LLMs. A different product tier — it means outbound requests and stored fixtures — so it belongs
-behind its own flag, never in the default path.
+## What I would not do
 
-### What I would not do
-
-- **A separate ASCII mode.** It is a filter, not a mode; four modes is already plenty.
-- **A full web UI.** The charm is `curl` plus one environment variable.
-- **Any runtime dependency.** ASCII banner font data is a few KB of source, not a package.
+- A separate ASCII mode. It is a filter, not a mode.
+- A full web UI. The charm is `curl` plus one environment variable.
+- Any runtime dependency. The ASCII font is a kilobyte of source, not a package.
