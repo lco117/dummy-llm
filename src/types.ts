@@ -54,6 +54,8 @@ export interface Config {
   echoRaw: boolean;
   /** Log every received request (visible via "wrangler tail" on Cloudflare). */
   log: LogLevel;
+  /** Reject request bodies larger than this. 0 disables the check. */
+  maxBodyBytes: number;
   now: () => number;
 }
 

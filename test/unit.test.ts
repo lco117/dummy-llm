@@ -168,6 +168,28 @@ test("harness reminder blocks are stripped before deciding what the user said", 
   assert.equal(plan(noisy, resolveConfig({}), mulberry32(1)).reply, "hwfaeouheaw");
 });
 
+test("oversized request bodies are rejected", async () => {
+  const app = makeApp({ maxBodyBytes: 200 });
+  const big = await app(
+    new Request("http://localhost/v1/chat/completions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ model: "parrot-1", messages: [{ role: "user", content: "x".repeat(400) }] }),
+    }),
+  );
+  assert.equal(big.status, 413);
+  const small = await app(
+    new Request("http://localhost/v1/chat/completions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ model: "parrot-1", messages: [{ role: "user", content: "hi" }] }),
+    }),
+  );
+  assert.equal(small.status, 200);
+  assert.equal(resolveConfig({ PARROT_MAX_BODY: "10" }).maxBodyBytes, 10);
+  assert.equal(resolveConfig({}).maxBodyBytes, 1000000);
+});
+
 test("token estimate is never zero for non-empty text", () => {
   assert.equal(estimateTokens(""), 0);
   assert.equal(estimateTokens("a"), 1);

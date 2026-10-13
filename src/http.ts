@@ -82,7 +82,18 @@ function logRequest(ctx: Ctx, method: string, body: Record<string, any>): void {
 }
 
 async function readJson(request: Request, ctx: Ctx): Promise<Record<string, any>> {
+  // Best-effort guard: check the declared size before buffering, and the real size after.
+  const limit = ctx.cfg.maxBodyBytes;
+  if (limit > 0) {
+    const declared = Number(request.headers.get("content-length"));
+    if (Number.isFinite(declared) && declared > limit) {
+      throw new HttpError(413, `Request body too large: the limit is ${limit} bytes (PARROT_MAX_BODY).`);
+    }
+  }
   const text = await request.text();
+  if (limit > 0 && text.length > limit) {
+    throw new HttpError(413, `Request body too large: the limit is ${limit} bytes (PARROT_MAX_BODY).`);
+  }
   if (text.trim() === "") return {};
   try {
     const parsed = JSON.parse(text) as unknown;

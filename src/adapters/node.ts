@@ -32,6 +32,7 @@ Options:
       --no-thinking       Do not emit a thinking block at all
       --echo-raw          Echo the message verbatim, without stripping <system-reminder> blocks
       --log <level>       off | summary | full — log what was received (default off)
+      --max-body <bytes>  Reject larger request bodies      (default 1000000, 0 = unlimited)
   -h, --help              Show this help
   -v, --version           Show the version
 
@@ -104,6 +105,7 @@ apply("PARROT_CHUNK", "chunk");
 apply("PARROT_TPS", "tps");
 apply("PARROT_DELAY_MS", "delay");
 apply("PARROT_LOG", "log");
+apply("PARROT_MAX_BODY", "max-body");
 apply("PARROT_TTFT_MS", "ttft");
 apply("PARROT_SEED", "seed");
 apply("PARROT_API_KEY", "api-key");

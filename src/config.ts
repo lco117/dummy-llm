@@ -34,6 +34,7 @@ export const DEFAULTS = {
   chunk: 4 as ChunkMode,
   tps: 100,
   log: "off" as LogLevel,
+  maxBodyBytes: 1_000_000,
   ttftMs: 0,
   seed: 1,
   cors: "*",
@@ -139,6 +140,7 @@ export function resolveConfig(env: Env = {}, overrides: Partial<Config> = {}): C
     thinking: thinkingPool(env.PARROT_THINKING),
     echoRaw: boolean(env.PARROT_ECHO_RAW),
     log: logLevel(env.PARROT_LOG),
+    maxBodyBytes: wholeNumber(env.PARROT_MAX_BODY, DEFAULTS.maxBodyBytes),
     now: () => Date.now(),
     ...overrides,
   };
