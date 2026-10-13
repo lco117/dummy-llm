@@ -24,6 +24,39 @@ No tests, no docs, no lockfile.
 npm pack --dry-run          # see exactly what would be uploaded
 ```
 
+## 0. Create the npm account
+
+1. Open <https://www.npmjs.com/signup> and fill in a username, email and password.
+   (There is usually a **Sign up with GitHub** button as well — either way works.)
+2. Verify the email address npm sends you. Nothing publishes until this is done.
+3. Enable **two-factor authentication** in **Account settings → Two-factor authentication**.
+   npm requires 2FA from anyone who publishes. A TOTP app (1Password, Authy, Google
+   Authenticator) is the simplest option; passkeys and security keys also work.
+4. Your username is also your scope: it is what ```yourname/package` would use. The package here
+   is unscoped (`parrot-llm`), so the username does not appear in the install command.
+
+**The registry gotcha (read this if you are in China).** If `npm config get registry` points at a
+mirror such as `registry.npmmirror.com`, then `npm login` and `npm publish` would try to talk to
+the mirror, which does not accept publishes. Pin the real registry for those two commands:
+
+```bash
+npm login --registry=https://registry.npmjs.org/
+npm whoami --registry=https://registry.npmjs.org/
+```
+
+Installs can keep using the mirror — which is why `package.json` carries
+
+```json
+"publishConfig": { "access": "public", "registry": "https://registry.npmjs.org/" }
+```
+
+`publishConfig` only affects publishing, so `npm install` stays on the fast mirror while
+`npm publish` always reaches the real registry.
+
+Modern npm (10+) opens a browser for `npm login` and stores a session token in `~/.npmrc`. You
+can also skip the CLI entirely: create a **Granular Access Token** on the website (see
+"Turning on automated publishing") and write it into `~/.npmrc` yourself.
+
 ## First publish (manual, once)
 
 ```bash
