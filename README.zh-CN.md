@@ -104,9 +104,15 @@ curl -N http://localhost:8080/v1/chat/completions \
 
 全部同时是 CLI 参数：`parrot-llm --help`。
 
-`echo` 模式复读的是最后一条**人说的**消息。但 agent 框架会把自己的噪声当成 user
-消息塞进对话（比如 `<system-reminder>` 块），所以这些块会先被剥掉；如果最新那条除了噪声什么都没有，
-就往上找上一条真正有人话的消息。想一个字节不差地看请求体，加 `--echo-raw`。
+`echo` 模式复读的是最后一条**人说的**消息。但 agent 框架会把自己的噪声当成 user 消息塞进对话，
+有两种：
+
+- **带标签的块** —— `<system-reminder>Updated instructions from: AGENTS.md…</system-reminder>`
+- **没有标签的元数据行** —— `Time sampled while preparing turn 1, step 1: …`、
+  `Browser time zone for this request: …`、`Elapsed since the preceding model-visible message: …`
+
+两种都会先被剥掉；如果最新那条除了噪声什么都没有，就往上找上一条真正有人话的消息。可以用
+`PARROT_STRIP`（`|` 分隔的正则）加自己的规则，或者用 `--echo-raw` 全部关掉，一个字节不差地看请求体。
 
 ## 思考
 
