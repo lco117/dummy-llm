@@ -26,7 +26,9 @@ export function normalize(raw: string): string {
     .replace(/"total_duration":\d+/g, "\"total_duration\":0")
     .replace(/"load_duration":\d+/g, "\"load_duration\":0")
     .replace(/"eval_duration":\d+/g, "\"eval_duration\":0")
-    .replace(/"prompt_eval_duration":\d+/g, "\"prompt_eval_duration\":0");
+    .replace(/"prompt_eval_duration":\d+/g, "\"prompt_eval_duration\":0")
+    // the reported version is the package version, which every release bumps
+    .replace(/"version":"[^"]*"/g, "\"version\":\"VERSION\"");
 }
 
 export async function runCase(testCase: Case): Promise<string> {
