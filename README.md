@@ -12,6 +12,7 @@ Zero runtime dependencies. Byte-exact streaming. Runs on a VPS, a Raspberry Pi, 
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-f38020.svg)](https://workers.cloudflare.com/)
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/lco117/parrot-llm)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/lco117/parrot-llm&project-name=parrot-llm&repository-name=parrot-llm)
 
 *Click the button and authorize Cloudflare: your own Worker is deployed in about a minute — free plan, no cold start, no build step. This template ships with `workers.dev` and preview URLs **disabled**, so bind a custom domain (or set `"workers_dev": true` in `wrangler.jsonc`) to reach it.*
 
@@ -124,6 +125,7 @@ Unknown routes return a 404 **in the error shape of the protocol you were speaki
 | `PARROT_API_KEY` | — | If set, API routes require this key |
 | `PARROT_CORS` | `*` | `Access-Control-Allow-Origin` |
 | `PARROT_LOG` | `off` | `off` / `summary` / `full` — log every request that arrives |
+| `PARROT_MAX_BODY` | `1000000` | Reject request bodies larger than this (`0` = unlimited) |
 | `PARROT_MODELS` | `parrot-1, parrot-1-mini, definitely-not-a-model` | Comma separated model ids to advertise |
 | `PARROT_TOOLCALL` | — | Function name, or JSON `{"name":…,"arguments":…}` |
 | `PARROT_THINKING` | a pool of 10 | The "reasoning". `\|`-separated templates, one picked at random per request; `{input}` and `{reply}` are substituted; `off` disables it |
@@ -282,6 +284,20 @@ The one architectural rule: **the engine knows nothing about protocols, and the 
 
 Bug reports, new protocols and better jokes are all welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). If you are an AI agent, read [AGENTS.md](AGENTS.md) first.
 
+## Security
+
+Short version: no runtime dependencies, no install scripts, no outbound requests, no storage,
+and no secrets in the repository. The full threat model — including what you must configure
+yourself — is in **[docs/security.md](docs/security.md)**.
+
+## Launch & publishing
+
+- **[docs/launch.md](docs/launch.md)** — taglines, ready-to-paste posts and where to submit.
+- **[docs/publishing.md](docs/publishing.md)** — how and why to publish to npm, plus the one-command release flow.
+
 ## License
 
 [MIT](LICENSE) © lco117 · 中文说明: [README.zh-CN.md](README.zh-CN.md)
+
+Not affiliated with, endorsed by, or connected to OpenAI, Anthropic or Google. Protocol names
+and shapes are reproduced for interoperability and testing only.

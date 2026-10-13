@@ -7,6 +7,7 @@
 零运行时依赖 · 字节级精准的流式输出 · VPS / 树莓派 / Cloudflare Workers / Vercel 都能跑
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/lco117/parrot-llm)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/lco117/parrot-llm&project-name=parrot-llm&repository-name=parrot-llm)
 
 *点一下按钮、授权 Cloudflare，一分钟内 Worker 就部署好了——免费额度、无冷启动、无需构建。本模板默认**关闭** `workers.dev` 和 Preview URL，请自行绑定域名（或把 `wrangler.jsonc` 里的 `"workers_dev"` 改成 `true`）后再访问。*
 
@@ -95,6 +96,7 @@ curl -N http://localhost:8080/v1/chat/completions \
 | `PARROT_API_KEY` | — | 设置后 API 路由需要该密钥 |
 | `PARROT_CORS` | `*` | 允许的跨域来源 |
 | `PARROT_LOG` | `off` | `off` / `summary` / `full`，记录收到的每个请求 |
+| `PARROT_MAX_BODY` | `1000000` | 超过这个字节数的请求体直接拒绝（`0` 表示不限制） |
 | `PARROT_MODELS` | `parrot-1, parrot-1-mini, definitely-not-a-model` | 逗号分隔 |
 | `PARROT_TOOLCALL` | — | 需要时返回固定 function call |
 | `PARROT_THINKING` | 内置 10 个模板 | 硬编码的思考。用 `\|` 分隔多个模板，每次请求随机取一个；会替换 `{input}`、`{reply}`；`off` 关闭 |
@@ -207,6 +209,18 @@ npm run build        # esbuild 打包 CLI
 
 架构的唯一铁律：**engine 不认识任何协议，协议模块不关心任何时间。** 新增一个厂商 = 新增一个文件。
 
+## 安全
+
+一句话：零运行时依赖、无安装脚本、不外发请求、不存数据、仓库里没有密钥。完整的威胁模型和
+"你必须自己配的东西"见 **[docs/security.md](docs/security.md)**。
+
+## 发布与推广
+
+- **[docs/launch.md](docs/launch.md)** —— 广告词、可直接复制的发帖文案、投递渠道。
+- **[docs/publishing.md](docs/publishing.md)** —— npm 怎么发、为什么要发，以及一条命令的发布流程。
+
 ## 许可
 
 [MIT](LICENSE) © lco117 · English: [README.md](README.md)
+
+本项目与 OpenAI、Anthropic、Google 无任何关联，也不代表其立场。协议名称与格式仅用于互操作与测试。
