@@ -135,6 +135,21 @@ export const CASES: Case[] = [
     config: { chunk: "whole" },
   },
 
+  {
+    name: "openai-chat-persona-not-a-model",
+    method: "POST",
+    path: "/v1/chat/completions",
+    body: { model: "definitely-not-a-model", messages: [{ role: "user", content: "hi" }], stream: true },
+    config: { chunk: "whole" },
+  },
+  {
+    name: "openai-chat-filters",
+    method: "POST",
+    path: "/v1/chat/completions",
+    body: { model: "gpt-4o", messages: [{ role: "user", content: "hello world" }] },
+    config: { mode: "fixed", text: "say {input|upper} ({input|count} chars)", chunk: "whole", thinking: [] },
+  },
+
   // --- OpenAI Responses ---
   { name: "openai-responses-stream", method: "POST", path: "/v1/responses", body: { model: "gpt-4o", input: "hi", stream: true } },
   { name: "openai-responses-sync", method: "POST", path: "/v1/responses", body: { model: "gpt-4o", input: "abc" } },

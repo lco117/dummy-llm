@@ -1,0 +1,3 @@
+# status: 200
+# content-type: application/json; charset=utf-8
+{"id":"chatcmpl-ID","object":"chat.completion","created":1786000000,"model":"gpt-4o","system_fingerprint":"fp_npc","choices":[{"index":0,"message":{"role":"assistant","content":"say HELLO WORLD (11 chars)"},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":3,"completion_tokens":7,"total_tokens":10}}

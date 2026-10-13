@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildText, chunkText, estimateTokens, phases, plan, renderThinking, stripReminders, userInput } from "../src/engine.ts";
+import { buildText, chunkText, estimateTokens, phases, plan, renderTemplate, renderThinking, stripReminders, userInput } from "../src/engine.ts";
+import { FILTER_NAMES } from "../src/filters.ts";
+import { NOT_A_MODEL_REPLIES } from "../src/personas.ts";
 import { mulberry32, randomId } from "../src/random.ts";
 import { parseFaultSpec } from "../src/errors.ts";
 import { DEFAULT_THINKING_POOL, resolveConfig } from "../src/config.ts";
@@ -140,7 +142,7 @@ test("the landing page is a live demo, not a giant 6", async () => {
   assert.match(response.headers.get("content-type") ?? "", /text\/html/);
   assert.match(html, /says whatever you said/);
   assert.match(html, /v1\/chat\/completions/);
-  assert.match(html, /npc-1-mini/);
+  assert.match(html, /npc-echo-1/);
 });
 
 test("harness reminder blocks are stripped before deciding what the user said", () => {
@@ -202,6 +204,46 @@ test("oversized request bodies are rejected", async () => {
   assert.equal(small.status, 200);
   assert.equal(resolveConfig({ NPC_MAX_BODY: "10" }).maxBodyBytes, 10);
   assert.equal(resolveConfig({}).maxBodyBytes, 1000000);
+});
+
+test("placeholder filters compose", () => {
+  const vars = { input: "hello world", raw: "hello world", model: "npc-echo-1" };
+  assert.equal(renderTemplate("{input|upper}", vars), "HELLO WORLD");
+  assert.equal(renderTemplate("{input|reverse}", vars), "dlrow olleh");
+  assert.equal(renderTemplate("{input|truncate:5}", vars), "hello…");
+  assert.equal(renderTemplate("{input|count}", vars), "11");
+  assert.equal(renderTemplate("{input|repeat:2}", vars), "hello worldhello world");
+  assert.equal(renderTemplate("{input|morse}", vars), ".... . .-.. .-.. --- / .-- --- .-. .-.. -..");
+  assert.equal(renderTemplate("{input|base64}", vars), "aGVsbG8gd29ybGQ=");
+  assert.equal(renderTemplate("{input|hex}", vars), "68 65 6c 6c 6f 20 77 6f 72 6c 64");
+  assert.equal(renderTemplate("{input|json}", vars), '"hello world"');
+  assert.equal(renderTemplate("{input|leet}", vars), "h3ll0 w0rld");
+  assert.equal(renderTemplate("{input|spongebob}", { ...vars, input: "abcd" }), "aBcD");
+  assert.equal(renderTemplate("{input|upper|reverse}", vars), "DLROW OLLEH");
+  assert.equal(renderTemplate("{input|nope}", vars), "hello world", "an unknown filter is ignored");
+  assert.equal(renderTemplate("{unknown}", vars), "{unknown}", "an unknown placeholder is left alone");
+  assert.equal(renderTemplate("{input|box}", vars), "+-------------+\n| hello world |\n+-------------+");
+  assert.equal(renderTemplate("{input|ascii}", { ...vars, input: "AB" }).split("\n").length, 5);
+  assert.equal(renderTemplate("{input|ascii}", { ...vars, input: "A" }), ".#.\n#.#\n###\n#.#\n#.#");
+  assert.equal(renderTemplate("{input|hash}", vars).length, 8);
+  assert.ok(FILTER_NAMES.includes("ascii") && FILTER_NAMES.includes("box"));
+});
+
+test("the model id selects a persona", () => {
+  const cfg = resolveConfig({});
+  assert.deepEqual(cfg.models, ["npc-echo-1", "definitely-not-a-model"]);
+  const base = { protocol: "openai-chat" as const, messages: [{ role: "user", content: "hi" }], stream: false, includeUsage: false, raw: {} };
+  const npc = plan({ ...base, model: "definitely-not-a-model" }, cfg, mulberry32(1));
+  assert.ok(NOT_A_MODEL_REPLIES.includes(npc.reply), "the reply comes from the persona pool");
+  assert.ok(npc.thinking !== null && npc.thinking.includes("hi"), "and its thinking explains itself");
+  assert.equal(plan({ ...base, model: "npc-echo-1" }, cfg, mulberry32(1)).reply, "hi");
+  assert.equal(plan({ ...base, model: "gpt-4o" }, cfg, mulberry32(1)).reply, "hi", "unknown models fall through");
+
+  const custom = resolveConfig({ NPC_PERSONAS: '{"npc-ascii-1":{"mode":"fixed","text":"{input|ascii}","thinking":[]}}' });
+  assert.deepEqual(custom.models, ["npc-echo-1", "definitely-not-a-model", "npc-ascii-1"], "env personas join the model list");
+  const art = plan({ ...base, model: "npc-ascii-1" }, custom, mulberry32(1));
+  assert.equal(art.reply.split("\n").length, 5, "the ASCII banner has five rows");
+  assert.equal(art.thinking, null, "and this persona silences the thinking channel");
 });
 
 test("token estimate is never zero for non-empty text", () => {
