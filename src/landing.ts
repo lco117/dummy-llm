@@ -37,7 +37,7 @@ const STYLE = `
   h2 { font-size: .72rem; letter-spacing: .28em; text-transform: uppercase; color: var(--dim); margin: 0 0 .9rem; font-weight: 600; }
   header { display: grid; gap: .85rem; }
   .brand { display: flex; align-items: center; gap: .75rem; }
-  .brand .bird { font-size: 1.9rem; line-height: 1; filter: drop-shadow(0 0 18px rgba(110,231,135,.45)); }
+  .brand .bird { width: 46px; height: 46px; border-radius: 12px; filter: drop-shadow(0 0 22px rgba(56,168,248,.35)); }
   .tagline { margin: 0; color: var(--dim); max-width: 44rem; }
   .chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .35rem; }
   .chip {
@@ -95,6 +95,7 @@ export function landingPage(ctx: Ctx): Response {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
 <title>npc-llm — it says whatever you said</title>
 <style>${STYLE}</style>
 </head>
@@ -102,7 +103,7 @@ export function landingPage(ctx: Ctx): Response {
 <main>
   <header>
     <div class="brand">
-      <span class="bird">🧍</span>
+      <img class="bird" src="/logo.svg" alt="" width="46" height="46">
       <h1>npc-llm</h1>
     </div>
     <p class="tagline">It says whatever you said — after thinking about it. No model, no weights, no GPU: one template, four protocols, byte-exact streaming.</p>

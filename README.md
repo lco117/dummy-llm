@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🧍 npc-llm
+<img src="assets/logo.svg" alt="npc-llm" width="132" height="132">
+
+# npc-llm
 
 **A fake LLM server that repeats back whatever you send, or answers with a template of your own.**
 

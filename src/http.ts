@@ -1,6 +1,7 @@
 import { stripReminders } from "./engine.ts";
 import { errorResponse, HttpError } from "./errors.ts";
 import { landingPage } from "./landing.ts";
+import { LOGO_SVG } from "./logo.ts";
 import { mulberry32 } from "./random.ts";
 import { json } from "./sse.ts";
 import * as anthropic from "./protocols/anthropic.ts";
@@ -131,6 +132,11 @@ async function route(request: Request, ctx: Ctx): Promise<Response> {
 
   if (method === "OPTIONS") return new Response(null, { status: 204 });
   if (method === "GET" && (path === "/" || path === "/index.html")) return landingPage(ctx);
+  if (method === "GET" && path === "/logo.svg") {
+    return new Response(LOGO_SVG, {
+      headers: { "content-type": "image/svg+xml; charset=utf-8", "cache-control": "public, max-age=86400" },
+    });
+  }
   if (method === "GET" && path === "/healthz") {
     return json({
       ok: true,

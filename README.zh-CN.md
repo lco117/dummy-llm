@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🧍 npc-llm
+<img src="assets/logo.svg" alt="npc-llm" width="132" height="132">
+
+# npc-llm
 
 **一个假的 LLM 服务：你说什么它就复读什么，或者按你自己写的模板回答。**
 
