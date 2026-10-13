@@ -2,11 +2,11 @@
 
 # 🧍 npc-llm
 
-**A fake LLM server with a template engine.**
+**A fake LLM server that repeats back whatever you send, or answers with a template of your own.**
 
-Point any OpenAI, Anthropic, Gemini or Ollama SDK at it. You hand it a template — `{input}` is what the
-user sent, `{reply}` is what you are about to say — and it streams the result back in that provider's
-exact wire format. Repeating you is just the default template.
+Point any OpenAI, Anthropic, Gemini or Ollama SDK at it. Repeating you is the default; `{input}`,
+`{reply}` and `{model}` in a template of your own cover the rest — and every reply streams back in
+that provider's exact wire format.
 
 Zero runtime dependencies. Byte-exact streaming. Runs on a VPS, a Raspberry Pi, Cloudflare Workers or Vercel.
 
@@ -26,9 +26,8 @@ Zero runtime dependencies. Byte-exact streaming. Runs on a VPS, a Raspberry Pi, 
 
 ## What is this?
 
-You send any text. It "thinks" for a moment, then answers with whatever your template says. The
-default template hands your own words straight back; the other three modes are fixed text, a random
-line, and a keyword→reply map.
+You send any text. It "thinks" for a moment, then answers. By default that answer is your own words
+handed straight back; the other three modes are fixed text, a random line, and a keyword→reply map.
 
 But here is the part that makes it more than a joke: it answers **in the exact wire format** a real provider uses. Same SSE frames, same `data: [DONE]` sentinel, same Anthropic event order, same Ollama NDJSON. An unmodified official SDK cannot tell the difference until it reads the words.
 
