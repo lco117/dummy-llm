@@ -49,7 +49,8 @@
     "typecheck": "tsc --noEmit",
     "deploy": "wrangler deploy",
     "deploy:dry": "wrangler deploy --dry-run --outdir dist-worker",
-    "set-repo": "node scripts/set-repo.mjs"
+    "set-repo": "node scripts/set-repo.mjs",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

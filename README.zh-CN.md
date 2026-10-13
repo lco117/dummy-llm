@@ -32,15 +32,18 @@
 ## 快速开始
 
 ```bash
-# 1. Node 20+，无需安装
-npx parrot-llm --port 8080 --text "6"
+# 方式 A —— Docker，直接从仓库构建（无需 clone）
+docker build -t parrot-llm https://github.com/lco117/parrot-llm.git
+docker run --rm -p 8080:8080 -e PARROT_TEXT=6 parrot-llm
 
-# 2. Docker
-docker run --rm -p 8080:8080 -e PARROT_TEXT=6 ghcr.io/lco117/parrot-llm
-
-# 3. 从源码
+# 方式 B —— 从源码
 git clone https://github.com/lco117/parrot-llm && cd parrot-llm
-npm install && npm run dev
+npm install
+npm run dev              # Node 22.18+ 可直接运行 TypeScript，无需构建
+# 或：npm run build && node dist/cli.js --port 8080
+
+# 方式 C —— npm（包发布后；parrot-llm 这个名字目前没被占用）
+npx parrot-llm --port 8080 --text "6"
 ```
 
 然后把任何 SDK 指过来，其余都不用改：

@@ -37,15 +37,18 @@ That makes parrot-llm two things at once:
 ## Quickstart
 
 ```bash
-# 1. Node 20+, nothing to install
-npx parrot-llm --port 8080 --text "6"
+# Option A — Docker, built straight from the repository (no clone needed)
+docker build -t parrot-llm https://github.com/lco117/parrot-llm.git
+docker run --rm -p 8080:8080 -e PARROT_TEXT=6 parrot-llm
 
-# 2. or Docker
-docker run --rm -p 8080:8080 -e PARROT_TEXT=6 ghcr.io/lco117/parrot-llm
-
-# 3. or from source
+# Option B — from source
 git clone https://github.com/lco117/parrot-llm && cd parrot-llm
-npm install && npm run dev
+npm install
+npm run dev              # Node 22.18+ runs the TypeScript directly
+# or: npm run build && node dist/cli.js --port 8080
+
+# Option C — npm, once the package is published (the name parrot-llm is free)
+npx parrot-llm --port 8080 --text "6"
 ```
 
 Now point any SDK at it and change nothing else:
