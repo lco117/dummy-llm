@@ -42,7 +42,7 @@
 ```bash
 # 方式 A —— Docker，直接从仓库构建（无需 clone）
 docker build -t dummy-llm https://github.com/lco117/dummy-llm.git
-docker run --rm -p 8080:8080 -e DUMMY_TEXT=6 dummy-llm
+docker run --rm -p 8080:8080 -e DUMMY_REPLY='{input}' dummy-llm
 
 # 方式 B —— 从源码
 git clone https://github.com/lco117/dummy-llm && cd dummy-llm
@@ -51,7 +51,7 @@ npm run dev              # Node 22.18+ 可直接运行 TypeScript，无需构建
 # 或：npm run build && node dist/cli.js --port 8080
 
 # 方式 C —— npm（包发布后；dummy-llm 这个名字目前没被占用）
-npx dummy-llm --port 8080 --text "6"
+npx dummy-llm --port 8080 --reply "6"
 ```
 
 然后把任何 SDK 指过来，其余都不用改：
@@ -91,8 +91,8 @@ curl -N http://localhost:8080/v1/chat/completions \
 
 | 环境变量 | 默认 | 说明 |
 | --- | --- | --- |
-| `DUMMY_TEXT` | `6` | `fixed` 模式的回答模板（会替换 `{input}`、`{model}`），也是用户什么都没说时的兜底 |
-| `DUMMY_MODE` | `echo` | `echo`（复读用户）/ `fixed` / `random` / `canned` |
+| `DUMMY_REPLY` | `{input}` | 它回答什么。**值的形状就是行为**：一个模板、一个 JSON 数组（池子）、或一个 JSON 对象（关键词映射，`"*"` 兜底） |
+| `DUMMY_MODE` 等旧字段 | — | 已弃用的四件套（`DUMMY_MODE`、`DUMMY_TEXT`、`DUMMY_LINES`、`DUMMY_CANNED`），会再兼容一个版本并映射到 `DUMMY_REPLY` |
 | `DUMMY_ECHO_RAW` | — | 原样复读，不做任何噪声剥离 |
 | `DUMMY_STRIP` | — | 额外的正则（`\|` 分隔），复读前从用户消息里剔除 |
 | `DUMMY_CHUNK` | `4` | 每个流式片段几个字符——4 个字符约等于一个英文 token。也支持 `word` / `line` / `whole` |
@@ -106,7 +106,7 @@ curl -N http://localhost:8080/v1/chat/completions \
 | `DUMMY_LOG` | `off` | `off` / `summary` / `full`，记录收到的每个请求 |
 | `DUMMY_MAX_BODY` | `1000000` | 超过这个字节数的请求体直接拒绝（`0` 表示不限制） |
 | `DUMMY_MODELS` | 全部 persona | 逗号分隔 |
-| `DUMMY_PERSONAS` | — | 额外 persona 的 JSON 映射：`{"dummy-ascii-1":{"mode":"fixed","text":"{input\|ascii}","thinking":[]}}` |
+| `DUMMY_PERSONAS` | — | 额外 persona 的 JSON 映射：`{"dummy-ascii-1":{"reply":"{input|ascii}","thinking":[]}}` |
 | `DUMMY_TOOLCALL` | — | 需要时返回固定 function call |
 | `DUMMY_THINKING` | 内置 10 个模板 | 硬编码的思考。用 `\|` 分隔多个模板，每次请求随机取一个；会替换 `{input}`、`{reply}`；`off` 关闭 |
 
@@ -131,23 +131,23 @@ curl -N http://localhost:8080/v1/chat/completions \
 | `dummy-echo-1` | 把你说的话复读回来（默认 persona） |
 | `definitely-not-a-model` | 拒绝承认自己是语言模型，十种说法，每一种都配一段同样有十种写法的"推理" |
 
-**其他任何** model 字符串都会落回服务端自己的 `DUMMY_MODE` / `DUMMY_TEXT`，所以写死 `gpt-4o` 的客户端
+**其他任何** model 字符串都会落回服务端自己的 `DUMMY_REPLY`，所以写死 `gpt-4o` 的客户端
 依然能正常工作。
 
 ## 模板与过滤器
 
-模板可以写在 `DUMMY_TEXT`、`DUMMY_LINES`、`DUMMY_CANNED`、`DUMMY_THINKING` 里。占位符：
+模板可以写在 `DUMMY_REPLY`、`DUMMY_THINKING` 里。占位符：
 `{input}`（清洗过的用户消息）、`{raw}`（原始未处理）、`{reply}`（正在生成的回答）、`{model}`、
 `{text}`。
 
 过滤器用 `|` 串联：
 
 ```bash
-dummy-llm --text '{input|upper}'        # 大声复读
-dummy-llm --text '{input|ascii}'        # 把消息渲染成 3x5 点阵横幅
-dummy-llm --text '{input|box}'          # 套一个 ASCII 方框
-dummy-llm --text '{input|upper|box}'    # 可以叠加
-dummy-llm --text 'you said {input} ({input|count} chars)'
+dummy-llm --reply '{input|upper}'        # 大声复读
+dummy-llm --reply '{input|ascii}'        # 把消息渲染成 3x5 点阵横幅
+dummy-llm --reply '{input|box}'          # 套一个 ASCII 方框
+dummy-llm --reply '{input|upper|box}'    # 可以叠加
+dummy-llm --reply 'you said {input} ({input|count} chars)'
 ```
 
 可用过滤器：`upper` `lower` `title` `reverse` `spongebob` `leet` `truncate:N` `repeat:N`
@@ -183,13 +183,19 @@ curl -s http://localhost:8080/v1/chat/completions -H 'content-type: application/
 | Gemini | `thought: true` 的 `Part` |
 | Ollama | `message.thinking` |
 
-模式速查：
+回答的**形状就是行为**（已经没有 mode 这个概念了）：
 
 ```bash
-dummy-llm                             # echo   - 你说什么它说什么（默认）
-dummy-llm --mode fixed --text "6"     # fixed  - 永远同一句
-dummy-llm --no-thinking               # 不输出思考
+dummy-llm                                          # "{input}" —— 你说什么它说什么（默认）
+dummy-llm --reply "6"                              # 永远同一句
+dummy-llm --reply '["6","7","maybe"]'              # 随机抽一句
+dummy-llm --reply '{"weather":"raining","*":"no idea"}'   # 关键词 → 模板，"*" 兜底
+dummy-llm --reply-file ./long-answer.txt           # 长模板放文件（仅 Node）
+dummy-llm --persona definitely-not-a-model         # 以内置 persona 为起点
+dummy-llm --no-thinking                            # 不输出思考
 ```
+
+值能按 JSON 解析就按 JSON 解析，否则**整体当成一个模板**——所以 `{input|upper}` 是一个带过滤器的模板，而 `["6","7","maybe"]` 是一个池子。只有这一条规则，没有歧义。
 
 用 `DUMMY_THINKING` 改词（占位符 `{input}`、`{reply}`、`{model}`）。
 

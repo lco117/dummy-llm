@@ -16,8 +16,7 @@
   },
   // Non-secret defaults. Everything can be overridden in the Cloudflare dashboard.
   "vars": {
-    "DUMMY_TEXT": "6",
-    "DUMMY_MODE": "echo",
+    "DUMMY_REPLY": "{input}",
     // DUMMY_CHUNK is left unset on purpose: the code default is 4 code points
     // (~one token), which is what makes DUMMY_TPS mean tokens per second.
     "DUMMY_TPS": "100",

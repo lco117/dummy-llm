@@ -74,12 +74,14 @@ Each protocol module has exactly two jobs: `parse(body, headers) -> CanonRequest
 
 ### 3.2 Answer modes
 
-| mode | behaviour |
+| reply shape | behaviour |
 | --- | --- |
-| `echo` (default) | repeat the last user message verbatim (a ventriloquist's dummy) |
-| `fixed` | always `DUMMY_TEXT` |
-| `random` | pick one line from a list |
-| `canned` | keyword -> canned reply map from a JSON file (turns the joke into a usable stub) |
+| a string | one template. `"{input}"` is the default — what older versions called "echo" |
+| a JSON array | one entry is drawn per request |
+| a JSON object | keyword -> template; `"*"` is the fallback |
+
+There is no separate `mode` field: the shape of the value *is* the behaviour, which removes four
+knobs (`MODE`, `TEXT`, `LINES`, `CANNED`) that used to have to agree with each other.
 
 ### 3.3 Chunking
 
@@ -169,7 +171,7 @@ result to `phasesFor()`; calling `plan()` twice would consume the seeded PRNG tw
 
 ### 3.7 The template language
 
-A template is any string in `DUMMY_TEXT`, `DUMMY_LINES`, `DUMMY_CANNED` or `DUMMY_THINKING`. Placeholders
+A template is any string in `DUMMY_REPLY` or `DUMMY_THINKING`. Placeholders
 are ```{name|filter:arg|filter}```; unknown names are left untouched and unknown filters are ignored, so a
 typo degrades to text instead of throwing mid-stream.
 

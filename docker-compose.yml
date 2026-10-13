@@ -4,8 +4,7 @@ services:
     # build: .            # uncomment to build locally instead of pulling
     restart: unless-stopped
     environment:
-      DUMMY_TEXT: "6"
-      DUMMY_MODE: echo
+      DUMMY_REPLY: "{input}"
       DUMMY_TPS: "100"
       # DUMMY_LOG: summary
       # DUMMY_API_KEY: sk-dummy

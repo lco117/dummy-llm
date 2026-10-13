@@ -48,7 +48,7 @@ That makes dummy-llm two things at once:
 ```bash
 # Option A — Docker, built straight from the repository (no clone needed)
 docker build -t dummy-llm https://github.com/lco117/dummy-llm.git
-docker run --rm -p 8080:8080 -e DUMMY_TEXT=6 dummy-llm
+docker run --rm -p 8080:8080 -e DUMMY_REPLY='{input}' dummy-llm
 
 # Option B — from source
 git clone https://github.com/lco117/dummy-llm && cd dummy-llm
@@ -78,7 +78,7 @@ export OLLAMA_HOST=http://localhost:8080
 ```bash
 curl -N http://localhost:8080/v1/chat/completions \
   -H 'content-type: application/json' \
-  -d '{"model":"dummy-1","messages":[{"role":"user","content":"are you a real LLM?"}],"stream":true}'
+  -d '{"model":"dummy-echo-1","messages":[{"role":"user","content":"are you a real LLM?"}],"stream":true}'
 ```
 
 ```
@@ -118,10 +118,8 @@ Unknown routes return a 404 **in the error shape of the protocol you were speaki
 
 | Env | Default | Meaning |
 | --- | --- | --- |
-| `DUMMY_TEXT` | `6` | The `fixed` mode answer template — `{input}` and `{model}` are substituted — and the fallback when the user says nothing |
-| `DUMMY_MODE` | `echo` | `echo` (repeat the user) · `fixed` · `random` · `canned` |
-| `DUMMY_LINES` | — | `a\|b\|c` replies for `random` mode |
-| `DUMMY_CANNED` | — | JSON map of keyword → reply for `canned` mode |
+| `DUMMY_REPLY` | `{input}` | What it answers with. **The shape is the behaviour**: a template, a JSON array (a pool), or a JSON object (a keyword map, `"*"` is the fallback) |
+| `DUMMY_MODE` + friends | — | Deprecated quartet (`DUMMY_MODE`, `DUMMY_TEXT`, `DUMMY_LINES`, `DUMMY_CANNED`); mapped onto `DUMMY_REPLY` for one release |
 | `DUMMY_ECHO_RAW` | — | Repeat the message verbatim, without stripping any harness noise |
 | `DUMMY_STRIP` | — | Extra regexes (`\|`-separated) removed from user messages before echoing |
 | `DUMMY_CHUNK` | `4` | Code points per streamed piece — 4 is about one English token. Also accepts `word` / `line` / `whole` |
@@ -136,7 +134,7 @@ Unknown routes return a 404 **in the error shape of the protocol you were speaki
 | `DUMMY_LOG` | `off` | `off` / `summary` / `full` — log every request that arrives |
 | `DUMMY_MAX_BODY` | `1000000` | Reject request bodies larger than this (`0` = unlimited) |
 | `DUMMY_MODELS` | every persona | Comma separated model ids to advertise |
-| `DUMMY_PERSONAS` | — | JSON map of extra personas: `{"dummy-ascii-1":{"mode":"fixed","text":"{input\|ascii}","thinking":[]}}` |
+| `DUMMY_PERSONAS` | — | JSON map of extra personas: `{"dummy-ascii-1":{"reply":"{input|ascii}","thinking":[]}}` |
 | `DUMMY_TOOLCALL` | — | Function name, or JSON `{"name":…,"arguments":…}` |
 | `DUMMY_THINKING` | a pool of 10 | The "reasoning". `\|`-separated templates, one picked at random per request; `{input}` and `{reply}` are substituted; `off` disables it |
 
@@ -152,22 +150,36 @@ selects how the answer is written:
 | `dummy-echo-1` | repeats you back (the default persona) |
 | `definitely-not-a-model` | refuses to be a language model, ten ways, each with its own ten-way "reasoning" |
 
-Any **other** model string falls through to the server's own `DUMMY_MODE` / `DUMMY_TEXT`, so a client
+Any **other** model string falls through to the server's own `DUMMY_REPLY`, so a client
 that hardcodes `gpt-4o` still gets sensible behaviour.
 
-## Modes
+## Reply: the shape of the value is the behaviour
+
+There is no mode to learn. `DUMMY_REPLY` takes a value, and its **shape** decides everything:
+
+| you write | it does |
+| --- | --- |
+| `--reply "{input}"` | one template — the default, and it *is* "echo" |
+| `--reply "6"` | the same answer, forever |
+| `--reply '["6","7","maybe"]'` | draws one at random |
+| `--reply '{"weather":"raining","*":"no idea"}'` | keyword → template; `\*` is the fallback |
 
 ```bash
-dummy-llm                             # echo   - says whatever you said  (default)
-dummy-llm --mode fixed --text "6"     # fixed  - one answer, forever
-dummy-llm --mode random --lines "6|7|maybe"
-dummy-llm --mode canned --text "I do not know"
-dummy-llm --no-thinking               # skip the hardcoded reasoning
-# DUMMY_CANNED='{"weather":"It is raining.","name":"I am a dummy."}'
+dummy-llm                                          # "{input}" — says whatever you said
+dummy-llm --reply "6"                              # one answer, forever
+dummy-llm --reply "{input|upper} ({input|count})"   # any template
+dummy-llm --reply-file ./long-answer.txt           # for anything long (Node only)
+dummy-llm --persona definitely-not-a-model         # start from a built-in persona
+dummy-llm --no-thinking                            # skip the hardcoded reasoning
 ```
 
-In `echo` mode it repeats the last **human** message. Agent harnesses stuff their own noise
-into the conversation as user messages, in two flavours:
+The value is parsed as JSON when it can be, and treated as **one template** otherwise — so
+`{input|upper}` is a single template with a filter, while `["6","7","maybe"]` is a pool. One rule,
+no ambiguity to remember. The pre-0.4 quartet (`DUMMY_MODE` plus
+`DUMMY_TEXT`/`DUMMY_LINES`/`DUMMY_CANNED`) still maps onto a reply value for one release.
+
+When the reply is `{input}` it repeats the last **human** message. Agent harnesses stuff their own
+noise into the conversation as user messages, in two flavours:
 
 - **tagged blocks** — `<system-reminder>Updated instructions from: AGENTS.md…</system-reminder>`
 - **bare metadata lines** — `Time sampled while preparing turn 1, step 1: …`,
@@ -179,19 +191,20 @@ noise it walks back to the previous real one. Add your own rules with `DUMMY_STR
 for byte.
 
 ## Templates and filters
+## Templates and filters
 
-Templates live in `DUMMY_TEXT`, `DUMMY_LINES`, `DUMMY_CANNED` and `DUMMY_THINKING`. Placeholders:
+Templates live in `DUMMY_REPLY` and `DUMMY_THINKING`. Placeholders:
 `{input}` (the cleaned-up user message), `{raw}` (untouched), `{reply}` (the answer being built),
 `{model}` and `{text}`.
 
 Filters compose with `|`:
 
 ```bash
-dummy-llm --text '{input|upper}'        # SHOUT BACK
-dummy-llm --text '{input|ascii}'        # render the message as a 3x5 block banner
-dummy-llm --text '{input|box}'          # put it in an ASCII box
-dummy-llm --text '{input|upper|box}'    # filters compose
-dummy-llm --text 'you said {input} ({input|count} chars)'
+dummy-llm --reply '{input|upper}'        # SHOUT BACK
+dummy-llm --reply '{input|ascii}'        # render the message as a 3x5 block banner
+dummy-llm --reply '{input|box}'          # put it in an ASCII box
+dummy-llm --reply '{input|upper|box}'    # filters compose
+dummy-llm --reply 'you said {input} ({input|count} chars)'
 ```
 
 Available: `upper` `lower` `title` `reverse` `spongebob` `leet` `truncate:N` `repeat:N`
@@ -206,7 +219,7 @@ It "reasons" before it answers — by drawing one of ten hardcoded templates at 
 
 ```bash
 curl -s http://localhost:8080/v1/chat/completions -H 'content-type: application/json' \
-  -d '{"model":"dummy-1","messages":[{"role":"user","content":"abc"}]}'
+  -d '{"model":"dummy-echo-1","messages":[{"role":"user","content":"abc"}]}'
 ```
 
 ```json

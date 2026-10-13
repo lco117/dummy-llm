@@ -52,6 +52,7 @@ suite. Nothing here is aspirational any more — when it lands, it moves up.
 - [ ] a docs site — the `docs/` folder is probably enough
 
 ### Template engine
+- [x] reply values whose **shape is the behaviour** — the separate `mode` concept is gone
 - [x] placeholders `{input}` `{raw}` `{reply}` `{model}` `{text}`
 - [x] 18 filters, composable with `|` (`{input|upper|box}`)
 - [x] personas selected by the model id (`dummy-echo-1`, `definitely-not-a-model`)
