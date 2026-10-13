@@ -6,6 +6,15 @@ export type LogLevel = "off" | "summary" | "full";
 
 export type ChunkMode = number | "word" | "line" | "whole";
 
+/** A named answer profile, selected by the model id the client sends. */
+export interface Persona {
+  mode?: Mode;
+  text?: string;
+  lines?: string[];
+  /** Overrides the thinking pool. An empty array silences the thinking channel. */
+  thinking?: string[];
+}
+
 export interface CanonMessage {
   role: string;
   content: string;
@@ -58,6 +67,8 @@ export interface Config {
   maxBodyBytes: number;
   /** Extra regexes removed from user messages before echoing (on top of the built-in rules). */
   strip: string[];
+  /** Answer profiles keyed by model id. An unknown model falls through to the settings above. */
+  personas: Record<string, Persona>;
   now: () => number;
 }
 

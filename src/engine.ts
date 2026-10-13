@@ -1,3 +1,4 @@
+import { applyFilters } from "./filters.ts";
 import { pick } from "./random.ts";
 import { FaultError } from "./errors.ts";
 import type { CanonRequest, Config, Piece } from "./types.ts";
@@ -75,11 +76,32 @@ export interface TemplateVars {
  *   {input} the cleaned-up user message   {raw} the untouched last user message
  *   {model} the requested model           {reply} the answer   {text} NPC_TEXT
  */
+const PLACEHOLDER = /\{([a-zA-Z_]+)((?:\|[^{}]+)*)\}/g;
+
+function placeholderValue(name: string, vars: TemplateVars): string | undefined {
+  switch (name) {
+    case "input":
+      return vars.input;
+    case "raw":
+      return vars.raw;
+    case "model":
+      return vars.model;
+    case "reply":
+      return vars.reply;
+    case "text":
+      return vars.text;
+    default:
+      return undefined;
+  }
+}
+
 export function renderTemplate(template: string, vars: TemplateVars): string {
-  let out = template.split("{input}").join(vars.input).split("{raw}").join(vars.raw).split("{model}").join(vars.model);
-  if (vars.reply !== undefined) out = out.split("{reply}").join(vars.reply);
-  if (vars.text !== undefined) out = out.split("{text}").join(vars.text);
-  return out;
+  return template.replace(PLACEHOLDER, (match, name: string, pipeText: string) => {
+    const value = placeholderValue(name, vars);
+    if (value === undefined) return match;
+    const filters = pipeText ? pipeText.slice(1).split("|").filter(Boolean) : [];
+    return applyFilters(value, filters);
+  });
 }
 
 export function templateVars(canon: CanonRequest, cfg: Config, reply?: string): TemplateVars {
@@ -121,9 +143,23 @@ export interface Answer {
   thinking: string | null;
 }
 
+/** The model id selects a persona; anything unrecognised falls through to the server defaults. */
+export function withPersona(cfg: Config, model: string): Config {
+  const persona = cfg.personas[model];
+  if (!persona) return cfg;
+  return {
+    ...cfg,
+    mode: persona.mode ?? cfg.mode,
+    text: persona.text ?? cfg.text,
+    lines: persona.lines ?? cfg.lines,
+    thinking: persona.thinking ?? cfg.thinking,
+  };
+}
+
 export function plan(canon: CanonRequest, cfg: Config, rand: () => number): Answer {
-  const reply = buildText(canon, cfg, rand);
-  return { reply, thinking: renderThinking(canon, cfg, reply, rand) };
+  const effective = withPersona(cfg, canon.model);
+  const reply = buildText(canon, effective, rand);
+  return { reply, thinking: renderThinking(canon, effective, reply, rand) };
 }
 
 /** Splits by code point, never by UTF-16 unit, so emoji and CJK survive intact. */

@@ -1,9 +1,8 @@
+import { BUILTIN_PERSONAS } from "./personas.ts";
+
 /**
- * The models this server advertises. Deliberately only our own aliases:
- * requests may still name any model string, but the picker shows our NPCs.
+ * The models this server advertises. Each one is a persona: the model id the client
+ * sends selects how the answer is written. Requests may still name any string; an
+ * unknown model falls through to the server's own settings.
  */
-export const DEFAULT_MODELS: string[] = [
-  "npc-1",
-  "npc-1-mini",
-  "definitely-not-a-model",
-];
+export const DEFAULT_MODELS: string[] = Object.keys(BUILTIN_PERSONAS);

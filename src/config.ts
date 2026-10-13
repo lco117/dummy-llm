@@ -1,4 +1,5 @@
-import { DEFAULT_MODELS } from "./models.ts";
+import { BUILTIN_PERSONAS } from "./personas.ts";
+import type { Persona } from "./types.ts";
 import { parseFaultSpec } from "./errors.ts";
 import type { ChunkMode, Config, LogLevel, Mode } from "./types.ts";
 
@@ -87,6 +88,17 @@ function boolean(value: string | undefined): boolean {
 }
 
 /** NPC_THINKING accepts one template, a |-separated pool, or "off". */
+/** NPC_PERSONAS lets an operator add a persona without touching the source. */
+function personaOverrides(value: string | undefined): Record<string, Persona> {
+  if (!value) return {};
+  try {
+    const parsed = JSON.parse(value) as Record<string, Persona>;
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
 function thinkingPool(value: string | undefined): string[] {
   if (value === undefined) return DEFAULTS.thinking;
   if (OFF.has(value.trim().toLowerCase())) return [];
@@ -116,6 +128,7 @@ export function resolveConfig(env: Env = {}, overrides: Partial<Config> = {}): C
   }
 
   const tps = wholeNumber(env.NPC_TPS, DEFAULTS.tps);
+  const personas = { ...BUILTIN_PERSONAS, ...personaOverrides(env.NPC_PERSONAS) };
   const seedProvided = hasValue(env.NPC_SEED);
   const deterministic = seedProvided || overrides.seed !== undefined || overrides.deterministic === true;
   const explicitDelay = env.NPC_DELAY_MS !== undefined && env.NPC_DELAY_MS.trim() !== "";
@@ -135,13 +148,14 @@ export function resolveConfig(env: Env = {}, overrides: Partial<Config> = {}): C
     hangMs: wholeNumber(env.NPC_HANG_MS, 0),
     apiKey: env.NPC_API_KEY && env.NPC_API_KEY.trim() !== "" ? env.NPC_API_KEY.trim() : null,
     cors: env.NPC_CORS ?? DEFAULTS.cors,
-    models: list(env.NPC_MODELS, DEFAULT_MODELS),
+    models: list(env.NPC_MODELS, Object.keys(personas)),
     toolCall: env.NPC_TOOLCALL && env.NPC_TOOLCALL.trim() !== "" ? env.NPC_TOOLCALL : null,
     thinking: thinkingPool(env.NPC_THINKING),
     echoRaw: boolean(env.NPC_ECHO_RAW),
     log: logLevel(env.NPC_LOG),
     maxBodyBytes: wholeNumber(env.NPC_MAX_BODY, DEFAULTS.maxBodyBytes),
     strip: env.NPC_STRIP ? env.NPC_STRIP.split("|").map((item) => item.trim()).filter(Boolean) : [],
+    personas,
     now: () => Date.now(),
     ...overrides,
   };

@@ -1,4 +1,4 @@
-import { buildText, contentPieces, estimateTokens, phases, phasesFor, plan, promptTokens, usageFor } from "../engine.ts";
+import { buildText, contentPieces, estimateTokens, phases, phasesFor, plan, promptTokens, usageFor, withPersona } from "../engine.ts";
 import { FaultError, HttpError, errorResponse, preflightFault, streamErrorFrame } from "../errors.ts";
 import { randomId } from "../random.ts";
 import { SSE_DONE, SSE_HEADERS, json, sse, streamResponse } from "../sse.ts";
@@ -178,7 +178,7 @@ export function completions(body: unknown, ctx: Ctx): Response {
   if (fault) return fault;
 
   if (!canon.stream) {
-    const text = buildText(canon, ctx.cfg, ctx.rand);
+    const text = buildText(canon, withPersona(ctx.cfg, canon.model), ctx.rand);
     return json({
       id: `cmpl-${randomId(ctx.rand, 24)}`,
       object: "text_completion",
