@@ -4,7 +4,7 @@ An honest assessment, including the parts that are not solved.
 
 ## Threat model
 
-npc-llm is a **stateless HTTP server that returns a canned answer**. It is not a secret store,
+dummy-llm is a **stateless HTTP server that returns a canned answer**. It is not a secret store,
 not a proxy to a real model, and not multi-tenant. The realistic risks are:
 
 1. someone burning through your free quota or your VPS bandwidth;
@@ -22,7 +22,7 @@ not a proxy to a real model, and not multi-tenant. The realistic risks are:
 | **No storage** | Nothing is written to disk, KV, D1 or R2. No persistence, no cross-request state. |
 | **No secrets in the repo** | Verified by scanning the tracked tree for common token shapes. `.env` is gitignored and `.dev.vars.example` ships fully commented out. |
 | **No XSS** | The landing page escapes every operator-controlled value (`escapeHtml`) and the live demo writes model output with `textContent`, never `innerHTML`. |
-| **Request size guard** | `NPC_MAX_BODY` (default 1 MB) rejects oversized bodies — it checks `content-length` before buffering and re-checks the decoded length afterwards. |
+| **Request size guard** | `DUMMY_MAX_BODY` (default 1 MB) rejects oversized bodies — it checks `content-length` before buffering and re-checks the decoded length afterwards. |
 | **Not publicly routable by default** | `wrangler.jsonc` sets `workers_dev: false` and `preview_urls: false`, so a fresh deployment has no URL until the operator binds a domain. |
 | **Streaming does not add smuggling surface** | We never set `Content-Length` on a stream and never mix framing; responses are plain Web `Response` objects. |
 
@@ -30,11 +30,11 @@ not a proxy to a real model, and not multi-tenant. The realistic risks are:
 
 | exposure | risk | mitigation |
 | --- | --- | --- |
-| No API key | Anyone who finds the URL can generate traffic | Set `NPC_API_KEY`. It is accepted as `Authorization: Bearer`, `x-api-key`, `x-goog-api-key` or `?key=` |
-| `NPC_LOG=summary` | The last user message ends up in Workers Logs | Set `NPC_LOG=off` for real traffic. `full` records entire request bodies — only use it while debugging your own client |
+| No API key | Anyone who finds the URL can generate traffic | Set `DUMMY_API_KEY`. It is accepted as `Authorization: Bearer`, `x-api-key`, `x-goog-api-key` or `?key=` |
+| `DUMMY_LOG=summary` | The last user message ends up in Workers Logs | Set `DUMMY_LOG=off` for real traffic. `full` records entire request bodies — only use it while debugging your own client |
 | Public URL | Free plan is ~100k requests/day | Add a Cloudflare **Rate Limiting** rule or WAF rule in front of the Worker |
-| `NPC_HANG_MS` | Holds connections open on purpose | Keep it at 0 in production; it exists to test client timeouts |
-| `NPC_CORS=*` (default) | Any web page can call the endpoint from a browser | Set `NPC_CORS=https://your.app` |
+| `DUMMY_HANG_MS` | Holds connections open on purpose | Keep it at 0 in production; it exists to test client timeouts |
+| `DUMMY_CORS=*` (default) | Any web page can call the endpoint from a browser | Set `DUMMY_CORS=https://your.app` |
 | Echo mode | It mirrors whatever you send | Do not point it at traffic containing secrets. It stores nothing, but your client and your logs might |
 
 ## Known gaps
@@ -54,10 +54,10 @@ not a proxy to a real model, and not multi-tenant. The realistic risks are:
 
 ## Before you make the URL public
 
-- [ ] `NPC_API_KEY` set, and the key is not in the repo
-- [ ] `NPC_LOG` set to `off` (or `summary`, and you accept that user text is logged)
-- [ ] `NPC_CORS` narrowed if a browser app talks to it
-- [ ] `NPC_HANG_MS` is 0
+- [ ] `DUMMY_API_KEY` set, and the key is not in the repo
+- [ ] `DUMMY_LOG` set to `off` (or `summary`, and you accept that user text is logged)
+- [ ] `DUMMY_CORS` narrowed if a browser app talks to it
+- [ ] `DUMMY_HANG_MS` is 0
 - [ ] a rate limit or WAF rule sits in front
 - [ ] `npm audit --omit=dev` reports nothing (it should: there is nothing to audit)
 

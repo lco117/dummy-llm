@@ -1,3 +1,3 @@
 # status: 429
 # content-type: application/json; charset=utf-8
-{"error":{"message":"Rate limit reached for npc-llm. Please try again never.","type":"rate_limit_error","param":null,"code":null}}
+{"error":{"message":"Rate limit reached for dummy-llm. Please try again never.","type":"rate_limit_error","param":null,"code":null}}

@@ -6,10 +6,10 @@ import type { Env } from "../config.ts";
 import { createApp, version } from "../index.ts";
 
 const HELP = `
-npc-llm ${version} - an LLM that always says the same thing.
+dummy-llm ${version} - an LLM that always says the same thing.
 
 Usage:
-  npc-llm [options]
+  dummy-llm [options]
 
 Options:
   -p, --port <n>          Port to listen on                 (default 8080)
@@ -38,8 +38,8 @@ Options:
   -v, --version           Show the version
 
 Examples:
-  npc-llm --text "6" --port 8080
-  npc-llm --mode echo --delay 0
+  dummy-llm --text "6" --port 8080
+  dummy-llm --mode echo --delay 0
   curl -N http://localhost:8080/v1/chat/completions \
     -H 'content-type: application/json' \
     -d '{"model":"gpt-4o","messages":[{"role":"user","content":"hi"}],"stream":true}'
@@ -99,26 +99,26 @@ function apply(target: string, ...names: string[]): void {
 
 apply("PORT", "port", "p");
 apply("HOST", "host");
-apply("NPC_TEXT", "text", "t");
-apply("NPC_MODE", "mode");
-apply("NPC_LINES", "lines");
-apply("NPC_CHUNK", "chunk");
-apply("NPC_TPS", "tps");
-apply("NPC_DELAY_MS", "delay");
-apply("NPC_LOG", "log");
-apply("NPC_MAX_BODY", "max-body");
-apply("NPC_STRIP", "strip");
-apply("NPC_TTFT_MS", "ttft");
-apply("NPC_SEED", "seed");
-apply("NPC_API_KEY", "api-key");
-apply("NPC_CORS", "cors");
-apply("NPC_MODELS", "models");
-apply("NPC_FAIL", "fail");
-apply("NPC_HANG_MS", "hang");
-apply("NPC_TOOLCALL", "tools");
-apply("NPC_THINKING", "thinking");
-if (flags["no-thinking"] === true) env.NPC_THINKING = "off";
-if (flags["echo-raw"] === true) env.NPC_ECHO_RAW = "1";
+apply("DUMMY_TEXT", "text", "t");
+apply("DUMMY_MODE", "mode");
+apply("DUMMY_LINES", "lines");
+apply("DUMMY_CHUNK", "chunk");
+apply("DUMMY_TPS", "tps");
+apply("DUMMY_DELAY_MS", "delay");
+apply("DUMMY_LOG", "log");
+apply("DUMMY_MAX_BODY", "max-body");
+apply("DUMMY_STRIP", "strip");
+apply("DUMMY_TTFT_MS", "ttft");
+apply("DUMMY_SEED", "seed");
+apply("DUMMY_API_KEY", "api-key");
+apply("DUMMY_CORS", "cors");
+apply("DUMMY_MODELS", "models");
+apply("DUMMY_FAIL", "fail");
+apply("DUMMY_HANG_MS", "hang");
+apply("DUMMY_TOOLCALL", "tools");
+apply("DUMMY_THINKING", "thinking");
+if (flags["no-thinking"] === true) env.DUMMY_THINKING = "off";
+if (flags["echo-raw"] === true) env.DUMMY_ECHO_RAW = "1";
 
 const config = resolveConfig(env);
 const app = createApp(config);
@@ -175,7 +175,7 @@ const server = createServer(async (request, response) => {
 });
 
 server.listen(port, host, () => {
-  console.log(`\u{1F99C}  npc-llm ${version}`);
+  console.log(`\u{1F99C}  dummy-llm ${version}`);
   console.log(`    listening on http://localhost:${port}`);
   console.log(`    it will always say: ${JSON.stringify(config.text)} (mode: ${config.mode}, ${config.chunk} chunk(s), ${config.delayMs}ms apart)`);
   console.log(`    point any SDK at http://localhost:${port} and use any API key`);

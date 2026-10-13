@@ -6,8 +6,8 @@ Publishing does not host anything — npm stores a tarball, not a running server
 
 | what you get | why it matters |
 | --- | --- |
-| `npx npc-llm` | The single biggest adoption lever. Someone can try it in 5 seconds without cloning, installing or reading anything. |
-| `npm i -D npc-llm` | It becomes a pinned dev dependency. A `pretest` script can boot it and every developer on the team gets the same fake LLM. |
+| `npx dummy-llm` | The single biggest adoption lever. Someone can try it in 5 seconds without cloning, installing or reading anything. |
+| `npm i -D dummy-llm` | It becomes a pinned dev dependency. A `pretest` script can boot it and every developer on the team gets the same fake LLM. |
 | Discoverability | npm search, libraries.io, npmtrends, Socket.dev, Dependabot alerts. A downloads badge is social proof. |
 | Versioning as a contract | Consumers can pin `0.1.x`. Semver becomes a promise you can keep. |
 | Provenance | Publishing from GitHub Actions with `--provenance` attaches a signed link between the tarball and the commit that built it. |
@@ -33,7 +33,7 @@ npm pack --dry-run          # see exactly what would be uploaded
    npm requires 2FA from anyone who publishes. A TOTP app (1Password, Authy, Google
    Authenticator) is the simplest option; passkeys and security keys also work.
 4. Your username is also your scope: it is what ```yourname/package` would use. The package here
-   is unscoped (`npc-llm`), so the username does not appear in the install command.
+   is unscoped (`dummy-llm`), so the username does not appear in the install command.
 
 **The registry gotcha (read this if you are in China).** If `npm config get registry` points at a
 mirror such as `registry.npmmirror.com`, then `npm login` and `npm publish` would try to talk to
@@ -62,16 +62,16 @@ can also skip the CLI entirely: create a **Granular Access Token** on the websit
 ```bash
 npm login                                   # interactive — only you can do this
 npm whoami                                  # confirm the account
-npm view npc-llm version                 # 404 means the name is still free
+npm view dummy-llm version                 # 404 means the name is still free
 
 npm run typecheck && npm test               # must be green
 npm publish --access public                 # prepublishOnly runs the build for you
 
-npx npc-llm@latest --help                # verify from a clean cache
+npx dummy-llm@latest --help                # verify from a clean cache
 ```
 
-The name `npc-llm` was free when this repository was created. If it has been taken since,
-either publish under a scope (```yourname/npc-llm`) or rename.
+The name `dummy-llm` was free when this repository was created. If it has been taken since,
+either publish under a scope (```yourname/dummy-llm`) or rename.
 
 ## Every publish after that
 
@@ -86,8 +86,8 @@ notes. That is the "one click".
 ## Turning on automated publishing
 
 1. npmjs.com → **Access Tokens** → **Granular Access Token**
-   - name: `npc-llm CI`
-   - permissions: **Read and write**, packages: `npc-llm` only
+   - name: `dummy-llm CI`
+   - permissions: **Read and write**, packages: `dummy-llm` only
    - enable **Bypass 2FA** for automation (or use a classic **Automation** token)
 2. GitHub → the repo → **Settings → Secrets and variables → Actions → New repository secret**
    - name: `NPM_TOKEN`, value: the token
@@ -110,7 +110,7 @@ signature did not move.
 ## If something goes wrong
 
 ```bash
-npm deprecate npc-llm@0.1.0 "broken SSE framing, use 0.1.1"
+npm deprecate dummy-llm@0.1.0 "broken SSE framing, use 0.1.1"
 ```
 
 Unpublishing is only possible for 72 hours, and consumers may already depend on the version.
@@ -118,8 +118,8 @@ Prefer deprecation plus a fixed release.
 
 ## Checklist after publishing
 
-- [ ] `npx npc-llm@latest --help` works on a clean machine
+- [ ] `npx dummy-llm@latest --help` works on a clean machine
 - [ ] the npm badge in the README resolves
-- [ ] the tarball size is sane (`npm view npc-llm dist.unpackedSize`)
+- [ ] the tarball size is sane (`npm view dummy-llm dist.unpackedSize`)
 - [ ] the GitHub Release exists and links the tag
 - [ ] `docs/launch.md` section 3 is ready to paste

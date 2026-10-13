@@ -12,7 +12,7 @@ FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production \
     PORT=8080 \
-    NPC_TEXT=6
+    DUMMY_TEXT=6
 # esbuild produces a self-contained bundle, so no node_modules are needed at runtime.
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package.json ./

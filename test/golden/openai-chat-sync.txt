@@ -1,3 +1,3 @@
 # status: 200
 # content-type: application/json; charset=utf-8
-{"id":"chatcmpl-ID","object":"chat.completion","created":1786000000,"model":"gpt-4o","system_fingerprint":"fp_npc","choices":[{"index":0,"message":{"role":"assistant","content":"hi","reasoning_content":"The user wrote \"hi\". I hold no opinions and own no weights. I will return \"hi\"."},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2}}
+{"id":"chatcmpl-ID","object":"chat.completion","created":1786000000,"model":"gpt-4o","system_fingerprint":"fp_dummy","choices":[{"index":0,"message":{"role":"assistant","content":"hi","reasoning_content":"The user wrote \"hi\". I hold no opinions and own no weights. I will return \"hi\"."},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2}}

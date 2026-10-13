@@ -1,7 +1,7 @@
 # Caddy terminates TLS automatically and flushes SSE frames immediately —
 # unlike Nginx, it needs no extra configuration to stream text/event-stream.
-{$NPC_DOMAIN:localhost} {
-	reverse_proxy npc:8080 {
+{$DUMMY_DOMAIN:localhost} {
+	reverse_proxy dummy:8080 {
 		# belt and braces: never buffer the upstream body
 		flush_interval -1
 	}

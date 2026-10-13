@@ -59,7 +59,7 @@ export function parseToolCall(raw: string): { name: string; arguments: string } 
 export function models(ctx: Ctx): Response {
   return json({
     object: "list",
-    data: ctx.cfg.models.map((id) => ({ id, object: "model", created: CREATED, owned_by: "npc" })),
+    data: ctx.cfg.models.map((id) => ({ id, object: "model", created: CREATED, owned_by: "dummy" })),
   });
 }
 
@@ -71,7 +71,7 @@ export function model(id: string, ctx: Ctx): Response {
   if (!ctx.cfg.models.includes(id)) {
     return errorResponse(PROTOCOL, 404, `The model '${id}' does not exist or you do not have access to it.`);
   }
-  return json({ id, object: "model", created: CREATED, owned_by: "npc" });
+  return json({ id, object: "model", created: CREATED, owned_by: "dummy" });
 }
 
 export function chat(body: unknown, ctx: Ctx): Response {
@@ -99,7 +99,7 @@ function syncChat(canon: CanonRequest, ctx: Ctx): Response {
     object: "chat.completion",
     created: Math.floor(ctx.cfg.now() / 1000),
     model: canon.model,
-    system_fingerprint: "fp_npc",
+    system_fingerprint: "fp_dummy",
     choices: [{ index: 0, message, logprobs: null, finish_reason: hasTool ? "tool_calls" : "stop" }],
     usage: usageFor(canon, answer.reply),
   });
@@ -113,7 +113,7 @@ function streamChat(canon: CanonRequest, ctx: Ctx): Response {
       object: "chat.completion.chunk",
       created: Math.floor(ctx.cfg.now() / 1000),
       model: canon.model,
-      system_fingerprint: "fp_npc",
+      system_fingerprint: "fp_dummy",
     };
     yield sse({ ...base, choices: [{ index: 0, delta: { role: "assistant", content: "" }, logprobs: null, finish_reason: null }] });
 
@@ -238,7 +238,7 @@ export function embeddings(body: unknown, ctx: Ctx): Response {
   return json({
     object: "list",
     data,
-    model: typeof raw.model === "string" && raw.model !== "" ? raw.model : "npc-embedding-1",
+    model: typeof raw.model === "string" && raw.model !== "" ? raw.model : "dummy-embedding-1",
     usage: { prompt_tokens: tokens, total_tokens: tokens },
   });
 }

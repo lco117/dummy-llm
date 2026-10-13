@@ -12,7 +12,7 @@ suite. Nothing here is aspirational any more — when it lands, it moves up.
 ### M1 — OpenAI Chat Completions on Node
 - [x] `POST /v1/chat/completions`, streaming and not, plus the legacy `/v1/completions`
 - [x] `GET /v1/models` and `/v1/models/{id}`
-- [x] code-point chunking, `NPC_TPS` pacing, `NPC_TTFT_MS`
+- [x] code-point chunking, `DUMMY_TPS` pacing, `DUMMY_TTFT_MS`
 - [x] the `data: [DONE]` sentinel and the `stream_options.include_usage` chunk
 - [x] `GET /healthz`, permissive CORS, 404 in the protocol's own error shape
 - [x] Dockerfile, docker compose, Caddyfile, Nginx snippet
@@ -33,7 +33,7 @@ suite. Nothing here is aspirational any more — when it lands, it moves up.
 - [x] `:generateContent` and `:streamGenerateContent?alt=sse`
 - [x] `thought: true` parts
 - [x] deterministic pseudo-embeddings
-- [x] `NPC_FAIL`, `NPC_FAIL=…:after=N`, `NPC_HANG_MS`, `?fail=`
+- [x] `DUMMY_FAIL`, `DUMMY_FAIL=…:after=N`, `DUMMY_HANG_MS`, `?fail=`
 - [x] the `echo` / `fixed` / `random` / `canned` modes
 
 ### M5 — Edge adapters, deployment and the public demo
@@ -44,7 +44,7 @@ suite. Nothing here is aspirational any more — when it lands, it moves up.
 - [x] custom domain declared in `wrangler.jsonc`; `workers.dev` and preview URLs off by default
 
 ### M6 — Open-source polish
-- [x] published to npm as `npc-llm`
+- [x] published to npm as `dummy-llm`
 - [x] CONTRIBUTING.md, [launch kit](launch.md), [security notes](security.md), [publishing guide](publishing.md)
 - [x] Chinese README
 - [x] landing page that streams from the real API
@@ -54,9 +54,9 @@ suite. Nothing here is aspirational any more — when it lands, it moves up.
 ### Template engine
 - [x] placeholders `{input}` `{raw}` `{reply}` `{model}` `{text}`
 - [x] 18 filters, composable with `|` (`{input|upper|box}`)
-- [x] personas selected by the model id (`npc-echo-1`, `definitely-not-a-model`)
-- [x] `NPC_PERSONAS` adds one from the environment, no code change
-- [x] harness-noise stripping, extensible with `NPC_STRIP`
+- [x] personas selected by the model id (`dummy-echo-1`, `definitely-not-a-model`)
+- [x] `DUMMY_PERSONAS` adds one from the environment, no code change
+- [x] harness-noise stripping, extensible with `DUMMY_STRIP`
 - [x] a hardcoded thinking pool, one template drawn per request
 
 ## Next
@@ -64,7 +64,7 @@ suite. Nothing here is aspirational any more — when it lands, it moves up.
 ### 3. Packs — personas as shareable files
 
 A pack is a JSON file (or a `pack.json` in a directory) holding a partial config plus a map of
-personas: `npc-llm --pack ./packs/rickroll`, or `NPC_PACK` on a Worker. The repository would
+personas: `dummy-llm --pack ./packs/rickroll`, or `DUMMY_PACK` on a Worker. The repository would
 ship `packs/ascii-banner`, `packs/rickroll`, `packs/pirate`, `packs/haiku-only` and
 `packs/adversarial` (for testing agent guardrails). A remote `https://` pack would be the first
 outbound request this server ever makes, so it stays opt-in and documented.
@@ -72,14 +72,14 @@ outbound request this server ever makes, so it stays opt-in and documented.
 ### 4. Playground editor on the landing page
 
 The landing page already streams from the real API. Add a template textarea and a mode switch,
-backed by a per-request override (`?template=…&mode=…`, enabled by `NPC_PLAYGROUND=1`), plus a
+backed by a per-request override (`?template=…&mode=…`, enabled by `DUMMY_PLAYGROUND=1`), plus a
 shareable `?t=<base64>` link that pre-fills the editor. That link is the growth loop: people share
 a URL that demonstrates a template.
 
 ### 5. Record and replay
 
-`npc-llm --record --upstream https://api.openai.com/v1` proxies once and writes every response to
-`cassettes/*.sse`; `npc-llm --replay ./cassettes` serves those bytes back deterministically. VCR
+`dummy-llm --record --upstream https://api.openai.com/v1` proxies once and writes every response to
+`cassettes/*.sse`; `dummy-llm --replay ./cassettes` serves those bytes back deterministically. VCR
 for LLMs — a test suite gets real model output without the network, the cost or the flakes. It makes
 outbound requests and stores data on disk, so it lives behind its own flag and never in the default
 path.

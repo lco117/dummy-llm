@@ -1,5 +1,5 @@
 {
-  "name": "npc-llm",
+  "name": "dummy-llm",
   "version": "0.3.0",
   "description": "An LLM that says whatever you said - after a hardcoded thinking step. Speaks OpenAI, Anthropic, Gemini and Ollama with byte-exact streaming.",
   "keywords": [
@@ -16,7 +16,7 @@
     "streaming",
     "testing",
     "cloudflare-workers",
-    "npc"
+    "dummy"
   ],
   "license": "MIT",
   "type": "module",
@@ -26,17 +26,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lco117/npc-llm.git"
+    "url": "git+https://github.com/lco117/dummy-llm.git"
   },
-  "homepage": "https://github.com/lco117/npc-llm#readme",
+  "homepage": "https://github.com/lco117/dummy-llm#readme",
   "bugs": {
-    "url": "https://github.com/lco117/npc-llm/issues"
+    "url": "https://github.com/lco117/dummy-llm/issues"
   },
   "engines": {
     "node": ">=20"
   },
   "bin": {
-    "npc-llm": "dist/cli.js"
+    "dummy-llm": "dist/cli.js"
   },
   "main": "./dist/index.js",
   "exports": {

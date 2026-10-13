@@ -150,12 +150,12 @@ function modelEntry(id: string, ctx: Ctx): Record<string, unknown> {
     model: id,
     modified_at: new Date(ctx.cfg.now()).toISOString(),
     size: 42,
-    digest: "npc0000000000000000000000000000000000000000000000000000000000",
+    digest: "dummy0000000000000000000000000000000000000000000000000000000000",
     details: {
       parent_model: "",
-      format: "npc",
-      family: "npc",
-      families: ["npc"],
+      format: "dummy",
+      family: "dummy",
+      families: ["dummy"],
       parameter_size: "0B",
       quantization_level: "Q0_0",
     },
@@ -171,7 +171,7 @@ export function ps(ctx: Ctx): Response {
 }
 
 export function version(): Response {
-  return json({ version: "0.0.1-npc" });
+  return json({ version: "0.0.1-dummy" });
 }
 
 export function embed(body: unknown, ctx: Ctx): Response {

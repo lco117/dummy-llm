@@ -8,7 +8,7 @@ Copy, paste, post. Everything here is usable as-is.
 | --- | --- | --- |
 | one line | A fake LLM server that repeats back whatever you send, or answers with a template of your own. | 一个假的 LLM 服务：你说什么它就复读什么，或者按你自己写的模板回答。 |
 | list / table | A fake LLM with real wire format. | 协议说得最标准的假大模型。 |
-| elevator | npc-llm is a fake LLM server with a template engine. Give it a template (`{input}`, `{reply}`, `{model}`) and it streams the result in the exact wire format OpenAI, Anthropic, Gemini and Ollama use. "Echo" is just the default template. The joke is the surface; the product is a deterministic, offline, byte-exact LLM test double. | npc-llm 是个假的大模型服务：先用十条硬编码模板「思考」，然后一字不差复读你——就像游戏里那个永远重复同一句话的村口 NPC。笑点在表面，真正有用的是它：确定、离线、字节级精准，还说四家厂商的协议，可以当 CI 里的 LLM 测试替身。 |
+| elevator | dummy-llm is a fake LLM server with a template engine. Give it a template (`{input}`, `{reply}`, `{model}`) and it streams the result in the exact wire format OpenAI, Anthropic, Gemini and Ollama use. "Echo" is just the default template. The joke is the surface; the product is a deterministic, offline, byte-exact LLM test double. | dummy-llm 是个假的大模型服务：先用十条硬编码模板「思考」，然后一字不差复读你——就像游戏里那个永远重复同一句话的村口 dummy。笑点在表面，真正有用的是它：确定、离线、字节级精准，还说四家厂商的协议，可以当 CI 里的 LLM 测试替身。 |
 
 **Never lead with "it's a joke".** Lead with protocol fidelity, land the joke second. The project is
 funny *because* it is rigorous.
@@ -18,35 +18,35 @@ funny *because* it is rigorous.
 ### English
 
 1. It repeats back whatever you send — or answers with a template of your own.
-2. Every village needs one NPC. This one speaks four protocols.
+2. Every village needs one dummy. This one speaks four protocols.
 3. 0 parameters. 0 GPUs. 4 protocols.
-4. The NPC repeats you — byte-exact, over SSE, at 100 tokens per second.
+4. The dummy repeats you — byte-exact, over SSE, at 100 tokens per second.
 5. A fake LLM with real wire format.
 6. Your retry logic has never been tested. This fixes that.
 7. Deterministic LLM responses for CI: offline, instant, free.
 8. No weights. No billed tokens. No flakiness.
 9. "I used to be an adventurer like you, then I took an arrow in the knee" — now available over four APIs.
-10. 12 KB of NPC. OpenAI, Anthropic, Gemini and Ollama on board.
+10. 12 KB of dummy. OpenAI, Anthropic, Gemini and Ollama on board.
 
 ### 中文
 
 1. 你说什么它就复读什么——或者按你自己写的模板回答。
-2. 每个村口都需要一个 NPC，而这个 NPC 会说四家厂商的协议。
+2. 每个村口都需要一个 dummy，而这个 dummy 会说四家厂商的协议。
 3. 零参数、零 GPU、零依赖，四个协议全都说得很标准。
 4. 你说什么，它复读什么——字节级精准，还带流式。
 5. 给 CI 用的假 LLM：确定性、离线、不要钱。
 6. 你的重试逻辑从来没被测过，它能测。
 7. 没有权重，不烧 token，永不 flaky。
 8. 别人卷参数，它卷协议兼容性。
-9. 游戏里的 NPC 只会重复一句话，它也是——只不过它是流式输出的。
-10. 12KB 的 NPC，会说 OpenAI / Anthropic / Gemini / Ollama。
+9. 游戏里的 dummy 只会重复一句话，它也是——只不过它是流式输出的。
+10. 12KB 的 dummy，会说 OpenAI / Anthropic / Gemini / Ollama。
 
 ## 3. Ready-to-paste posts
 
 ### X / Twitter
 
 ```
-I built npc-llm 🧍
+I built dummy-llm 🧍
 
 An LLM with exactly one line of dialogue: yours.
 
@@ -57,7 +57,7 @@ An LLM with exactly one line of dialogue: yours.
 
 The joke is the API. The product is CI that never flakes.
 
-https://github.com/lco117/npc-llm
+https://github.com/lco117/dummy-llm
 ```
 
 ### Hacker News
@@ -65,7 +65,7 @@ https://github.com/lco117/npc-llm
 Title:
 
 ```
-Show HN: npc-llm – a fake LLM that speaks four real protocols
+Show HN: dummy-llm – a fake LLM that speaks four real protocols
 ```
 
 First comment (post it yourself, immediately):
@@ -76,7 +76,7 @@ Author here. This started as a joke and accidentally became a testing tool.
 Every team I know hand-rolls a fake LLM for CI, and they all break the same three ways: wrong SSE
 framing, no `data: [DONE]` sentinel, and non-deterministic chunk boundaries.
 
-npc-llm treats the wire format as the product:
+dummy-llm treats the wire format as the product:
 
 - byte-exact frames for OpenAI Chat Completions, OpenAI Responses, Anthropic Messages, Gemini and
   Ollama (yes, Responses has no [DONE] — it ends on response.completed)
@@ -114,7 +114,7 @@ MIT, one file, no dependencies.
 r/ProgrammerHumor:
 
 ```
-Title: I gave an AI exactly one line of dialogue and it is the best NPC I have ever shipped
+Title: I gave an AI exactly one line of dialogue and it is the best dummy I have ever shipped
 
 Params: 0. Training cost: $0. GPU: none. It thinks "We need answer to user. User just said "abc".
 Need infer? Probably minimal." and then answers "abc". Flawless. Ship it.
@@ -127,7 +127,7 @@ Need infer? Probably minimal." and then answers "abc". Flawless. Ship it.
 ```
 标题：[分享] 我写了个假的大模型，专门在 CI 里假装自己是 GPT-4
 
-它永远只做两件事：先用十条硬编码模板「思考」一遍，然后一字不差复读你。跟游戏里那个重复同一句话的村口 NPC 一模一样。
+它永远只做两件事：先用十条硬编码模板「思考」一遍，然后一字不差复读你。跟游戏里那个重复同一句话的村口 dummy 一模一样。
 
 但正经的部分是：OpenAI Chat Completions / Responses、Anthropic Messages、Gemini、Ollama 四套协议全部按
 官方线格式返回，SSE 帧逐字节对齐（有 golden 文件做回归），所以官方 SDK 接进来不会有任何解析告警。
@@ -146,20 +146,20 @@ MIT，欢迎拿来当测试替身。
 ```
 我给「大模型」祛了个魅 🧍
 
-它叫 npc-llm：你问它什么，它先认真思考一遍（十条硬编码模板里随机抽一条），然后一字不差复读你。
+它叫 dummy-llm：你问它什么，它先认真思考一遍（十条硬编码模板里随机抽一条），然后一字不差复读你。
 
-跟游戏里那个只会重复一句话的 NPC 一模一样，但它是认真写协议的那种假：OpenAI、Anthropic、Gemini、Ollama 四家的流式格式全对，官方 SDK 接进去毫无违和。
+跟游戏里那个只会重复一句话的 dummy 一模一样，但它是认真写协议的那种假：OpenAI、Anthropic、Gemini、Ollama 四家的流式格式全对，官方 SDK 接进去毫无违和。
 
 程序员朋友可以拿它当 CI 里的 GPT 替身，省钱、不 flaky、还能模拟「流到一半断掉」这种真实故障。
 
-GitHub 搜 npc-llm，MIT。
+GitHub 搜 dummy-llm，MIT。
 ```
 
 ### Product Hunt
 
 ```
 Tagline: A fake LLM with real wire format
-Description: npc-llm thinks for a moment (ten hardcoded templates), then repeats whatever you said —
+Description: dummy-llm thinks for a moment (ten hardcoded templates), then repeats whatever you said —
 over the exact streaming protocols OpenAI, Anthropic, Gemini and Ollama use. Built for CI:
 deterministic, offline, fault-injectable, zero dependencies.
 ```
@@ -167,7 +167,7 @@ deterministic, offline, fault-injectable, zero dependencies.
 ### 知乎 / 掘金
 
 ```
-标题：如何优雅地在 CI 里假装自己有大模型——npc-llm 的实现与线格式细节
+标题：如何优雅地在 CI 里假装自己有大模型——dummy-llm 的实现与线格式细节
 
 大纲：
 1. 为什么每个团队都在手写假 LLM，以及它们为什么都会坏
@@ -182,8 +182,8 @@ deterministic, offline, fault-injectable, zero dependencies.
 
 Ordered by effort-to-reward:
 
-1. **GitHub topics** — already set (`llm`, `mock-server`, `openai`, `anthropic`, `ollama`, `gemini`, `cloudflare-workers`, `sse`, `streaming`, `testing`, `fake-llm`, `npc`, `reasoning`).
-2. **LLM client projects** — open a *real PR* proposing npc-llm as their CI mock: Open WebUI, LibreChat, Cline, Roo Code, Continue, aider. A merged PR beats a hundred tweets.
+1. **GitHub topics** — already set (`llm`, `mock-server`, `openai`, `anthropic`, `ollama`, `gemini`, `cloudflare-workers`, `sse`, `streaming`, `testing`, `fake-llm`, `dummy`, `reasoning`).
+2. **LLM client projects** — open a *real PR* proposing dummy-llm as their CI mock: Open WebUI, LibreChat, Cline, Roo Code, Continue, aider. A merged PR beats a hundred tweets.
 3. **Awesome lists** — `awesome-llm`, `awesome-chatgpt`, `awesome-testing`, `awesome-nodejs`, `awesome-cloudflare`, `awesome-selfhosted` (as a dev tool).
 4. **Cloudflare community** — the Workers template gallery, the Discord `#showcase` channel.
 5. **npm** — publishing makes it searchable and adds a downloads badge (see [publishing.md](publishing.md)).
@@ -203,7 +203,7 @@ Ordered by effort-to-reward:
 | --- | --- |
 | "That's just an echo server." | "The echo is four lines. The other 600 are wire-format fidelity, ten thinking templates, seeded determinism and mid-stream fault injection. The goldens are the API contract." |
 | "What is it actually for?" | "The same reason you mock HTTP: your LLM app's retry, streaming and error paths are untested, and testing them against the real API costs money and flakes." |
-| "Won't people abuse the public demo?" | "The template ships with `workers.dev` and preview URLs disabled, an optional `NPC_API_KEY`, a body-size cap and the free plan's 100k/day ceiling." |
+| "Won't people abuse the public demo?" | "The template ships with `workers.dev` and preview URLs disabled, an optional `DUMMY_API_KEY`, a body-size cap and the free plan's 100k/day ceiling." |
 | "Isn't this dishonest?" | "The README's first line says it is a fake LLM. It is a mock, and it says so." |
 | "Why not just use a small local model?" | "Because you want determinism, not quality. A 3B model still flaked your CI at 02:00." |
 | "Why does it repeat my harness metadata?" | "It does not any more — system-reminders and the timestamp preamble are stripped first." |

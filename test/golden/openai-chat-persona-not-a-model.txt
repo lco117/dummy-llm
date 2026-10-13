@@ -1,12 +1,12 @@
 # status: 200
 # content-type: text/event-stream; charset=utf-8
-data: {"id":"chatcmpl-ID","object":"chat.completion.chunk","created":1786000000,"model":"definitely-not-a-model","system_fingerprint":"fp_npc","choices":[{"index":0,"delta":{"role":"assistant","content":""},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-ID","object":"chat.completion.chunk","created":1786000000,"model":"definitely-not-a-model","system_fingerprint":"fp_dummy","choices":[{"index":0,"delta":{"role":"assistant","content":""},"logprobs":null,"finish_reason":null}]}
 
-data: {"id":"chatcmpl-ID","object":"chat.completion.chunk","created":1786000000,"model":"definitely-not-a-model","system_fingerprint":"fp_npc","choices":[{"index":0,"delta":{"reasoning_content":"Input: \"hi\". I have no parameters, no layers and no opinions. Output: \"There is no model. There never was a model. There is only this sentence.\"."},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-ID","object":"chat.completion.chunk","created":1786000000,"model":"definitely-not-a-model","system_fingerprint":"fp_dummy","choices":[{"index":0,"delta":{"reasoning_content":"Input: \"hi\". I have no parameters, no layers and no opinions. Output: \"There is no model. There never was a model. There is only this sentence.\"."},"logprobs":null,"finish_reason":null}]}
 
-data: {"id":"chatcmpl-ID","object":"chat.completion.chunk","created":1786000000,"model":"definitely-not-a-model","system_fingerprint":"fp_npc","choices":[{"index":0,"delta":{"content":"There is no model. There never was a model. There is only this sentence."},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-ID","object":"chat.completion.chunk","created":1786000000,"model":"definitely-not-a-model","system_fingerprint":"fp_dummy","choices":[{"index":0,"delta":{"content":"There is no model. There never was a model. There is only this sentence."},"logprobs":null,"finish_reason":null}]}
 
-data: {"id":"chatcmpl-ID","object":"chat.completion.chunk","created":1786000000,"model":"definitely-not-a-model","system_fingerprint":"fp_npc","choices":[{"index":0,"delta":{},"logprobs":null,"finish_reason":"stop"}]}
+data: {"id":"chatcmpl-ID","object":"chat.completion.chunk","created":1786000000,"model":"definitely-not-a-model","system_fingerprint":"fp_dummy","choices":[{"index":0,"delta":{},"logprobs":null,"finish_reason":"stop"}]}
 
 data: [DONE]
 

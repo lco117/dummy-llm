@@ -2,7 +2,7 @@
 # Keep every line commented out so the one-click deploy asks no questions,
 # and uncomment only what you want a deployer to be forced to fill in.
 
-# NPC_API_KEY=sk-npc
-# NPC_TEXT=6
-# NPC_MODE=fixed
-# NPC_DELAY_MS=20
+# DUMMY_API_KEY=sk-dummy
+# DUMMY_TEXT=6
+# DUMMY_MODE=fixed
+# DUMMY_DELAY_MS=20

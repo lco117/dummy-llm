@@ -18,7 +18,7 @@ Everything below is implemented; you only have to pick a host.
 
 ```bash
 npx wrangler deploy        # Cloudflare
-docker compose up -d       # VPS (edit NPC_DOMAIN in .env first)
+docker compose up -d       # VPS (edit DUMMY_DOMAIN in .env first)
 vercel deploy              # Vercel
 ```
 
@@ -57,7 +57,7 @@ two are the *same code*.
 ## 1. VPS — Docker + Caddy (recommended)
 
 Why it wins for this project: nothing enforces a wall-clock ceiling, so a
-`NPC_DELAY_MS` of 200 with a long paragraph still completes, and there is no cold start.
+`DUMMY_DELAY_MS` of 200 with a long paragraph still completes, and there is no cold start.
 
 ### Dockerfile (multi-stage, non-root)
 
@@ -85,12 +85,12 @@ ENTRYPOINT ["node", "--enable-source-maps", "dist/adapters/node.js"]
 
 ```yaml
 services:
-  npc:
-    image: ghcr.io/OWNER/npc-llm:latest
+  dummy:
+    image: ghcr.io/OWNER/dummy-llm:latest
     restart: unless-stopped
     environment:
-      NPC_TEXT: "6"
-      NPC_DELAY_MS: "20"
+      DUMMY_TEXT: "6"
+      DUMMY_DELAY_MS: "20"
     expose: ["8080"]
 
   caddy:
@@ -106,7 +106,7 @@ volumes:
 
 ```
 llm.example.com {
-	reverse_proxy npc:8080
+	reverse_proxy dummy:8080
 }
 ```
 
@@ -127,27 +127,27 @@ location / {
 }
 ```
 
-(Also send `X-Accel-Buffering: no` from the app; npc-llm does this by default.)
+(Also send `X-Accel-Buffering: no` from the app; dummy-llm does this by default.)
 
 ### No Docker: systemd
 
 ```ini
 [Unit]
-Description=npc-llm
+Description=dummy-llm
 After=network.target
 
 [Service]
-WorkingDirectory=/opt/npc-llm
-EnvironmentFile=/opt/npc-llm/.env
+WorkingDirectory=/opt/dummy-llm
+EnvironmentFile=/opt/dummy-llm/.env
 ExecStart=/usr/bin/node dist/adapters/node.js
 Restart=always
-User=npc
+User=dummy
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-Then `sudo systemctl enable --now npc-llm`, and put Caddy/Nginx in front for TLS.
+Then `sudo systemctl enable --now dummy-llm`, and put Caddy/Nginx in front for TLS.
 Only open ports 22/80/443 in the firewall.
 
 ## 2. Cloudflare Workers (best free option)
@@ -158,7 +158,7 @@ about fifteen lines.
 ```jsonc
 // wrangler.jsonc
 {
-  "name": "npc-llm",
+  "name": "dummy-llm",
   "main": "src/adapters/worker.ts",
   "compatibility_date": "2026-01-01",
   "observability": { "enabled": true }
@@ -193,7 +193,7 @@ Caveats to design around:
 - Free plan request quota is roughly 100k/day; a public joke endpoint can meet that. Add a
   simple cache/preflight bypass or a rate limit if it goes viral.
 - Avoid `Content-Encoding: gzip` on an event stream; per-frame compression can delay
-  flushing. npc-llm sends `Cache-Control: no-transform`.
+  flushing. dummy-llm sends `Cache-Control: no-transform`.
 
 Docs: <https://developers.cloudflare.com/workers/platform/limits/>
 
@@ -232,7 +232,7 @@ Deno.serve(app);
 ```
 
 ```bash
-deployctl deploy --project=npc-llm main.ts
+deployctl deploy --project=dummy-llm main.ts
 ```
 
 Streaming works natively, zero cold start. Check the current monthly free quota before making
@@ -241,7 +241,7 @@ it the primary host: <https://deno.com/deploy/pricing>
 ## 5. Google Cloud Run
 
 ```bash
-gcloud run deploy npc-llm --source . --allow-unauthenticated --region asia-east1
+gcloud run deploy dummy-llm --source . --allow-unauthenticated --region asia-east1
 ```
 
 Useful when you want the Docker image but no VPS: scale-to-zero, real SSE support, request
@@ -283,7 +283,7 @@ is generous but not unlimited. Docs: <https://cloud.google.com/run/pricing>
 ```yaml
 # .github/workflows/release.yml
 # 1. test      -> node 20/22 + wrangler dev + deno
-# 2. publish   -> docker buildx push ghcr.io/OWNER/npc-llm
+# 2. publish   -> docker buildx push ghcr.io/OWNER/dummy-llm
 # 3. deploy    -> cloudflare/wrangler-action  (optional, needs CF_API_TOKEN)
 # 4. deploy    -> vercel --prod               (optional, needs VERCEL_TOKEN)
 ```

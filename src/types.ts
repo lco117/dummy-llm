@@ -46,7 +46,7 @@ export interface Config {
   chunk: ChunkMode;
   /** Streamed pieces (tokens) per second. delayMs is derived from this unless set explicitly. */
   tps: number;
-  /** True when NPC_SEED was given (or a test pinned one): ids and picks stop being random. */
+  /** True when DUMMY_SEED was given (or a test pinned one): ids and picks stop being random. */
   deterministic: boolean;
   delayMs: number;
   ttftMs: number;

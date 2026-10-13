@@ -1,6 +1,6 @@
 # status: 200
 # content-type: text/event-stream; charset=utf-8
-data: {"id":"chatcmpl-ID","object":"chat.completion.chunk","created":1786000000,"model":"gpt-4o","system_fingerprint":"fp_npc","choices":[{"index":0,"delta":{"role":"assistant","content":""},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-ID","object":"chat.completion.chunk","created":1786000000,"model":"gpt-4o","system_fingerprint":"fp_dummy","choices":[{"index":0,"delta":{"role":"assistant","content":""},"logprobs":null,"finish_reason":null}]}
 
 data: {"error":{"message":"Injected fault: HTTP 429","type":"rate_limit_error","param":null,"code":null}}
 

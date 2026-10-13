@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for wanting to give the NPC a new line. 🧍
+Thanks for wanting to give the dummy a new line. 🧍
 
 ## Ground rules
 
@@ -14,7 +14,7 @@ Thanks for wanting to give the NPC a new line. 🧍
 - A Cohere v2 `/v1/chat` adapter
 - `/api/ps` and `/api/show` for Ollama
 - An OpenAI-compatible `/v1/audio/speech` returning a silent WAV
-- A `NPC_LATENCY_PROFILE` flag: `instant` / `dialup` / `sleepy`
+- A `DUMMY_LATENCY_PROFILE` flag: `instant` / `dialup` / `sleepy`
 - A Chinese README (`README.zh-CN.md`)
 
 ## Adding a protocol

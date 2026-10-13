@@ -1,14 +1,14 @@
 services:
-  npc:
-    image: ghcr.io/lco117/npc-llm:latest
+  dummy:
+    image: ghcr.io/lco117/dummy-llm:latest
     # build: .            # uncomment to build locally instead of pulling
     restart: unless-stopped
     environment:
-      NPC_TEXT: "6"
-      NPC_MODE: echo
-      NPC_TPS: "100"
-      # NPC_LOG: summary
-      # NPC_API_KEY: sk-npc
+      DUMMY_TEXT: "6"
+      DUMMY_MODE: echo
+      DUMMY_TPS: "100"
+      # DUMMY_LOG: summary
+      # DUMMY_API_KEY: sk-dummy
     expose:
       - "8080"
 
@@ -20,7 +20,7 @@ services:
       - "443:443"
     environment:
       # set this in a .env file next to this compose file
-      NPC_DOMAIN: ${NPC_DOMAIN:-localhost}
+      DUMMY_DOMAIN: ${DUMMY_DOMAIN:-localhost}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

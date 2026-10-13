@@ -5,7 +5,7 @@ import type { ChunkMode, Config, LogLevel, Mode } from "./types.ts";
 
 /**
  * Ten hardcoded "reasonings". In echo mode one is picked at random per request,
- * so the NPC does not look like a broken record. {input} is what the user said,
+ * so the dummy does not look like a broken record. {input} is what the user said,
  * {reply} is what we are about to say back.
  */
 export const DEFAULT_THINKING_POOL: string[] = [
@@ -87,8 +87,8 @@ function boolean(value: string | undefined): boolean {
   return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
 }
 
-/** NPC_THINKING accepts one template, a |-separated pool, or "off". */
-/** NPC_PERSONAS lets an operator add a persona without touching the source. */
+/** DUMMY_THINKING accepts one template, a |-separated pool, or "off". */
+/** DUMMY_PERSONAS lets an operator add a persona without touching the source. */
 function personaOverrides(value: string | undefined): Record<string, Persona> {
   if (!value) return {};
   try {
@@ -111,27 +111,27 @@ function thinkingPool(value: string | undefined): string[] {
  * Node passes `process.env`, a Worker passes the `env` binding.
  */
 export function resolveConfig(env: Env = {}, overrides: Partial<Config> = {}): Config {
-  const mode = (env.NPC_MODE as Mode | undefined) ?? DEFAULTS.mode;
-  const text = env.NPC_TEXT ?? DEFAULTS.text;
-  const lines = env.NPC_LINES
-    ? env.NPC_LINES.split("|").map((line) => line.trim()).filter(Boolean)
+  const mode = (env.DUMMY_MODE as Mode | undefined) ?? DEFAULTS.mode;
+  const text = env.DUMMY_TEXT ?? DEFAULTS.text;
+  const lines = env.DUMMY_LINES
+    ? env.DUMMY_LINES.split("|").map((line) => line.trim()).filter(Boolean)
     : [text];
 
   let canned: Record<string, string> = {};
-  if (env.NPC_CANNED) {
+  if (env.DUMMY_CANNED) {
     try {
-      const parsed = JSON.parse(env.NPC_CANNED) as Record<string, string>;
+      const parsed = JSON.parse(env.DUMMY_CANNED) as Record<string, string>;
       if (parsed && typeof parsed === "object") canned = parsed;
     } catch {
       canned = {};
     }
   }
 
-  const tps = wholeNumber(env.NPC_TPS, DEFAULTS.tps);
-  const personas = { ...BUILTIN_PERSONAS, ...personaOverrides(env.NPC_PERSONAS) };
-  const seedProvided = hasValue(env.NPC_SEED);
+  const tps = wholeNumber(env.DUMMY_TPS, DEFAULTS.tps);
+  const personas = { ...BUILTIN_PERSONAS, ...personaOverrides(env.DUMMY_PERSONAS) };
+  const seedProvided = hasValue(env.DUMMY_SEED);
   const deterministic = seedProvided || overrides.seed !== undefined || overrides.deterministic === true;
-  const explicitDelay = env.NPC_DELAY_MS !== undefined && env.NPC_DELAY_MS.trim() !== "";
+  const explicitDelay = env.DUMMY_DELAY_MS !== undefined && env.DUMMY_DELAY_MS.trim() !== "";
 
   return {
     deterministic,
@@ -139,22 +139,22 @@ export function resolveConfig(env: Env = {}, overrides: Partial<Config> = {}): C
     mode: MODES.includes(mode) ? mode : DEFAULTS.mode,
     lines: lines.length > 0 ? lines : [text],
     canned,
-    chunk: chunkMode(env.NPC_CHUNK),
+    chunk: chunkMode(env.DUMMY_CHUNK),
     tps,
-    delayMs: explicitDelay ? wholeNumber(env.NPC_DELAY_MS, tpsToDelay(tps)) : tpsToDelay(tps),
-    ttftMs: wholeNumber(env.NPC_TTFT_MS, DEFAULTS.ttftMs),
-    seed: wholeNumber(env.NPC_SEED, DEFAULTS.seed),
-    fail: parseFaultSpec(env.NPC_FAIL),
-    hangMs: wholeNumber(env.NPC_HANG_MS, 0),
-    apiKey: env.NPC_API_KEY && env.NPC_API_KEY.trim() !== "" ? env.NPC_API_KEY.trim() : null,
-    cors: env.NPC_CORS ?? DEFAULTS.cors,
-    models: list(env.NPC_MODELS, Object.keys(personas)),
-    toolCall: env.NPC_TOOLCALL && env.NPC_TOOLCALL.trim() !== "" ? env.NPC_TOOLCALL : null,
-    thinking: thinkingPool(env.NPC_THINKING),
-    echoRaw: boolean(env.NPC_ECHO_RAW),
-    log: logLevel(env.NPC_LOG),
-    maxBodyBytes: wholeNumber(env.NPC_MAX_BODY, DEFAULTS.maxBodyBytes),
-    strip: env.NPC_STRIP ? env.NPC_STRIP.split("|").map((item) => item.trim()).filter(Boolean) : [],
+    delayMs: explicitDelay ? wholeNumber(env.DUMMY_DELAY_MS, tpsToDelay(tps)) : tpsToDelay(tps),
+    ttftMs: wholeNumber(env.DUMMY_TTFT_MS, DEFAULTS.ttftMs),
+    seed: wholeNumber(env.DUMMY_SEED, DEFAULTS.seed),
+    fail: parseFaultSpec(env.DUMMY_FAIL),
+    hangMs: wholeNumber(env.DUMMY_HANG_MS, 0),
+    apiKey: env.DUMMY_API_KEY && env.DUMMY_API_KEY.trim() !== "" ? env.DUMMY_API_KEY.trim() : null,
+    cors: env.DUMMY_CORS ?? DEFAULTS.cors,
+    models: list(env.DUMMY_MODELS, Object.keys(personas)),
+    toolCall: env.DUMMY_TOOLCALL && env.DUMMY_TOOLCALL.trim() !== "" ? env.DUMMY_TOOLCALL : null,
+    thinking: thinkingPool(env.DUMMY_THINKING),
+    echoRaw: boolean(env.DUMMY_ECHO_RAW),
+    log: logLevel(env.DUMMY_LOG),
+    maxBodyBytes: wholeNumber(env.DUMMY_MAX_BODY, DEFAULTS.maxBodyBytes),
+    strip: env.DUMMY_STRIP ? env.DUMMY_STRIP.split("|").map((item) => item.trim()).filter(Boolean) : [],
     personas,
     now: () => Date.now(),
     ...overrides,

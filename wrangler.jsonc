@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "npc-llm",
+  "name": "dummy-llm",
   "main": "src/adapters/worker.ts",
   "compatibility_date": "2025-09-01",
   // No *.workers.dev route and no preview URLs: bind your own domain instead
@@ -8,21 +8,22 @@
   // Flip either to true (or delete the line) to get the free workers.dev URL back.
   "workers_dev": false,
   "preview_urls": false,
-  // The domain this deployment answers on. Declared here so a deploy keeps it
-  // instead of resetting the Worker to "no routes".
-  "routes": [{ "pattern": "npc.example.com", "custom_domain": true }],
+  // Routes are deliberately left unset: the previously deployed Worker still holds
+  // the custom domain, and declaring a domain that is already bound would make
+  // `wrangler deploy` fail. Bind yours in the dashboard, then uncomment:
+  // "routes": [{ "pattern": "llm.example.com", "custom_domain": true }],
   "observability": {
     "enabled": true
   },
   // Non-secret defaults. Everything can be overridden in the Cloudflare dashboard.
   "vars": {
-    "NPC_TEXT": "6",
-    "NPC_MODE": "echo",
-    // NPC_CHUNK is left unset on purpose: the code default is 4 code points
-    // (~one token), which is what makes NPC_TPS mean tokens per second.
-    "NPC_TPS": "100",
-    // One JSON line per request, visible in Workers Logs / `npx wrangler tail npc-llm`.
+    "DUMMY_TEXT": "6",
+    "DUMMY_MODE": "echo",
+    // DUMMY_CHUNK is left unset on purpose: the code default is 4 code points
+    // (~one token), which is what makes DUMMY_TPS mean tokens per second.
+    "DUMMY_TPS": "100",
+    // One JSON line per request, visible in Workers Logs / `npx wrangler tail dummy-llm`.
     // Set to "off" (or "full" to include whole request bodies).
-    "NPC_LOG": "summary"
+    "DUMMY_LOG": "summary"
   }
 }

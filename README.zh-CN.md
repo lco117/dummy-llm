@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="assets/logo.svg" alt="npc-llm" width="132" height="132">
+<img src="assets/logo.svg" alt="dummy-llm" width="132" height="132">
 
-# npc-llm
+# dummy-llm
 
 **一个假的 LLM 服务：你说什么它就复读什么，或者按你自己写的模板回答。**
 
@@ -11,9 +11,9 @@
 
 零运行时依赖 · 字节级精准的流式输出 · VPS / 树莓派 / Cloudflare Workers / Vercel 都能跑
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/lco117/npc-llm)
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/lco117/npc-llm&project-name=npc-llm&repository-name=npc-llm)
-[![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run/?git_repo=https://github.com/lco117/npc-llm)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/lco117/dummy-llm)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/lco117/dummy-llm&project-name=dummy-llm&repository-name=dummy-llm)
+[![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run/?git_repo=https://github.com/lco117/dummy-llm)
 
 *三种一键部署。**Cloudflare Workers** 是免费且无冷启动的那个——本模板默认关闭 `workers.dev` 和 Preview URL，请自行绑域名（或把 `"workers_dev"` 改成 `true`）。**Vercel** 会部署 edge function 加一条 catch-all rewrite。**Google Cloud Run** 用仓库里的 Dockerfile 构建，但需要已开通计费的 GCP 账号。*
 
@@ -30,9 +30,9 @@
 
 于是它同时是两样东西：
 
-| 你想做的事 | npc-llm 给你的 |
+| 你想做的事 | dummy-llm 给你的 |
 | --- | --- |
-| 整活：把朋友的"前沿大模型"换成村口 NPC | 改一行配置，任何客户端直接接上 |
+| 整活：把朋友的"前沿大模型"换成村口 dummy | 改一行配置，任何客户端直接接上 |
 | 在 CI 里测 LLM 应用 | 确定性、离线、瞬时、免费的 LLM 替身 |
 | 复现某个厂商的 bug | 可以 diff 的字节级 fixture |
 | 测重试 / 退避逻辑 | 形状正确的 429、500，以及**流中途断流** |
@@ -41,27 +41,27 @@
 
 ```bash
 # 方式 A —— Docker，直接从仓库构建（无需 clone）
-docker build -t npc-llm https://github.com/lco117/npc-llm.git
-docker run --rm -p 8080:8080 -e NPC_TEXT=6 npc-llm
+docker build -t dummy-llm https://github.com/lco117/dummy-llm.git
+docker run --rm -p 8080:8080 -e DUMMY_TEXT=6 dummy-llm
 
 # 方式 B —— 从源码
-git clone https://github.com/lco117/npc-llm && cd npc-llm
+git clone https://github.com/lco117/dummy-llm && cd dummy-llm
 npm install
 npm run dev              # Node 22.18+ 可直接运行 TypeScript，无需构建
 # 或：npm run build && node dist/cli.js --port 8080
 
-# 方式 C —— npm（包发布后；npc-llm 这个名字目前没被占用）
-npx npc-llm --port 8080 --text "6"
+# 方式 C —— npm（包发布后；dummy-llm 这个名字目前没被占用）
+npx dummy-llm --port 8080 --text "6"
 ```
 
 然后把任何 SDK 指过来，其余都不用改：
 
 ```bash
 export OPENAI_BASE_URL=http://localhost:8080/v1
-export OPENAI_API_KEY=sk-npc
+export OPENAI_API_KEY=sk-dummy
 
 export ANTHROPIC_BASE_URL=http://localhost:8080
-export ANTHROPIC_API_KEY=sk-npc
+export ANTHROPIC_API_KEY=sk-dummy
 
 export OLLAMA_HOST=http://localhost:8080
 ```
@@ -69,7 +69,7 @@ export OLLAMA_HOST=http://localhost:8080
 ```bash
 curl -N http://localhost:8080/v1/chat/completions \
   -H 'content-type: application/json' \
-  -d '{"model":"npc-1","messages":[{"role":"user","content":"你是真模型吗"}],"stream":true}'
+  -d '{"model":"dummy-1","messages":[{"role":"user","content":"你是真模型吗"}],"stream":true}'
 ```
 
 ## 接口一览
@@ -91,26 +91,26 @@ curl -N http://localhost:8080/v1/chat/completions \
 
 | 环境变量 | 默认 | 说明 |
 | --- | --- | --- |
-| `NPC_TEXT` | `6` | `fixed` 模式的回答模板（会替换 `{input}`、`{model}`），也是用户什么都没说时的兜底 |
-| `NPC_MODE` | `echo` | `echo`（复读用户）/ `fixed` / `random` / `canned` |
-| `NPC_ECHO_RAW` | — | 原样复读，不做任何噪声剥离 |
-| `NPC_STRIP` | — | 额外的正则（`\|` 分隔），复读前从用户消息里剔除 |
-| `NPC_CHUNK` | `4` | 每个流式片段几个字符——4 个字符约等于一个英文 token。也支持 `word` / `line` / `whole` |
-| `NPC_TPS` | `100` | 每秒输出多少 token，一个片段多大取决于 `NPC_CHUNK`（`0` 表示不限速） |
-| `NPC_DELAY_MS` | 由 `NPC_TPS` 换算 | 显式设置后会覆盖 `NPC_TPS` |
-| `NPC_TTFT_MS` | `0` | 首 token 延迟 |
-| `NPC_SEED` | `1` | 让 id 和抖动可复现 |
-| `NPC_FAIL` | — | `429` / `429:after=3` / `rate_limit` |
-| `NPC_API_KEY` | — | 设置后 API 路由需要该密钥 |
-| `NPC_CORS` | `*` | 允许的跨域来源 |
-| `NPC_LOG` | `off` | `off` / `summary` / `full`，记录收到的每个请求 |
-| `NPC_MAX_BODY` | `1000000` | 超过这个字节数的请求体直接拒绝（`0` 表示不限制） |
-| `NPC_MODELS` | 全部 persona | 逗号分隔 |
-| `NPC_PERSONAS` | — | 额外 persona 的 JSON 映射：`{"npc-ascii-1":{"mode":"fixed","text":"{input\|ascii}","thinking":[]}}` |
-| `NPC_TOOLCALL` | — | 需要时返回固定 function call |
-| `NPC_THINKING` | 内置 10 个模板 | 硬编码的思考。用 `\|` 分隔多个模板，每次请求随机取一个；会替换 `{input}`、`{reply}`；`off` 关闭 |
+| `DUMMY_TEXT` | `6` | `fixed` 模式的回答模板（会替换 `{input}`、`{model}`），也是用户什么都没说时的兜底 |
+| `DUMMY_MODE` | `echo` | `echo`（复读用户）/ `fixed` / `random` / `canned` |
+| `DUMMY_ECHO_RAW` | — | 原样复读，不做任何噪声剥离 |
+| `DUMMY_STRIP` | — | 额外的正则（`\|` 分隔），复读前从用户消息里剔除 |
+| `DUMMY_CHUNK` | `4` | 每个流式片段几个字符——4 个字符约等于一个英文 token。也支持 `word` / `line` / `whole` |
+| `DUMMY_TPS` | `100` | 每秒输出多少 token，一个片段多大取决于 `DUMMY_CHUNK`（`0` 表示不限速） |
+| `DUMMY_DELAY_MS` | 由 `DUMMY_TPS` 换算 | 显式设置后会覆盖 `DUMMY_TPS` |
+| `DUMMY_TTFT_MS` | `0` | 首 token 延迟 |
+| `DUMMY_SEED` | `1` | 让 id 和抖动可复现 |
+| `DUMMY_FAIL` | — | `429` / `429:after=3` / `rate_limit` |
+| `DUMMY_API_KEY` | — | 设置后 API 路由需要该密钥 |
+| `DUMMY_CORS` | `*` | 允许的跨域来源 |
+| `DUMMY_LOG` | `off` | `off` / `summary` / `full`，记录收到的每个请求 |
+| `DUMMY_MAX_BODY` | `1000000` | 超过这个字节数的请求体直接拒绝（`0` 表示不限制） |
+| `DUMMY_MODELS` | 全部 persona | 逗号分隔 |
+| `DUMMY_PERSONAS` | — | 额外 persona 的 JSON 映射：`{"dummy-ascii-1":{"mode":"fixed","text":"{input\|ascii}","thinking":[]}}` |
+| `DUMMY_TOOLCALL` | — | 需要时返回固定 function call |
+| `DUMMY_THINKING` | 内置 10 个模板 | 硬编码的思考。用 `\|` 分隔多个模板，每次请求随机取一个；会替换 `{input}`、`{reply}`；`off` 关闭 |
 
-全部同时是 CLI 参数：`npc-llm --help`。
+全部同时是 CLI 参数：`dummy-llm --help`。
 
 `echo` 模式复读的是最后一条**人说的**消息。但 agent 框架会把自己的噪声当成 user 消息塞进对话，
 有两种：
@@ -120,7 +120,7 @@ curl -N http://localhost:8080/v1/chat/completions \
   `Browser time zone for this request: …`、`Elapsed since the preceding model-visible message: …`
 
 两种都会先被剥掉；如果最新那条除了噪声什么都没有，就往上找上一条真正有人话的消息。可以用
-`NPC_STRIP`（`|` 分隔的正则）加自己的规则，或者用 `--echo-raw` 全部关掉，一个字节不差地看请求体。
+`DUMMY_STRIP`（`|` 分隔的正则）加自己的规则，或者用 `--echo-raw` 全部关掉，一个字节不差地看请求体。
 
 ## Persona：用 model id 选回答方式
 
@@ -128,26 +128,26 @@ curl -N http://localhost:8080/v1/chat/completions \
 
 | model id | 行为 |
 | --- | --- |
-| `npc-echo-1` | 把你说的话复读回来（默认 persona） |
+| `dummy-echo-1` | 把你说的话复读回来（默认 persona） |
 | `definitely-not-a-model` | 拒绝承认自己是语言模型，十种说法，每一种都配一段同样有十种写法的"推理" |
 
-**其他任何** model 字符串都会落回服务端自己的 `NPC_MODE` / `NPC_TEXT`，所以写死 `gpt-4o` 的客户端
+**其他任何** model 字符串都会落回服务端自己的 `DUMMY_MODE` / `DUMMY_TEXT`，所以写死 `gpt-4o` 的客户端
 依然能正常工作。
 
 ## 模板与过滤器
 
-模板可以写在 `NPC_TEXT`、`NPC_LINES`、`NPC_CANNED`、`NPC_THINKING` 里。占位符：
+模板可以写在 `DUMMY_TEXT`、`DUMMY_LINES`、`DUMMY_CANNED`、`DUMMY_THINKING` 里。占位符：
 `{input}`（清洗过的用户消息）、`{raw}`（原始未处理）、`{reply}`（正在生成的回答）、`{model}`、
 `{text}`。
 
 过滤器用 `|` 串联：
 
 ```bash
-npc-llm --text '{input|upper}'        # 大声复读
-npc-llm --text '{input|ascii}'        # 把消息渲染成 3x5 点阵横幅
-npc-llm --text '{input|box}'          # 套一个 ASCII 方框
-npc-llm --text '{input|upper|box}'    # 可以叠加
-npc-llm --text 'you said {input} ({input|count} chars)'
+dummy-llm --text '{input|upper}'        # 大声复读
+dummy-llm --text '{input|ascii}'        # 把消息渲染成 3x5 点阵横幅
+dummy-llm --text '{input|box}'          # 套一个 ASCII 方框
+dummy-llm --text '{input|upper|box}'    # 可以叠加
+dummy-llm --text 'you said {input} ({input|count} chars)'
 ```
 
 可用过滤器：`upper` `lower` `title` `reverse` `spongebob` `leet` `truncate:N` `repeat:N`
@@ -162,7 +162,7 @@ npc-llm --text 'you said {input} ({input|count} chars)'
 
 ```bash
 curl -s http://localhost:8080/v1/chat/completions -H 'content-type: application/json' \
-  -d '{"model":"npc-1","messages":[{"role":"user","content":"abc"}]}'
+  -d '{"model":"dummy-1","messages":[{"role":"user","content":"abc"}]}'
 ```
 
 ```json
@@ -186,37 +186,37 @@ curl -s http://localhost:8080/v1/chat/completions -H 'content-type: application/
 模式速查：
 
 ```bash
-npc-llm                             # echo   - 你说什么它说什么（默认）
-npc-llm --mode fixed --text "6"     # fixed  - 永远同一句
-npc-llm --no-thinking               # 不输出思考
+dummy-llm                             # echo   - 你说什么它说什么（默认）
+dummy-llm --mode fixed --text "6"     # fixed  - 永远同一句
+dummy-llm --no-thinking               # 不输出思考
 ```
 
-用 `NPC_THINKING` 改词（占位符 `{input}`、`{reply}`、`{model}`）。
+用 `DUMMY_THINKING` 改词（占位符 `{input}`、`{reply}`、`{model}`）。
 
 ## 故障注入
 
 ```bash
-npc-llm --fail 429            # 流开始前返回标准 429
-npc-llm --fail 500:after=3    # 流到第 3 帧后突然断开
-npc-llm --hang 30000          # 建连后什么都不发
+dummy-llm --fail 429            # 流开始前返回标准 429
+dummy-llm --fail 500:after=3    # 流到第 3 帧后突然断开
+dummy-llm --hang 30000          # 建连后什么都不发
 ```
 
 **流中途断流**最有价值：客户端会拿到一个中途死掉的合法流，这正是让线上代码永远卡住的场景。
 
 ## 日志
 
-`NPC_LOG=summary` 会对每个请求打一行 JSON：路径、模型、收到几条消息，以及剥离后的最后一条用户消息。
+`DUMMY_LOG=summary` 会对每个请求打一行 JSON：路径、模型、收到几条消息，以及剥离后的最后一条用户消息。
 `full` 还会带上完整请求体。
 
 ```bash
-npc-llm --log summary         # 本地
-npx wrangler tail npc-llm     # 线上 Worker 的实时日志
+dummy-llm --log summary         # 本地
+npx wrangler tail dummy-llm     # 线上 Worker 的实时日志
 ```
 
 想知道"客户端到底发了什么"，这是最快的办法：
 
 ```json
-{"npc":"request","path":"/v1/chat/completions","model":"npc-1","stream":true,"messages":2,"lastUser":"hwfaeouheaw"}
+{"dummy":"request","path":"/v1/chat/completions","model":"dummy-1","stream":true,"messages":2,"lastUser":"hwfaeouheaw"}
 ```
 
 默认关闭；`wrangler.jsonc` 里给部署好的 Worker 开了 `summary`。
