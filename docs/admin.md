@@ -156,13 +156,12 @@ Four things turn that from a mystery into something a person can reason about:
 
 - `/admin/api/state` returns, for every setting, the environment value, the stored override if one
   exists, and the effective value.
-- The admin page renders that as "environment 100, overridden to 40" with a **Reset to environment** button
+- The admin page renders that as "environment 100, overridden to 40", with a **Reset to environment** button
   on each row.
-- Every override is stored together with a `basedOn` snapshot of the environment value at the moment the
-  override was created, so the page can also report "the environment changed from 100 to 200 after you set
-  this override".
-- A **Copy for wrangler.jsonc** button produces the exact lines that reproduce the current effective state.
-  Making a change permanent is then mechanical: paste, deploy, reset the override.
+
+Two further ideas were considered and deliberately dropped, to keep the page small: storing a snapshot of the
+environment value alongside each override (so the page could report that the environment had changed since the
+override was created), and a **Copy for wrangler.jsonc** button.
 
 ### 4.5 What is true on the Cloudflare side, for the record
 
