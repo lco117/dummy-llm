@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "parrot-llm",
+  "name": "npc-llm",
   "main": "src/adapters/worker.ts",
   "compatibility_date": "2025-09-01",
   // No *.workers.dev route and no preview URLs: bind your own domain instead
@@ -13,13 +13,13 @@
   },
   // Non-secret defaults. Everything can be overridden in the Cloudflare dashboard.
   "vars": {
-    "PARROT_TEXT": "6",
-    "PARROT_MODE": "echo",
-    // PARROT_CHUNK is left unset on purpose: the code default is 4 code points
-    // (~one token), which is what makes PARROT_TPS mean tokens per second.
-    "PARROT_TPS": "100",
-    // One JSON line per request, visible in Workers Logs / `npx wrangler tail parrot-llm`.
+    "NPC_TEXT": "6",
+    "NPC_MODE": "echo",
+    // NPC_CHUNK is left unset on purpose: the code default is 4 code points
+    // (~one token), which is what makes NPC_TPS mean tokens per second.
+    "NPC_TPS": "100",
+    // One JSON line per request, visible in Workers Logs / `npx wrangler tail npc-llm`.
     // Set to "off" (or "full" to include whole request bodies).
-    "PARROT_LOG": "summary"
+    "NPC_LOG": "summary"
   }
 }

@@ -61,8 +61,8 @@ function collectMessages(body: Record<string, any>): Array<{ role: string; conte
 }
 
 /**
- * PARROT_LOG=summary prints one line per request — what the server actually received.
- * On Cloudflare that shows up in Workers Logs and in `npx wrangler tail parrot-llm`.
+ * NPC_LOG=summary prints one line per request — what the server actually received.
+ * On Cloudflare that shows up in Workers Logs and in `npx wrangler tail npc-llm`.
  */
 function logRequest(ctx: Ctx, method: string, body: Record<string, any>): void {
   if (ctx.cfg.log === "off") return;
@@ -70,7 +70,7 @@ function logRequest(ctx: Ctx, method: string, body: Record<string, any>): void {
   const users = messages.filter((message) => message.role === "user");
   const lastUser = users.length > 0 ? stripReminders(users[users.length - 1].content, ctx.cfg.strip) : "";
   const line: Record<string, unknown> = {
-    parrot: "request",
+    npc: "request",
     method,
     path: ctx.url.pathname,
     model: body.model ?? null,
@@ -88,12 +88,12 @@ async function readJson(request: Request, ctx: Ctx): Promise<Record<string, any>
   if (limit > 0) {
     const declared = Number(request.headers.get("content-length"));
     if (Number.isFinite(declared) && declared > limit) {
-      throw new HttpError(413, `Request body too large: the limit is ${limit} bytes (PARROT_MAX_BODY).`);
+      throw new HttpError(413, `Request body too large: the limit is ${limit} bytes (NPC_MAX_BODY).`);
     }
   }
   const text = await request.text();
   if (limit > 0 && text.length > limit) {
-    throw new HttpError(413, `Request body too large: the limit is ${limit} bytes (PARROT_MAX_BODY).`);
+    throw new HttpError(413, `Request body too large: the limit is ${limit} bytes (NPC_MAX_BODY).`);
   }
   if (text.trim() === "") return {};
   try {
@@ -121,7 +121,7 @@ function checkAuth(request: Request, ctx: Ctx): Response | null {
   return errorResponse(
     protocolFor(ctx.url.pathname),
     401,
-    "Incorrect API key provided. This parrot accepts any key when PARROT_API_KEY is unset; it is currently set.",
+    "Incorrect API key provided. This NPC accepts any key when NPC_API_KEY is unset; it is currently set.",
   );
 }
 
@@ -199,7 +199,7 @@ function withCors(response: Response, request: Request, config: Config): Respons
 export function createApp(config: Config): App {
   return async function app(request: Request): Promise<Response> {
     const url = new URL(request.url);
-    // Locked seed (tests, PARROT_SEED) keeps runs reproducible; otherwise every
+    // Locked seed (tests, NPC_SEED) keeps runs reproducible; otherwise every
     // request gets its own stream of randomness so the thinking template varies.
     const seed = config.deterministic ? config.seed : (Date.now() ^ (requestCounter++ * 0x9e3779b9)) >>> 0;
     const ctx: Ctx = { cfg: config, url, rand: mulberry32(seed) };

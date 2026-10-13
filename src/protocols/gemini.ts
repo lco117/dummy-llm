@@ -106,7 +106,7 @@ export function models(ctx: Ctx): Response {
       baseModelId: id,
       version: "001",
       displayName: id,
-      description: "A parrot. It says whatever you said.",
+      description: "An NPC. It says whatever you said.",
       inputTokenLimit: 128000,
       outputTokenLimit: 8192,
       supportedGenerationMethods: ["generateContent", "streamGenerateContent", "countTokens"],

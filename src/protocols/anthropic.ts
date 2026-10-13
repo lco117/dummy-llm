@@ -44,7 +44,7 @@ function syncMessages(canon: CanonRequest, ctx: Ctx): Response {
   const answer = plan(canon, ctx.cfg, ctx.rand);
   const content: unknown[] = [];
   if (answer.thinking) {
-    content.push({ type: "thinking", thinking: answer.thinking, signature: `parrot-${randomId(ctx.rand, 16)}` });
+    content.push({ type: "thinking", thinking: answer.thinking, signature: `npc-${randomId(ctx.rand, 16)}` });
   }
   content.push({ type: "text", text: answer.reply });
   return json({
@@ -92,7 +92,7 @@ function streamMessages(canon: CanonRequest, ctx: Ctx): Response {
         if (phase.channel !== current) {
           if (current === "thinking") {
             yield sse(
-              { type: "content_block_delta", index: blockIndex, delta: { type: "signature_delta", signature: `parrot-${randomId(ctx.rand, 16)}` } },
+              { type: "content_block_delta", index: blockIndex, delta: { type: "signature_delta", signature: `npc-${randomId(ctx.rand, 16)}` } },
               "content_block_delta",
             );
           }
@@ -125,7 +125,7 @@ function streamMessages(canon: CanonRequest, ctx: Ctx): Response {
 
     if (current === "thinking") {
       yield sse(
-        { type: "content_block_delta", index: blockIndex, delta: { type: "signature_delta", signature: `parrot-${randomId(ctx.rand, 16)}` } },
+        { type: "content_block_delta", index: blockIndex, delta: { type: "signature_delta", signature: `npc-${randomId(ctx.rand, 16)}` } },
         "content_block_delta",
       );
     }

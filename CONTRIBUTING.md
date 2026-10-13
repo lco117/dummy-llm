@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for wanting to make the parrot say something. 🦜
+Thanks for wanting to give the NPC a new line. 🧍
 
 ## Ground rules
 
@@ -14,7 +14,7 @@ Thanks for wanting to make the parrot say something. 🦜
 - A Cohere v2 `/v1/chat` adapter
 - `/api/ps` and `/api/show` for Ollama
 - An OpenAI-compatible `/v1/audio/speech` returning a silent WAV
-- A `PARROT_LATENCY_PROFILE` flag: `instant` / `dialup` / `sleepy`
+- A `NPC_LATENCY_PROFILE` flag: `instant` / `dialup` / `sleepy`
 - A Chinese README (`README.zh-CN.md`)
 
 ## Adding a protocol

@@ -1,13 +1,15 @@
 <div align="center">
 
-# 🦜 parrot-llm
+# 🧍 npc-llm
 
-**一个你说什么它就说什么的"大模型"——只不过它会先"思考"一会儿。**
+**一个只有一句台词的"大模型"——台词还是你写的。**
+
+它会先"思考"一下，当然。
 
 零运行时依赖 · 字节级精准的流式输出 · VPS / 树莓派 / Cloudflare Workers / Vercel 都能跑
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/lco117/parrot-llm)
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/lco117/parrot-llm&project-name=parrot-llm&repository-name=parrot-llm)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/lco117/npc-llm)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/lco117/npc-llm&project-name=npc-llm&repository-name=npc-llm)
 
 *点一下按钮、授权 Cloudflare，一分钟内 Worker 就部署好了——免费额度、无冷启动、无需构建。本模板默认**关闭** `workers.dev` 和 Preview URL，请自行绑定域名（或把 `wrangler.jsonc` 里的 `"workers_dev"` 改成 `true`）后再访问。*
 
@@ -23,9 +25,9 @@
 
 于是它同时是两样东西：
 
-| 你想做的事 | parrot-llm 给你的 |
+| 你想做的事 | npc-llm 给你的 |
 | --- | --- |
-| 整活：把朋友的"前沿大模型"换成鹦鹉 | 改一行配置，任何客户端直接接上 |
+| 整活：把朋友的"前沿大模型"换成村口 NPC | 改一行配置，任何客户端直接接上 |
 | 在 CI 里测 LLM 应用 | 确定性、离线、瞬时、免费的 LLM 替身 |
 | 复现某个厂商的 bug | 可以 diff 的字节级 fixture |
 | 测重试 / 退避逻辑 | 形状正确的 429、500，以及**流中途断流** |
@@ -34,27 +36,27 @@
 
 ```bash
 # 方式 A —— Docker，直接从仓库构建（无需 clone）
-docker build -t parrot-llm https://github.com/lco117/parrot-llm.git
-docker run --rm -p 8080:8080 -e PARROT_TEXT=6 parrot-llm
+docker build -t npc-llm https://github.com/lco117/npc-llm.git
+docker run --rm -p 8080:8080 -e NPC_TEXT=6 npc-llm
 
 # 方式 B —— 从源码
-git clone https://github.com/lco117/parrot-llm && cd parrot-llm
+git clone https://github.com/lco117/npc-llm && cd npc-llm
 npm install
 npm run dev              # Node 22.18+ 可直接运行 TypeScript，无需构建
 # 或：npm run build && node dist/cli.js --port 8080
 
-# 方式 C —— npm（包发布后；parrot-llm 这个名字目前没被占用）
-npx parrot-llm --port 8080 --text "6"
+# 方式 C —— npm（包发布后；npc-llm 这个名字目前没被占用）
+npx npc-llm --port 8080 --text "6"
 ```
 
 然后把任何 SDK 指过来，其余都不用改：
 
 ```bash
 export OPENAI_BASE_URL=http://localhost:8080/v1
-export OPENAI_API_KEY=sk-parrot
+export OPENAI_API_KEY=sk-npc
 
 export ANTHROPIC_BASE_URL=http://localhost:8080
-export ANTHROPIC_API_KEY=sk-parrot
+export ANTHROPIC_API_KEY=sk-npc
 
 export OLLAMA_HOST=http://localhost:8080
 ```
@@ -62,7 +64,7 @@ export OLLAMA_HOST=http://localhost:8080
 ```bash
 curl -N http://localhost:8080/v1/chat/completions \
   -H 'content-type: application/json' \
-  -d '{"model":"parrot-1","messages":[{"role":"user","content":"你是真模型吗"}],"stream":true}'
+  -d '{"model":"npc-1","messages":[{"role":"user","content":"你是真模型吗"}],"stream":true}'
 ```
 
 ## 接口一览
@@ -84,25 +86,25 @@ curl -N http://localhost:8080/v1/chat/completions \
 
 | 环境变量 | 默认 | 说明 |
 | --- | --- | --- |
-| `PARROT_TEXT` | `6` | `fixed` 模式的回答模板（会替换 `{input}`、`{model}`），也是用户什么都没说时的兜底 |
-| `PARROT_MODE` | `echo` | `echo`（复读用户）/ `fixed` / `random` / `canned` |
-| `PARROT_ECHO_RAW` | — | 原样复读，不做任何噪声剥离 |
-| `PARROT_STRIP` | — | 额外的正则（`\|` 分隔），复读前从用户消息里剔除 |
-| `PARROT_CHUNK` | `4` | 每个流式片段几个字符——4 个字符约等于一个英文 token。也支持 `word` / `line` / `whole` |
-| `PARROT_TPS` | `100` | 每秒输出多少 token，一个片段多大取决于 `PARROT_CHUNK`（`0` 表示不限速） |
-| `PARROT_DELAY_MS` | 由 `PARROT_TPS` 换算 | 显式设置后会覆盖 `PARROT_TPS` |
-| `PARROT_TTFT_MS` | `0` | 首 token 延迟 |
-| `PARROT_SEED` | `1` | 让 id 和抖动可复现 |
-| `PARROT_FAIL` | — | `429` / `429:after=3` / `rate_limit` |
-| `PARROT_API_KEY` | — | 设置后 API 路由需要该密钥 |
-| `PARROT_CORS` | `*` | 允许的跨域来源 |
-| `PARROT_LOG` | `off` | `off` / `summary` / `full`，记录收到的每个请求 |
-| `PARROT_MAX_BODY` | `1000000` | 超过这个字节数的请求体直接拒绝（`0` 表示不限制） |
-| `PARROT_MODELS` | `parrot-1, parrot-1-mini, definitely-not-a-model` | 逗号分隔 |
-| `PARROT_TOOLCALL` | — | 需要时返回固定 function call |
-| `PARROT_THINKING` | 内置 10 个模板 | 硬编码的思考。用 `\|` 分隔多个模板，每次请求随机取一个；会替换 `{input}`、`{reply}`；`off` 关闭 |
+| `NPC_TEXT` | `6` | `fixed` 模式的回答模板（会替换 `{input}`、`{model}`），也是用户什么都没说时的兜底 |
+| `NPC_MODE` | `echo` | `echo`（复读用户）/ `fixed` / `random` / `canned` |
+| `NPC_ECHO_RAW` | — | 原样复读，不做任何噪声剥离 |
+| `NPC_STRIP` | — | 额外的正则（`\|` 分隔），复读前从用户消息里剔除 |
+| `NPC_CHUNK` | `4` | 每个流式片段几个字符——4 个字符约等于一个英文 token。也支持 `word` / `line` / `whole` |
+| `NPC_TPS` | `100` | 每秒输出多少 token，一个片段多大取决于 `NPC_CHUNK`（`0` 表示不限速） |
+| `NPC_DELAY_MS` | 由 `NPC_TPS` 换算 | 显式设置后会覆盖 `NPC_TPS` |
+| `NPC_TTFT_MS` | `0` | 首 token 延迟 |
+| `NPC_SEED` | `1` | 让 id 和抖动可复现 |
+| `NPC_FAIL` | — | `429` / `429:after=3` / `rate_limit` |
+| `NPC_API_KEY` | — | 设置后 API 路由需要该密钥 |
+| `NPC_CORS` | `*` | 允许的跨域来源 |
+| `NPC_LOG` | `off` | `off` / `summary` / `full`，记录收到的每个请求 |
+| `NPC_MAX_BODY` | `1000000` | 超过这个字节数的请求体直接拒绝（`0` 表示不限制） |
+| `NPC_MODELS` | `npc-1, npc-1-mini, definitely-not-a-model` | 逗号分隔 |
+| `NPC_TOOLCALL` | — | 需要时返回固定 function call |
+| `NPC_THINKING` | 内置 10 个模板 | 硬编码的思考。用 `\|` 分隔多个模板，每次请求随机取一个；会替换 `{input}`、`{reply}`；`off` 关闭 |
 
-全部同时是 CLI 参数：`parrot-llm --help`。
+全部同时是 CLI 参数：`npc-llm --help`。
 
 `echo` 模式复读的是最后一条**人说的**消息。但 agent 框架会把自己的噪声当成 user 消息塞进对话，
 有两种：
@@ -112,7 +114,7 @@ curl -N http://localhost:8080/v1/chat/completions \
   `Browser time zone for this request: …`、`Elapsed since the preceding model-visible message: …`
 
 两种都会先被剥掉；如果最新那条除了噪声什么都没有，就往上找上一条真正有人话的消息。可以用
-`PARROT_STRIP`（`|` 分隔的正则）加自己的规则，或者用 `--echo-raw` 全部关掉，一个字节不差地看请求体。
+`NPC_STRIP`（`|` 分隔的正则）加自己的规则，或者用 `--echo-raw` 全部关掉，一个字节不差地看请求体。
 
 ## 思考
 
@@ -120,7 +122,7 @@ curl -N http://localhost:8080/v1/chat/completions \
 
 ```bash
 curl -s http://localhost:8080/v1/chat/completions -H 'content-type: application/json' \
-  -d '{"model":"parrot-1","messages":[{"role":"user","content":"abc"}]}'
+  -d '{"model":"npc-1","messages":[{"role":"user","content":"abc"}]}'
 ```
 
 ```json
@@ -144,37 +146,37 @@ curl -s http://localhost:8080/v1/chat/completions -H 'content-type: application/
 模式速查：
 
 ```bash
-parrot-llm                             # echo   - 你说什么它说什么（默认）
-parrot-llm --mode fixed --text "6"     # fixed  - 永远同一句
-parrot-llm --no-thinking               # 不输出思考
+npc-llm                             # echo   - 你说什么它说什么（默认）
+npc-llm --mode fixed --text "6"     # fixed  - 永远同一句
+npc-llm --no-thinking               # 不输出思考
 ```
 
-用 `PARROT_THINKING` 改词（占位符 `{input}`、`{reply}`、`{model}`）。
+用 `NPC_THINKING` 改词（占位符 `{input}`、`{reply}`、`{model}`）。
 
 ## 故障注入
 
 ```bash
-parrot-llm --fail 429            # 流开始前返回标准 429
-parrot-llm --fail 500:after=3    # 流到第 3 帧后突然断开
-parrot-llm --hang 30000          # 建连后什么都不发
+npc-llm --fail 429            # 流开始前返回标准 429
+npc-llm --fail 500:after=3    # 流到第 3 帧后突然断开
+npc-llm --hang 30000          # 建连后什么都不发
 ```
 
 **流中途断流**最有价值：客户端会拿到一个中途死掉的合法流，这正是让线上代码永远卡住的场景。
 
 ## 日志
 
-`PARROT_LOG=summary` 会对每个请求打一行 JSON：路径、模型、收到几条消息，以及剥离后的最后一条用户消息。
+`NPC_LOG=summary` 会对每个请求打一行 JSON：路径、模型、收到几条消息，以及剥离后的最后一条用户消息。
 `full` 还会带上完整请求体。
 
 ```bash
-parrot-llm --log summary         # 本地
-npx wrangler tail parrot-llm     # 线上 Worker 的实时日志
+npc-llm --log summary         # 本地
+npx wrangler tail npc-llm     # 线上 Worker 的实时日志
 ```
 
 想知道"客户端到底发了什么"，这是最快的办法：
 
 ```json
-{"parrot":"request","path":"/v1/chat/completions","model":"parrot-1","stream":true,"messages":2,"lastUser":"hwfaeouheaw"}
+{"npc":"request","path":"/v1/chat/completions","model":"npc-1","stream":true,"messages":2,"lastUser":"hwfaeouheaw"}
 ```
 
 默认关闭；`wrangler.jsonc` 里给部署好的 Worker 开了 `summary`。

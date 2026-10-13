@@ -14,7 +14,7 @@ export interface Case {
 }
 
 export function makeApp(overrides: Partial<Config> = {}) {
-  const env = { PARROT_TEXT: "6", PARROT_DELAY_MS: "0", PARROT_TTFT_MS: "0" };
+  const env = { NPC_TEXT: "6", NPC_DELAY_MS: "0", NPC_TTFT_MS: "0" };
   // seed 1 makes the run deterministic: ids, random lines and the thinking template
   return createApp(resolveConfig(env, { seed: 1, now: () => FIXED_NOW, ...overrides }));
 }
@@ -83,7 +83,7 @@ export const CASES: Case[] = [
     method: "POST",
     path: "/v1/chat/completions",
     body: {
-      model: "parrot-1",
+      model: "npc-1",
       messages: [
         { role: "user", content: "hwfaeouheaw" },
         { role: "user", content: "<system-reminder>\nUpdated instructions from: AGENTS.md\n\nA wall of harness noise.\n</system-reminder>" },
@@ -95,7 +95,7 @@ export const CASES: Case[] = [
     name: "openai-chat-echo-raw",
     method: "POST",
     path: "/v1/chat/completions",
-    body: { model: "parrot-1", messages: [{ role: "user", content: "hi <system-reminder>noise</system-reminder>" }] },
+    body: { model: "npc-1", messages: [{ role: "user", content: "hi <system-reminder>noise</system-reminder>" }] },
     config: { echoRaw: true, chunk: "whole" },
   },
 
@@ -104,7 +104,7 @@ export const CASES: Case[] = [
     method: "POST",
     path: "/v1/chat/completions",
     body: {
-      model: "parrot-1",
+      model: "npc-1",
       messages: [
         { role: "user", content: "hi" },
         {
@@ -145,5 +145,5 @@ export const CASES: Case[] = [
   { name: "not-found", method: "GET", path: "/nope" },
   { name: "fault-429", method: "POST", path: "/v1/chat/completions", body: { model: "gpt-4o", messages: [USER], stream: true }, config: { fail: { status: 429 } } },
   { name: "fault-midstream", method: "POST", path: "/v1/chat/completions", body: { model: "gpt-4o", messages: [USER], stream: true }, config: { fail: { status: 429, after: 0 } } },
-  { name: "auth-401", method: "POST", path: "/v1/chat/completions", body: { model: "gpt-4o", messages: [USER], stream: true }, config: { apiKey: "sk-parrot" } },
+  { name: "auth-401", method: "POST", path: "/v1/chat/completions", body: { model: "gpt-4o", messages: [USER], stream: true }, config: { apiKey: "sk-npc" } },
 ];

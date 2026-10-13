@@ -20,7 +20,7 @@ Deliverables: `src/{index,config,engine,http,context,sse}.ts`,
 
 - [ ] `POST /v1/chat/completions` with `stream: true` and `false`
 - [ ] `GET /v1/models` returning plausible ids
-- [ ] fixed text, code-point chunking, `PARROT_DELAY_MS`, `PARROT_TTFT_MS`
+- [ ] fixed text, code-point chunking, `NPC_DELAY_MS`, `NPC_TTFT_MS`
 - [ ] `data: [DONE]` sentinel and `stream_options.include_usage` chunk
 - [ ] `GET /healthz`, permissive CORS, 404 in OpenAI error shape
 - [ ] Dockerfile + `docker run -p 8080:8080`
@@ -40,7 +40,7 @@ golden `.sse` fixture diff passes in CI.
 
 - [ ] `POST /v1/responses` with the named-event sequence, no `[DONE]`
 - [ ] `/api/chat`, `/api/generate`, `/api/tags`, `/api/version` (NDJSON)
-- [ ] `PARROT_MODE=echo` (repeat the user) — the actual parrot joke
+- [ ] `NPC_MODE=echo` (repeat the user) — the actual npc joke
 
 **Done when** the `openai` SDK's `responses.stream()` and an Ollama client both work.
 
@@ -48,8 +48,8 @@ golden `.sse` fixture diff passes in CI.
 
 - [ ] `:generateContent` and `:streamGenerateContent?alt=sse`
 - [ ] deterministic pseudo-embeddings
-- [ ] `PARROT_FAIL` / `PARROT_FAIL_AFTER` / `PARROT_HANG_MS` / `?fail=` override
-- [ ] `PARROT_MODE=canned` with a keyword map
+- [ ] `NPC_FAIL` / `NPC_FAIL_AFTER` / `NPC_HANG_MS` / `?fail=` override
+- [ ] `NPC_MODE=canned` with a keyword map
 - [ ] optional fixed `tool_calls` response
 
 **Done when** a test asserts that a mid-stream failure surfaces as a client error, not a hang.
@@ -66,7 +66,7 @@ golden `.sse` fixture diff passes in CI.
 
 ## M6 — Open-source polish
 
-- [ ] publish to npm so `npx parrot-llm` works
+- [ ] publish to npm so `npx npc-llm` works
 - [ ] `CONTRIBUTING.md`, issue templates, "good first issue" labels
 - [ ] Chinese README (`README.zh-CN.md`)
 - [ ] landing page at `/` that renders the fixed string in a big font
@@ -77,7 +77,7 @@ golden `.sse` fixture diff passes in CI.
 - Ollama `/api/ps` and `/api/show` stubs
 - Cohere v2 `/v1/chat` adapter
 - `openai`-compatible `/v1/audio/speech` returning a silent WAV
-- a `PARROT_LATENCY_PROFILE` flag: `instant` / `dialup` / `sleepy`
+- a `NPC_LATENCY_PROFILE` flag: `instant` / `dialup` / `sleepy`
 - `curl` examples per protocol in the README
 - a Teapot easter egg on `/v1/brew`
 

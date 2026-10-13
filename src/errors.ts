@@ -125,7 +125,7 @@ export function preflightFault(protocol: ProtocolId, ctx: Ctx): Response | null 
 }
 
 export function faultMessage(status: number): string {
-  if (status === 429) return "Rate limit reached for parrot-llm. Please try again never.";
+  if (status === 429) return "Rate limit reached for npc-llm. Please try again never.";
   if (status === 401) return "Incorrect API key provided.";
   if (status === 404) return "The model you requested does not exist.";
   if (status >= 500) return "The server had an error while processing your request. Sorry about that.";

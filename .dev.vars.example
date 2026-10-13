@@ -2,7 +2,7 @@
 # Keep every line commented out so the one-click deploy asks no questions,
 # and uncomment only what you want a deployer to be forced to fill in.
 
-# PARROT_API_KEY=sk-parrot
-# PARROT_TEXT=6
-# PARROT_MODE=fixed
-# PARROT_DELAY_MS=20
+# NPC_API_KEY=sk-npc
+# NPC_TEXT=6
+# NPC_MODE=fixed
+# NPC_DELAY_MS=20

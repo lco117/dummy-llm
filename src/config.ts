@@ -4,7 +4,7 @@ import type { ChunkMode, Config, LogLevel, Mode } from "./types.ts";
 
 /**
  * Ten hardcoded "reasonings". In echo mode one is picked at random per request,
- * so the parrot does not look like a broken record. {input} is what the user said,
+ * so the NPC does not look like a broken record. {input} is what the user said,
  * {reply} is what we are about to say back.
  */
 export const DEFAULT_THINKING_POOL: string[] = [
@@ -86,7 +86,7 @@ function boolean(value: string | undefined): boolean {
   return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
 }
 
-/** PARROT_THINKING accepts one template, a |-separated pool, or "off". */
+/** NPC_THINKING accepts one template, a |-separated pool, or "off". */
 function thinkingPool(value: string | undefined): string[] {
   if (value === undefined) return DEFAULTS.thinking;
   if (OFF.has(value.trim().toLowerCase())) return [];
@@ -99,26 +99,26 @@ function thinkingPool(value: string | undefined): string[] {
  * Node passes `process.env`, a Worker passes the `env` binding.
  */
 export function resolveConfig(env: Env = {}, overrides: Partial<Config> = {}): Config {
-  const mode = (env.PARROT_MODE as Mode | undefined) ?? DEFAULTS.mode;
-  const text = env.PARROT_TEXT ?? DEFAULTS.text;
-  const lines = env.PARROT_LINES
-    ? env.PARROT_LINES.split("|").map((line) => line.trim()).filter(Boolean)
+  const mode = (env.NPC_MODE as Mode | undefined) ?? DEFAULTS.mode;
+  const text = env.NPC_TEXT ?? DEFAULTS.text;
+  const lines = env.NPC_LINES
+    ? env.NPC_LINES.split("|").map((line) => line.trim()).filter(Boolean)
     : [text];
 
   let canned: Record<string, string> = {};
-  if (env.PARROT_CANNED) {
+  if (env.NPC_CANNED) {
     try {
-      const parsed = JSON.parse(env.PARROT_CANNED) as Record<string, string>;
+      const parsed = JSON.parse(env.NPC_CANNED) as Record<string, string>;
       if (parsed && typeof parsed === "object") canned = parsed;
     } catch {
       canned = {};
     }
   }
 
-  const tps = wholeNumber(env.PARROT_TPS, DEFAULTS.tps);
-  const seedProvided = hasValue(env.PARROT_SEED);
+  const tps = wholeNumber(env.NPC_TPS, DEFAULTS.tps);
+  const seedProvided = hasValue(env.NPC_SEED);
   const deterministic = seedProvided || overrides.seed !== undefined || overrides.deterministic === true;
-  const explicitDelay = env.PARROT_DELAY_MS !== undefined && env.PARROT_DELAY_MS.trim() !== "";
+  const explicitDelay = env.NPC_DELAY_MS !== undefined && env.NPC_DELAY_MS.trim() !== "";
 
   return {
     deterministic,
@@ -126,22 +126,22 @@ export function resolveConfig(env: Env = {}, overrides: Partial<Config> = {}): C
     mode: MODES.includes(mode) ? mode : DEFAULTS.mode,
     lines: lines.length > 0 ? lines : [text],
     canned,
-    chunk: chunkMode(env.PARROT_CHUNK),
+    chunk: chunkMode(env.NPC_CHUNK),
     tps,
-    delayMs: explicitDelay ? wholeNumber(env.PARROT_DELAY_MS, tpsToDelay(tps)) : tpsToDelay(tps),
-    ttftMs: wholeNumber(env.PARROT_TTFT_MS, DEFAULTS.ttftMs),
-    seed: wholeNumber(env.PARROT_SEED, DEFAULTS.seed),
-    fail: parseFaultSpec(env.PARROT_FAIL),
-    hangMs: wholeNumber(env.PARROT_HANG_MS, 0),
-    apiKey: env.PARROT_API_KEY && env.PARROT_API_KEY.trim() !== "" ? env.PARROT_API_KEY.trim() : null,
-    cors: env.PARROT_CORS ?? DEFAULTS.cors,
-    models: list(env.PARROT_MODELS, DEFAULT_MODELS),
-    toolCall: env.PARROT_TOOLCALL && env.PARROT_TOOLCALL.trim() !== "" ? env.PARROT_TOOLCALL : null,
-    thinking: thinkingPool(env.PARROT_THINKING),
-    echoRaw: boolean(env.PARROT_ECHO_RAW),
-    log: logLevel(env.PARROT_LOG),
-    maxBodyBytes: wholeNumber(env.PARROT_MAX_BODY, DEFAULTS.maxBodyBytes),
-    strip: env.PARROT_STRIP ? env.PARROT_STRIP.split("|").map((item) => item.trim()).filter(Boolean) : [],
+    delayMs: explicitDelay ? wholeNumber(env.NPC_DELAY_MS, tpsToDelay(tps)) : tpsToDelay(tps),
+    ttftMs: wholeNumber(env.NPC_TTFT_MS, DEFAULTS.ttftMs),
+    seed: wholeNumber(env.NPC_SEED, DEFAULTS.seed),
+    fail: parseFaultSpec(env.NPC_FAIL),
+    hangMs: wholeNumber(env.NPC_HANG_MS, 0),
+    apiKey: env.NPC_API_KEY && env.NPC_API_KEY.trim() !== "" ? env.NPC_API_KEY.trim() : null,
+    cors: env.NPC_CORS ?? DEFAULTS.cors,
+    models: list(env.NPC_MODELS, DEFAULT_MODELS),
+    toolCall: env.NPC_TOOLCALL && env.NPC_TOOLCALL.trim() !== "" ? env.NPC_TOOLCALL : null,
+    thinking: thinkingPool(env.NPC_THINKING),
+    echoRaw: boolean(env.NPC_ECHO_RAW),
+    log: logLevel(env.NPC_LOG),
+    maxBodyBytes: wholeNumber(env.NPC_MAX_BODY, DEFAULTS.maxBodyBytes),
+    strip: env.NPC_STRIP ? env.NPC_STRIP.split("|").map((item) => item.trim()).filter(Boolean) : [],
     now: () => Date.now(),
     ...overrides,
   };

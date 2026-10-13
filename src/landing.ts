@@ -95,15 +95,15 @@ export function landingPage(ctx: Ctx): Response {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>parrot-llm — it says whatever you said</title>
+<title>npc-llm — it says whatever you said</title>
 <style>${STYLE}</style>
 </head>
 <body>
 <main>
   <header>
     <div class="brand">
-      <span class="bird">🦜</span>
-      <h1>parrot-llm</h1>
+      <span class="bird">🧍</span>
+      <h1>npc-llm</h1>
     </div>
     <p class="tagline">It says whatever you said — after thinking about it. No model, no weights, no GPU: one template, four protocols, byte-exact streaming.</p>
     <div class="chips">${modeChip}${tpsChip}${thinkingChip}${textChip}${logChip}</div>
@@ -138,16 +138,16 @@ export function landingPage(ctx: Ctx): Response {
     <div class="panel">
 <pre><span class="c"># OpenAI SDK</span>
 export OPENAI_BASE_URL=<span class="c">${escapeHtml(new URL(ctx.url).origin)}</span>/v1
-export OPENAI_API_KEY=sk-parrot
+export OPENAI_API_KEY=sk-npc
 
 <span class="c"># Anthropic SDK</span>
 export ANTHROPIC_BASE_URL=${escapeHtml(new URL(ctx.url).origin)}
-export ANTHROPIC_API_KEY=sk-parrot
+export ANTHROPIC_API_KEY=sk-npc
 
 <span class="c"># curl — watch it think, then repeat you</span>
 curl -N ${escapeHtml(new URL(ctx.url).origin)}/v1/chat/completions \\
   -H 'content-type: application/json' \\
-  -d '{"model":"${escapeHtml(cfg.models[0] ?? "parrot-1")}","stream":true,
+  -d '{"model":"${escapeHtml(cfg.models[0] ?? "npc-1")}","stream":true,
        "messages":[{"role":"user","content":"hello"}]}'</pre>
     </div>
   </section>
@@ -160,7 +160,7 @@ curl -N ${escapeHtml(new URL(ctx.url).origin)}/v1/chat/completions \\
   <footer>
     <span>MIT licensed</span>
     <span>·</span>
-    <a href="https://github.com/lco117/parrot-llm">github.com/lco117/parrot-llm</a>
+    <a href="https://github.com/lco117/npc-llm">github.com/lco117/npc-llm</a>
     <span>·</span>
     <span>GET /healthz</span>
   </footer>
@@ -205,11 +205,11 @@ curl -N ${escapeHtml(new URL(ctx.url).origin)}/v1/chat/completions \\
       var res = await fetch("/v1/chat/completions", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ model: "${escapeHtml(cfg.models[0] ?? "parrot-1")}", stream: true, messages: [{ role: "user", content: prompt }] }),
+        body: JSON.stringify({ model: "${escapeHtml(cfg.models[0] ?? "npc-1")}", stream: true, messages: [{ role: "user", content: prompt }] }),
       });
       if (!res.ok || !res.body) {
         ui.thinkWrap.remove();
-        ui.answerText.textContent = "HTTP " + res.status + " — check PARROT_API_KEY";
+        ui.answerText.textContent = "HTTP " + res.status + " — check NPC_API_KEY";
         ui.answerText.className = "error";
         ui.caret.remove();
         return;

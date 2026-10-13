@@ -2,7 +2,7 @@
 // Usage: npm run set-repo -- owner/repo
 import { readFile, writeFile } from "node:fs/promises";
 
-const PLACEHOLDER = "lco117/parrot-llm";
+const PLACEHOLDER = "lco117/npc-llm";
 const slug = process.argv[2];
 
 if (!slug || !/^[\w.-]+\/[\w.-]+$/.test(slug)) {

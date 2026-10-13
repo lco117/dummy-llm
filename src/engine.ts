@@ -31,7 +31,7 @@ const HARNESS_LINE =
 /**
  * Agent harnesses append their own noise to the conversation as *user* messages.
  * Drop the tagged blocks, the plain metadata lines, then any extra patterns the
- * operator configured through PARROT_STRIP.
+ * operator configured through NPC_STRIP.
  */
 export function stripReminders(text: string, extra: string[] = []): string {
   let out = text.replace(REMINDER_BLOCK, "").replace(REMINDER_UNCLOSED, "").replace(HARNESS_LINE, "");
@@ -69,10 +69,10 @@ export interface TemplateVars {
 }
 
 /**
- * Substitutes placeholders. Used both for the answer template (`PARROT_TEXT` in
+ * Substitutes placeholders. Used both for the answer template (`NPC_TEXT` in
  * fixed mode) and for the thinking template:
  *   {input} the cleaned-up user message   {raw} the untouched last user message
- *   {model} the requested model           {reply} the answer   {text} PARROT_TEXT
+ *   {model} the requested model           {reply} the answer   {text} NPC_TEXT
  */
 export function renderTemplate(template: string, vars: TemplateVars): string {
   let out = template.split("{input}").join(vars.input).split("{raw}").join(vars.raw).split("{model}").join(vars.model);
@@ -108,7 +108,7 @@ export function buildText(canon: CanonRequest, cfg: Config, rand: () => number):
 }
 
 /** The "reasoning" is a template too. */
-/** One template per request, picked from the pool — the parrot keeps changing its mind. */
+/** One template per request, picked from the pool — the NPC keeps changing its mind. */
 export function renderThinking(canon: CanonRequest, cfg: Config, reply: string, rand: () => number): string | null {
   if (!cfg.thinking || cfg.thinking.length === 0) return null;
   const template = cfg.thinking.length === 1 ? cfg.thinking[0] : pick(rand, cfg.thinking);
@@ -164,9 +164,9 @@ export interface Phase {
 
 /**
  * Produces the answer piece by piece — the thinking channel first, then the reply —
- * paying the simulated latency bill (`delayMs` per piece, derived from PARROT_TPS).
+ * paying the simulated latency bill (`delayMs` per piece, derived from NPC_TPS).
  * Throws FaultError when a mid-stream fault is configured, which is exactly the case
- * every client's retry logic gets wrong. `PARROT_FAIL=500:after=N` counts every
+ * every client's retry logic gets wrong. `NPC_FAIL=500:after=N` counts every
  * streamed piece, thinking included.
  */
 export async function* phasesFor(
@@ -185,7 +185,7 @@ export async function* phasesFor(
   // Absolute schedule rather than "sleep(delay) per piece": timers in Workers and
   // Node overshoot a little every time, and the error compounds until a 100 tps
   // stream is really running at 50. Targeting "piece i is due at start + i * interval"
-  // makes the long-run rate equal PARROT_TPS even when individual timers are late.
+  // makes the long-run rate equal NPC_TPS even when individual timers are late.
   const interval = cfg.delayMs;
   const started = Date.now();
   let emitted = 0;

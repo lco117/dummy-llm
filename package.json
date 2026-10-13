@@ -1,5 +1,5 @@
 {
-  "name": "parrot-llm",
+  "name": "npc-llm",
   "version": "0.1.1",
   "description": "An LLM that says whatever you said - after a hardcoded thinking step. Speaks OpenAI, Anthropic, Gemini and Ollama with byte-exact streaming.",
   "keywords": [
@@ -16,24 +16,24 @@
     "streaming",
     "testing",
     "cloudflare-workers",
-    "parrot"
+    "npc"
   ],
   "license": "MIT",
   "type": "module",
   "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org/" },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lco117/parrot-llm.git"
+    "url": "git+https://github.com/lco117/npc-llm.git"
   },
-  "homepage": "https://github.com/lco117/parrot-llm#readme",
+  "homepage": "https://github.com/lco117/npc-llm#readme",
   "bugs": {
-    "url": "https://github.com/lco117/parrot-llm/issues"
+    "url": "https://github.com/lco117/npc-llm/issues"
   },
   "engines": {
     "node": ">=20"
   },
   "bin": {
-    "parrot-llm": "dist/cli.js"
+    "npc-llm": "dist/cli.js"
   },
   "main": "./dist/index.js",
   "exports": {

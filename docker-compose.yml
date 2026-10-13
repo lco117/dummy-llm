@@ -1,14 +1,14 @@
 services:
-  parrot:
-    image: ghcr.io/lco117/parrot-llm:latest
+  npc:
+    image: ghcr.io/lco117/npc-llm:latest
     # build: .            # uncomment to build locally instead of pulling
     restart: unless-stopped
     environment:
-      PARROT_TEXT: "6"
-      PARROT_MODE: echo
-      PARROT_TPS: "100"
-      # PARROT_LOG: summary
-      # PARROT_API_KEY: sk-parrot
+      NPC_TEXT: "6"
+      NPC_MODE: echo
+      NPC_TPS: "100"
+      # NPC_LOG: summary
+      # NPC_API_KEY: sk-npc
     expose:
       - "8080"
 
@@ -20,7 +20,7 @@ services:
       - "443:443"
     environment:
       # set this in a .env file next to this compose file
-      PARROT_DOMAIN: ${PARROT_DOMAIN:-localhost}
+      NPC_DOMAIN: ${NPC_DOMAIN:-localhost}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

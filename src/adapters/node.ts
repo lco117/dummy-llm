@@ -6,10 +6,10 @@ import type { Env } from "../config.ts";
 import { createApp, version } from "../index.ts";
 
 const HELP = `
-parrot-llm ${version} - an LLM that always says the same thing.
+npc-llm ${version} - an LLM that always says the same thing.
 
 Usage:
-  parrot-llm [options]
+  npc-llm [options]
 
 Options:
   -p, --port <n>          Port to listen on                 (default 8080)
@@ -38,8 +38,8 @@ Options:
   -v, --version           Show the version
 
 Examples:
-  parrot-llm --text "6" --port 8080
-  parrot-llm --mode echo --delay 0
+  npc-llm --text "6" --port 8080
+  npc-llm --mode echo --delay 0
   curl -N http://localhost:8080/v1/chat/completions \
     -H 'content-type: application/json' \
     -d '{"model":"gpt-4o","messages":[{"role":"user","content":"hi"}],"stream":true}'
@@ -99,26 +99,26 @@ function apply(target: string, ...names: string[]): void {
 
 apply("PORT", "port", "p");
 apply("HOST", "host");
-apply("PARROT_TEXT", "text", "t");
-apply("PARROT_MODE", "mode");
-apply("PARROT_LINES", "lines");
-apply("PARROT_CHUNK", "chunk");
-apply("PARROT_TPS", "tps");
-apply("PARROT_DELAY_MS", "delay");
-apply("PARROT_LOG", "log");
-apply("PARROT_MAX_BODY", "max-body");
-apply("PARROT_STRIP", "strip");
-apply("PARROT_TTFT_MS", "ttft");
-apply("PARROT_SEED", "seed");
-apply("PARROT_API_KEY", "api-key");
-apply("PARROT_CORS", "cors");
-apply("PARROT_MODELS", "models");
-apply("PARROT_FAIL", "fail");
-apply("PARROT_HANG_MS", "hang");
-apply("PARROT_TOOLCALL", "tools");
-apply("PARROT_THINKING", "thinking");
-if (flags["no-thinking"] === true) env.PARROT_THINKING = "off";
-if (flags["echo-raw"] === true) env.PARROT_ECHO_RAW = "1";
+apply("NPC_TEXT", "text", "t");
+apply("NPC_MODE", "mode");
+apply("NPC_LINES", "lines");
+apply("NPC_CHUNK", "chunk");
+apply("NPC_TPS", "tps");
+apply("NPC_DELAY_MS", "delay");
+apply("NPC_LOG", "log");
+apply("NPC_MAX_BODY", "max-body");
+apply("NPC_STRIP", "strip");
+apply("NPC_TTFT_MS", "ttft");
+apply("NPC_SEED", "seed");
+apply("NPC_API_KEY", "api-key");
+apply("NPC_CORS", "cors");
+apply("NPC_MODELS", "models");
+apply("NPC_FAIL", "fail");
+apply("NPC_HANG_MS", "hang");
+apply("NPC_TOOLCALL", "tools");
+apply("NPC_THINKING", "thinking");
+if (flags["no-thinking"] === true) env.NPC_THINKING = "off";
+if (flags["echo-raw"] === true) env.NPC_ECHO_RAW = "1";
 
 const config = resolveConfig(env);
 const app = createApp(config);
@@ -175,7 +175,7 @@ const server = createServer(async (request, response) => {
 });
 
 server.listen(port, host, () => {
-  console.log(`\u{1F99C}  parrot-llm ${version}`);
+  console.log(`\u{1F99C}  npc-llm ${version}`);
   console.log(`    listening on http://localhost:${port}`);
   console.log(`    it will always say: ${JSON.stringify(config.text)} (mode: ${config.mode}, ${config.chunk} chunk(s), ${config.delayMs}ms apart)`);
   console.log(`    point any SDK at http://localhost:${port} and use any API key`);

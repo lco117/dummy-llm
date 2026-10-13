@@ -53,20 +53,20 @@ test("the defaults are: repeat the user, with hardcoded thinking", () => {
   assert.equal(config.thinking.length, 10);
   assert.equal(config.text, "6");
   assert.equal(config.apiKey, null);
-  assert.equal(resolveConfig({ PARROT_MODE: "nonsense" as never }).mode, "echo");
-  assert.equal(resolveConfig({ PARROT_CHUNK: "0" }).chunk, 4);
-  assert.deepEqual(resolveConfig({ PARROT_THINKING: "off" }).thinking, []);
-  assert.deepEqual(resolveConfig({ PARROT_THINKING: "none" }).thinking, []);
-  assert.deepEqual(resolveConfig({ PARROT_THINKING: "custom" }).thinking, ["custom"]);
+  assert.equal(resolveConfig({ NPC_MODE: "nonsense" as never }).mode, "echo");
+  assert.equal(resolveConfig({ NPC_CHUNK: "0" }).chunk, 4);
+  assert.deepEqual(resolveConfig({ NPC_THINKING: "off" }).thinking, []);
+  assert.deepEqual(resolveConfig({ NPC_THINKING: "none" }).thinking, []);
+  assert.deepEqual(resolveConfig({ NPC_THINKING: "custom" }).thinking, ["custom"]);
   assert.equal(resolveConfig({}).deterministic, false);
-  assert.equal(resolveConfig({ PARROT_SEED: "1" }).deterministic, true);
+  assert.equal(resolveConfig({ NPC_SEED: "1" }).deterministic, true);
 });
 
 test("it says whatever the user said", () => {
   const config = resolveConfig({});
   const rand = mulberry32(1);
   assert.equal(buildText(canon("abc"), config, rand), "abc");
-  assert.equal(buildText(canon(""), config, rand), "6", "empty input falls back to PARROT_TEXT");
+  assert.equal(buildText(canon(""), config, rand), "6", "empty input falls back to NPC_TEXT");
 });
 
 test("thinking comes from a pool of hardcoded templates", () => {
@@ -77,11 +77,11 @@ test("thinking comes from a pool of hardcoded templates", () => {
   const filled = DEFAULT_THINKING_POOL.map((template) => template.split("{input}").join("abc").split("{reply}").join("abc"));
   assert.ok(filled.includes(later.thinking as string), "and it is one of the ten templates");
 
-  const single = resolveConfig({ PARROT_THINKING: "say {reply} to {input}" });
+  const single = resolveConfig({ NPC_THINKING: "say {reply} to {input}" });
   assert.equal(renderThinking(canon("abc"), single, "abc", mulberry32(1)), "say abc to abc");
-  assert.equal(renderThinking(canon("abc"), resolveConfig({ PARROT_THINKING: "off" }), "abc", mulberry32(1)), null);
+  assert.equal(renderThinking(canon("abc"), resolveConfig({ NPC_THINKING: "off" }), "abc", mulberry32(1)), null);
 
-  const pool = resolveConfig({ PARROT_THINKING: "A {input} | B {reply} | C" });
+  const pool = resolveConfig({ NPC_THINKING: "A {input} | B {reply} | C" });
   assert.deepEqual(pool.thinking, ["A {input}", "B {reply}", "C"]);
   const seen = new Set<string>();
   for (let seed = 0; seed < 200; seed++) seen.add(renderThinking(canon("x"), pool, "y", mulberry32(seed)) as string);
@@ -89,7 +89,7 @@ test("thinking comes from a pool of hardcoded templates", () => {
 });
 
 test("thinking streams before the reply", async () => {
-  const config = resolveConfig({ PARROT_DELAY_MS: "0" }, { chunk: "whole" });
+  const config = resolveConfig({ NPC_DELAY_MS: "0" }, { chunk: "whole" });
   const out: string[] = [];
   for await (const phase of phases(canon("abc"), config, mulberry32(1))) out.push(`${phase.channel}:${phase.text}`);
   assert.equal(out.length, 2);
@@ -99,7 +99,7 @@ test("thinking streams before the reply", async () => {
 
 test("buildText modes", () => {
   const rand = mulberry32(1);
-  const fixed = resolveConfig({ PARROT_TEXT: "6" }, { mode: "fixed" });
+  const fixed = resolveConfig({ NPC_TEXT: "6" }, { mode: "fixed" });
   assert.equal(buildText(canon("what?"), fixed, rand), "6");
   const canned = resolveConfig({}, { mode: "canned", canned: { weather: "it is raining" } });
   assert.equal(buildText(canon("how is the WEATHER"), canned, rand), "it is raining");
@@ -107,20 +107,20 @@ test("buildText modes", () => {
   assert.ok(["a", "b"].includes(buildText(canon("x"), random, rand)));
 });
 
-test("tokens per second drive the delay, and PARROT_DELAY_MS still wins", () => {
+test("tokens per second drive the delay, and NPC_DELAY_MS still wins", () => {
   assert.equal(resolveConfig({}).tps, 100);
   assert.equal(resolveConfig({}).delayMs, 10);
-  assert.equal(resolveConfig({ PARROT_TPS: "10" }).delayMs, 100);
-  assert.equal(resolveConfig({ PARROT_TPS: "0" }).delayMs, 0, "0 tps means no artificial delay");
-  assert.equal(resolveConfig({ PARROT_TPS: "5", PARROT_DELAY_MS: "50" }).delayMs, 50, "explicit delay overrides tps");
+  assert.equal(resolveConfig({ NPC_TPS: "10" }).delayMs, 100);
+  assert.equal(resolveConfig({ NPC_TPS: "0" }).delayMs, 0, "0 tps means no artificial delay");
+  assert.equal(resolveConfig({ NPC_TPS: "5", NPC_DELAY_MS: "50" }).delayMs, 50, "explicit delay overrides tps");
 });
 
 test("log level parses", () => {
   assert.equal(resolveConfig({}).log, "off");
-  assert.equal(resolveConfig({ PARROT_LOG: "summary" }).log, "summary");
-  assert.equal(resolveConfig({ PARROT_LOG: "1" }).log, "summary");
-  assert.equal(resolveConfig({ PARROT_LOG: "full" }).log, "full");
-  assert.equal(resolveConfig({ PARROT_LOG: "nonsense" }).log, "off");
+  assert.equal(resolveConfig({ NPC_LOG: "summary" }).log, "summary");
+  assert.equal(resolveConfig({ NPC_LOG: "1" }).log, "summary");
+  assert.equal(resolveConfig({ NPC_LOG: "full" }).log, "full");
+  assert.equal(resolveConfig({ NPC_LOG: "nonsense" }).log, "off");
 });
 
 test("fixed mode replies with a template that can contain the user's words", () => {
@@ -140,7 +140,7 @@ test("the landing page is a live demo, not a giant 6", async () => {
   assert.match(response.headers.get("content-type") ?? "", /text\/html/);
   assert.match(html, /says whatever you said/);
   assert.match(html, /v1\/chat\/completions/);
-  assert.match(html, /parrot-1-mini/);
+  assert.match(html, /npc-1-mini/);
 });
 
 test("harness reminder blocks are stripped before deciding what the user said", () => {
@@ -160,7 +160,7 @@ test("harness reminder blocks are stripped before deciding what the user said", 
 
   const noisy: CanonRequest = {
     protocol: "openai-chat",
-    model: "parrot-1",
+    model: "npc-1",
     messages: [
       { role: "user", content: "hwfaeouheaw" },
       { role: "user", content: '<system-reminder>Updated instructions from: AGENTS.md</system-reminder>' },
@@ -170,8 +170,8 @@ test("harness reminder blocks are stripped before deciding what the user said", 
     raw: {},
   };
   assert.equal(userInput(noisy, resolveConfig({})), "hwfaeouheaw", "falls back to the previous real message");
-  assert.equal(userInput(noisy, resolveConfig({ PARROT_ECHO_RAW: "1" })), "<system-reminder>Updated instructions from: AGENTS.md</system-reminder>");
-  assert.equal(resolveConfig({ PARROT_ECHO_RAW: "1" }).echoRaw, true);
+  assert.equal(userInput(noisy, resolveConfig({ NPC_ECHO_RAW: "1" })), "<system-reminder>Updated instructions from: AGENTS.md</system-reminder>");
+  assert.equal(resolveConfig({ NPC_ECHO_RAW: "1" }).echoRaw, true);
   assert.equal(resolveConfig({}).echoRaw, false);
   assert.equal(plan(noisy, resolveConfig({}), mulberry32(1)).reply, "hwfaeouheaw");
 });
@@ -182,7 +182,7 @@ test("oversized request bodies are rejected", async () => {
     new Request("http://localhost/v1/chat/completions", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ model: "parrot-1", messages: [{ role: "user", content: "x".repeat(400) }] }),
+      body: JSON.stringify({ model: "npc-1", messages: [{ role: "user", content: "x".repeat(400) }] }),
     }),
   );
   assert.equal(big.status, 413);
@@ -190,11 +190,11 @@ test("oversized request bodies are rejected", async () => {
     new Request("http://localhost/v1/chat/completions", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ model: "parrot-1", messages: [{ role: "user", content: "hi" }] }),
+      body: JSON.stringify({ model: "npc-1", messages: [{ role: "user", content: "hi" }] }),
     }),
   );
   assert.equal(small.status, 200);
-  assert.equal(resolveConfig({ PARROT_MAX_BODY: "10" }).maxBodyBytes, 10);
+  assert.equal(resolveConfig({ NPC_MAX_BODY: "10" }).maxBodyBytes, 10);
   assert.equal(resolveConfig({}).maxBodyBytes, 1000000);
 });
 

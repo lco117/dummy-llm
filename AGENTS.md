@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Instructions for AI coding agents (and humans who like checklists) working on **parrot-llm**.
+Instructions for AI coding agents (and humans who like checklists) working on **npc-llm**.
 
 ## TL;DR for an agent asked to "deploy this"
 
@@ -17,7 +17,7 @@ npx wrangler deploy           # publishes the Worker
 
 ## What this project is
 
-A fake LLM server. It **says whatever the user said** (`PARROT_MODE=echo`, the default) after emitting a **hardcoded "thinking"** template (`PARROT_THINKING`, with `{input}` and `{reply}` placeholders), all in the exact wire format of OpenAI, Anthropic, Gemini or Ollama. It is used for (a) comedy and (b) deterministic LLM testing in CI.
+A fake LLM server. It **says whatever the user said** (`NPC_MODE=echo`, the default) after emitting a **hardcoded "thinking"** template (`NPC_THINKING`, with `{input}` and `{reply}` placeholders), all in the exact wire format of OpenAI, Anthropic, Gemini or Ollama. It is used for (a) comedy and (b) deterministic LLM testing in CI.
 
 ## Golden rules
 
@@ -44,17 +44,17 @@ A fake LLM server. It **says whatever the user said** (`PARROT_MODE=echo`, the d
 curl -s https://<your-worker-url>/healthz
 curl -sN https://<your-worker-url>/v1/chat/completions \
   -H 'content-type: application/json' \
-  -d '{"model":"parrot-1","messages":[{"role":"user","content":"hi"}],"stream":true}'
+  -d '{"model":"npc-1","messages":[{"role":"user","content":"hi"}],"stream":true}'
 ```
 
 You want: a `200` with `text/event-stream`, several `delta` frames, and a final `data: [DONE]`.
 
 ## Changing the answer
 
-- **What it says back.** Default `PARROT_MODE=echo` repeats the last user message after `stripReminders()` removes harness noise — tagged `<system-reminder>…</system-reminder>` blocks **and** bare metadata lines such as `Time sampled while preparing turn 1, step 1: …`, `Browser time zone for this request: …`, `Elapsed since the preceding model-visible message: …`. If the newest user message was pure noise it walks back to the previous real one. `PARROT_STRIP` adds operator regexes; `PARROT_ECHO_RAW=1` disables all of it. New harness noise belongs in `HARNESS_LINE` in `src/engine.ts`, with a golden case in `test/cases.ts`. `fixed` answers `PARROT_TEXT` forever, `random` picks from `PARROT_LINES`, `canned` matches keywords via `PARROT_CANNED`.
-- **What it "thinks".** `PARROT_THINKING` is a `\|`-separated pool (ten templates ship by default) rendered into every protocol's native reasoning channel; one is drawn per request unless the seed is pinned. `{input}` is the user's message, `{reply}` is the answer. `--no-thinking` (or `PARROT_THINKING=off`) removes the channel entirely.
-- **How fast.** `PARROT_TPS` (default 100) sets tokens per second. A token is `PARROT_CHUNK` code points (default 4, i.e. one English token); `PARROT_DELAY_MS` overrides the pacing. Pacing targets an absolute schedule, so this is the long-run rate, not a per-frame sleep.
-- **What it logs.** `PARROT_LOG=summary` (enabled in `wrangler.jsonc`) prints one JSON line per request; read it with `npx wrangler tail parrot-llm`. `full` includes bodies, `off` is silent.
+- **What it says back.** Default `NPC_MODE=echo` repeats the last user message after `stripReminders()` removes harness noise — tagged `<system-reminder>…</system-reminder>` blocks **and** bare metadata lines such as `Time sampled while preparing turn 1, step 1: …`, `Browser time zone for this request: …`, `Elapsed since the preceding model-visible message: …`. If the newest user message was pure noise it walks back to the previous real one. `NPC_STRIP` adds operator regexes; `NPC_ECHO_RAW=1` disables all of it. New harness noise belongs in `HARNESS_LINE` in `src/engine.ts`, with a golden case in `test/cases.ts`. `fixed` answers `NPC_TEXT` forever, `random` picks from `NPC_LINES`, `canned` matches keywords via `NPC_CANNED`.
+- **What it "thinks".** `NPC_THINKING` is a `\|`-separated pool (ten templates ship by default) rendered into every protocol's native reasoning channel; one is drawn per request unless the seed is pinned. `{input}` is the user's message, `{reply}` is the answer. `--no-thinking` (or `NPC_THINKING=off`) removes the channel entirely.
+- **How fast.** `NPC_TPS` (default 100) sets tokens per second. A token is `NPC_CHUNK` code points (default 4, i.e. one English token); `NPC_DELAY_MS` overrides the pacing. Pacing targets an absolute schedule, so this is the long-run rate, not a per-frame sleep.
+- **What it logs.** `NPC_LOG=summary` (enabled in `wrangler.jsonc`) prints one JSON line per request; read it with `npx wrangler tail npc-llm`. `full` includes bodies, `off` is silent.
 - Permanent on a deployed Worker: edit the `vars` block in `wrangler.jsonc` and redeploy, or set the variable in the Cloudflare dashboard.
 
 ## Adding a new protocol (recipe)
@@ -73,7 +73,7 @@ See the table in `README.md`. The same names work everywhere: `process.env` on N
 
 ## Repo URL placeholder
 
-The buttons and clone commands use `lco117/parrot-llm`. If this repository lives somewhere else, run:
+The buttons and clone commands use `lco117/npc-llm`. If this repository lives somewhere else, run:
 
 ```bash
 npm run set-repo -- owner/repo
@@ -83,7 +83,7 @@ That rewrites `README.md`, `AGENTS.md` and `package.json` in one shot.
 
 ## Publishing to npm
 
-The package name `parrot-llm` was free when this repo was created; as of v0.1.0 it is **not yet published**.
+The package name `npc-llm` was free when this repo was created; as of v0.1.1 it is **not yet published**.
 
 ```bash
 npm login --registry=https://registry.npmjs.org/   # interactive: the human must do this
@@ -91,7 +91,7 @@ npm test && npm run typecheck
 npm publish --access public --registry=https://registry.npmjs.org/
 ```
 
-`prepublishOnly` already runs the build, so `npx parrot-llm` works as soon as the publish lands.
+`prepublishOnly` already runs the build, so `npx npc-llm` works as soon as the publish lands.
 
 ## Commit conventions
 
