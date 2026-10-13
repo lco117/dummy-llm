@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildText, chunkText, estimateTokens, phases, plan, renderThinking } from "../src/engine.ts";
+import { buildText, chunkText, estimateTokens, phases, plan, renderThinking, stripReminders, userInput } from "../src/engine.ts";
 import { mulberry32, randomId } from "../src/random.ts";
 import { parseFaultSpec } from "../src/errors.ts";
 import { DEFAULT_THINKING, resolveConfig } from "../src/config.ts";
@@ -94,6 +94,31 @@ test("buildText modes", () => {
   assert.equal(buildText(canon("how is the WEATHER"), canned, rand), "it is raining");
   const random = resolveConfig({}, { mode: "random", lines: ["a", "b"] });
   assert.ok(["a", "b"].includes(buildText(canon("x"), random, rand)));
+});
+
+test("harness reminder blocks are stripped before deciding what the user said", () => {
+  assert.equal(stripReminders("hello <system-reminder>noise</system-reminder>"), "hello");
+  assert.equal(stripReminders("<system-reminder>only noise</system-reminder>"), "");
+  assert.equal(stripReminders("<SYSTEM-REMINDER>case</SYSTEM-REMINDER>x"), "x");
+  assert.equal(stripReminders("x <system-reminder>unclosed"), "x");
+  assert.equal(stripReminders("no reminders here"), "no reminders here");
+
+  const noisy: CanonRequest = {
+    protocol: "openai-chat",
+    model: "parrot-1",
+    messages: [
+      { role: "user", content: "hwfaeouheaw" },
+      { role: "user", content: '<system-reminder>Updated instructions from: AGENTS.md</system-reminder>' },
+    ],
+    stream: false,
+    includeUsage: false,
+    raw: {},
+  };
+  assert.equal(userInput(noisy, resolveConfig({})), "hwfaeouheaw", "falls back to the previous real message");
+  assert.equal(userInput(noisy, resolveConfig({ PARROT_ECHO_RAW: "1" })), "<system-reminder>Updated instructions from: AGENTS.md</system-reminder>");
+  assert.equal(resolveConfig({ PARROT_ECHO_RAW: "1" }).echoRaw, true);
+  assert.equal(resolveConfig({}).echoRaw, false);
+  assert.equal(plan(noisy, resolveConfig({}), mulberry32(1)).reply, "hwfaeouheaw");
 });
 
 test("token estimate is never zero for non-empty text", () => {

@@ -77,6 +77,27 @@ export const CASES: Case[] = [
   { name: "openai-embeddings", method: "POST", path: "/v1/embeddings", body: { model: "text-embedding-3-small", input: ["hi"], dimensions: 4 } },
   { name: "openai-models", method: "GET", path: "/v1/models" },
 
+  {
+    name: "openai-chat-strips-reminder",
+    method: "POST",
+    path: "/v1/chat/completions",
+    body: {
+      model: "parrot-1",
+      messages: [
+        { role: "user", content: "hwfaeouheaw" },
+        { role: "user", content: "<system-reminder>\nUpdated instructions from: AGENTS.md\n\nA wall of harness noise.\n</system-reminder>" },
+      ],
+    },
+    config: { chunk: "whole" },
+  },
+  {
+    name: "openai-chat-echo-raw",
+    method: "POST",
+    path: "/v1/chat/completions",
+    body: { model: "parrot-1", messages: [{ role: "user", content: "hi <system-reminder>noise</system-reminder>" }] },
+    config: { echoRaw: true, chunk: "whole" },
+  },
+
   // --- OpenAI Responses ---
   { name: "openai-responses-stream", method: "POST", path: "/v1/responses", body: { model: "gpt-4o", input: "hi", stream: true } },
   { name: "openai-responses-sync", method: "POST", path: "/v1/responses", body: { model: "gpt-4o", input: "abc" } },
