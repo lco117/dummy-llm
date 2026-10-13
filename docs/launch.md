@@ -6,9 +6,9 @@ Copy, paste, post. Everything here is usable as-is.
 
 | length | English | 中文 |
 | --- | --- | --- |
-| one line | A fake LLM that repeats what you send, over four real streaming protocols. | 一个假的 LLM：你说什么，它复读什么，用的是四家厂商真实的流式协议。 |
+| one line | A fake LLM with a template engine, speaking four real streaming protocols. | 一个带模板引擎的假 LLM，会说四家厂商真实的流式协议。 |
 | list / table | A fake LLM with real wire format. | 协议说得最标准的假大模型。 |
-| elevator | npc-llm is a fake LLM server. It "thinks" using ten hardcoded templates, then repeats you — like the one villager in every game who says the same sentence forever. The joke is the surface; the product is a deterministic, offline, byte-exact LLM test double that speaks four provider protocols. | npc-llm 是个假的大模型服务：先用十条硬编码模板「思考」，然后一字不差复读你——就像游戏里那个永远重复同一句话的村口 NPC。笑点在表面，真正有用的是它：确定、离线、字节级精准，还说四家厂商的协议，可以当 CI 里的 LLM 测试替身。 |
+| elevator | npc-llm is a fake LLM server with a template engine. Give it a template (`{input}`, `{reply}`, `{model}`) and it streams the result in the exact wire format OpenAI, Anthropic, Gemini and Ollama use. "Echo" is just the default template. The joke is the surface; the product is a deterministic, offline, byte-exact LLM test double. | npc-llm 是个假的大模型服务：先用十条硬编码模板「思考」，然后一字不差复读你——就像游戏里那个永远重复同一句话的村口 NPC。笑点在表面，真正有用的是它：确定、离线、字节级精准，还说四家厂商的协议，可以当 CI 里的 LLM 测试替身。 |
 
 **Never lead with "it's a joke".** Lead with protocol fidelity, land the joke second. The project is
 funny *because* it is rigorous.
@@ -17,7 +17,7 @@ funny *because* it is rigorous.
 
 ### English
 
-1. A fake LLM that repeats what you send — over four real streaming protocols.
+1. A fake LLM with a template engine. You write the reply, it speaks the protocol.
 2. Every village needs one NPC. This one speaks four protocols.
 3. 0 parameters. 0 GPUs. 4 protocols.
 4. The NPC repeats you — byte-exact, over SSE, at 100 tokens per second.
@@ -30,7 +30,7 @@ funny *because* it is rigorous.
 
 ### 中文
 
-1. 一个假的 LLM：你说什么，它复读什么，用的是四家厂商真实的流式协议。
+1. 一个带模板引擎的假 LLM：你来写回复，它负责说协议。
 2. 每个村口都需要一个 NPC，而这个 NPC 会说四家厂商的协议。
 3. 零参数、零 GPU、零依赖，四个协议全都说得很标准。
 4. 你说什么，它复读什么——字节级精准，还带流式。
