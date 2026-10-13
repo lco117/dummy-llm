@@ -1,4 +1,4 @@
-import { buildText, contentPieces, estimateTokens, promptTokens } from "../engine.ts";
+import { contentPieces, estimateTokens, phasesFor, plan, promptTokens } from "../engine.ts";
 import { FaultError, HttpError, errorResponse, preflightFault, streamErrorFrame } from "../errors.ts";
 import { NDJSON_HEADERS, json, ndjson, streamResponse } from "../sse.ts";
 import type { CanonMessage, CanonRequest, Ctx, ProtocolId } from "../types.ts";
@@ -42,25 +42,32 @@ export function chat(body: unknown, ctx: Ctx): Response {
 
   const startedAt = ctx.cfg.now();
   if (!canon.stream) {
-    const text = buildText(canon, ctx.cfg, ctx.rand);
+    const answer = plan(canon, ctx.cfg, ctx.rand);
+    const message: Record<string, unknown> = { role: "assistant", content: answer.reply };
+    if (answer.thinking) message.thinking = answer.thinking;
     return json({
       model: canon.model,
       created_at: new Date(ctx.cfg.now()).toISOString(),
-      message: { role: "assistant", content: text },
+      message,
       done: true,
       done_reason: "stop",
-      ...timings(startedAt, ctx, text),
+      ...timings(startedAt, ctx, answer.reply),
       prompt_eval_count: promptTokens(canon),
     });
   }
 
   const frames = async function* (): AsyncGenerator<string> {
     const createdAt = new Date(ctx.cfg.now()).toISOString();
+    const answer = plan(canon, ctx.cfg, ctx.rand);
     let text = "";
     try {
-      for await (const piece of contentPieces(canon, ctx.cfg, ctx.rand)) {
-        text += piece.text;
-        yield ndjson({ model: canon.model, created_at: createdAt, message: { role: "assistant", content: piece.text }, done: false });
+      for await (const phase of phasesFor(answer, ctx.cfg, ctx.rand)) {
+        if (phase.channel === "thinking") {
+          yield ndjson({ model: canon.model, created_at: createdAt, message: { role: "assistant", content: "", thinking: phase.text }, done: false });
+        } else {
+          text += phase.text;
+          yield ndjson({ model: canon.model, created_at: createdAt, message: { role: "assistant", content: phase.text }, done: false });
+        }
       }
     } catch (error) {
       if (error instanceof FaultError) {
@@ -84,7 +91,7 @@ export function chat(body: unknown, ctx: Ctx): Response {
 
 export function generate(body: unknown, ctx: Ctx): Response {
   const raw = (body && typeof body === "object" ? body : {}) as Record<string, any>;
-  const prompt = typeof raw.prompt === "string" ? raw.prompt : typeof raw.raw === "string" ? "" : "";
+  const prompt = typeof raw.prompt === "string" ? raw.prompt : "";
   const canon: CanonRequest = {
     protocol: PROTOCOL,
     model: typeof raw.model === "string" && raw.model !== "" ? raw.model : ctx.cfg.models[0],
@@ -98,25 +105,32 @@ export function generate(body: unknown, ctx: Ctx): Response {
 
   const startedAt = ctx.cfg.now();
   if (!canon.stream) {
-    const text = buildText(canon, ctx.cfg, ctx.rand);
-    return json({
+    const answer = plan(canon, ctx.cfg, ctx.rand);
+    const payload: Record<string, unknown> = {
       model: canon.model,
       created_at: new Date(ctx.cfg.now()).toISOString(),
-      response: text,
+      response: answer.reply,
       done: true,
       done_reason: "stop",
       context: [],
-      ...timings(startedAt, ctx, text),
-    });
+      ...timings(startedAt, ctx, answer.reply),
+    };
+    if (answer.thinking) payload.thinking = answer.thinking;
+    return json(payload);
   }
 
   const frames = async function* (): AsyncGenerator<string> {
     const createdAt = new Date(ctx.cfg.now()).toISOString();
+    const answer = plan(canon, ctx.cfg, ctx.rand);
     let text = "";
     try {
-      for await (const piece of contentPieces(canon, ctx.cfg, ctx.rand)) {
-        text += piece.text;
-        yield ndjson({ model: canon.model, created_at: createdAt, response: piece.text, done: false });
+      for await (const phase of phasesFor(answer, ctx.cfg, ctx.rand)) {
+        if (phase.channel === "thinking") {
+          yield ndjson({ model: canon.model, created_at: createdAt, response: "", thinking: phase.text, done: false });
+        } else {
+          text += phase.text;
+          yield ndjson({ model: canon.model, created_at: createdAt, response: phase.text, done: false });
+        }
       }
     } catch (error) {
       if (error instanceof FaultError) {

@@ -1,4 +1,4 @@
-import { buildText, contentPieces, estimateTokens, promptTokens, usageFor } from "../engine.ts";
+import { buildText, contentPieces, estimateTokens, phases, phasesFor, plan, promptTokens, usageFor } from "../engine.ts";
 import { FaultError, HttpError, errorResponse, preflightFault, streamErrorFrame } from "../errors.ts";
 import { randomId } from "../random.ts";
 import { SSE_DONE, SSE_HEADERS, json, sse, streamResponse } from "../sse.ts";
@@ -83,9 +83,11 @@ export function chat(body: unknown, ctx: Ctx): Response {
 
 function syncChat(canon: CanonRequest, ctx: Ctx): Response {
   const id = `chatcmpl-${randomId(ctx.rand, 24)}`;
-  const text = buildText(canon, ctx.cfg, ctx.rand);
+  const answer = plan(canon, ctx.cfg, ctx.rand);
   const hasTool = Boolean(canon.tools && ctx.cfg.toolCall);
-  const message: Record<string, unknown> = { role: "assistant", content: text === "" ? null : text };
+  const message: Record<string, unknown> = { role: "assistant", content: answer.reply === "" ? null : answer.reply };
+  // The de-facto convention for chain-of-thought on OpenAI-compatible endpoints.
+  if (answer.thinking) message.reasoning_content = answer.thinking;
   if (hasTool) {
     const tool = parseToolCall(ctx.cfg.toolCall as string);
     message.tool_calls = [
@@ -99,7 +101,7 @@ function syncChat(canon: CanonRequest, ctx: Ctx): Response {
     model: canon.model,
     system_fingerprint: "fp_parrot",
     choices: [{ index: 0, message, logprobs: null, finish_reason: hasTool ? "tool_calls" : "stop" }],
-    usage: usageFor(canon, text),
+    usage: usageFor(canon, answer.reply),
   });
 }
 
@@ -115,11 +117,16 @@ function streamChat(canon: CanonRequest, ctx: Ctx): Response {
     };
     yield sse({ ...base, choices: [{ index: 0, delta: { role: "assistant", content: "" }, logprobs: null, finish_reason: null }] });
 
+    const answer = plan(canon, ctx.cfg, ctx.rand);
     let text = "";
     try {
-      for await (const piece of contentPieces(canon, ctx.cfg, ctx.rand)) {
-        text += piece.text;
-        yield sse({ ...base, choices: [{ index: 0, delta: { content: piece.text }, logprobs: null, finish_reason: null }] });
+      for await (const phase of phasesFor(answer, ctx.cfg, ctx.rand)) {
+        if (phase.channel === "thinking") {
+          yield sse({ ...base, choices: [{ index: 0, delta: { reasoning_content: phase.text }, logprobs: null, finish_reason: null }] });
+        } else {
+          text += phase.text;
+          yield sse({ ...base, choices: [{ index: 0, delta: { content: phase.text }, logprobs: null, finish_reason: null }] });
+        }
       }
     } catch (error) {
       if (error instanceof FaultError) {

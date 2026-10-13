@@ -1,4 +1,4 @@
-import { buildText, contentPieces, estimateTokens, promptTokens } from "../engine.ts";
+import { contentPieces, estimateTokens, phasesFor, plan, promptTokens } from "../engine.ts";
 import { FaultError, HttpError, errorResponse, preflightFault, streamErrorFrame } from "../errors.ts";
 import { randomId } from "../random.ts";
 import { SSE_HEADERS, json, sse, streamResponse } from "../sse.ts";
@@ -41,10 +41,12 @@ export function messages(body: unknown, ctx: Ctx): Response {
 }
 
 function syncMessages(canon: CanonRequest, ctx: Ctx): Response {
-  const text = buildText(canon, ctx.cfg, ctx.rand);
+  const answer = plan(canon, ctx.cfg, ctx.rand);
   const content: unknown[] = [];
-  if (ctx.cfg.thinking) content.push({ type: "thinking", thinking: ctx.cfg.thinking, signature: `parrot-${randomId(ctx.rand, 16)}` });
-  content.push({ type: "text", text });
+  if (answer.thinking) {
+    content.push({ type: "thinking", thinking: answer.thinking, signature: `parrot-${randomId(ctx.rand, 16)}` });
+  }
+  content.push({ type: "text", text: answer.reply });
   return json({
     id: `msg_${randomId(ctx.rand, 24)}`,
     type: "message",
@@ -53,7 +55,7 @@ function syncMessages(canon: CanonRequest, ctx: Ctx): Response {
     content,
     stop_reason: "end_turn",
     stop_sequence: null,
-    usage: { input_tokens: promptTokens(canon), output_tokens: estimateTokens(text) },
+    usage: { input_tokens: promptTokens(canon), output_tokens: estimateTokens(answer.reply) },
   });
 }
 
@@ -61,7 +63,6 @@ function streamMessages(canon: CanonRequest, ctx: Ctx): Response {
   const frames = async function* (): AsyncGenerator<string> {
     const id = `msg_${randomId(ctx.rand, 24)}`;
     const inputTokens = promptTokens(canon);
-    let index = 0;
 
     yield sse(
       {
@@ -81,24 +82,38 @@ function streamMessages(canon: CanonRequest, ctx: Ctx): Response {
     );
     yield sse({ type: "ping" }, "ping");
 
-    if (ctx.cfg.thinking) {
-      yield sse({ type: "content_block_start", index, content_block: { type: "thinking", thinking: "", signature: "" } }, "content_block_start");
-      yield sse({ type: "content_block_delta", index, delta: { type: "thinking_delta", thinking: ctx.cfg.thinking } }, "content_block_delta");
-      yield sse(
-        { type: "content_block_delta", index, delta: { type: "signature_delta", signature: `parrot-${randomId(ctx.rand, 16)}` } },
-        "content_block_delta",
-      );
-      yield sse({ type: "content_block_stop", index }, "content_block_stop");
-      index++;
-    }
-
-    yield sse({ type: "content_block_start", index, content_block: { type: "text", text: "" } }, "content_block_start");
-
+    const answer = plan(canon, ctx.cfg, ctx.rand);
+    let blockIndex = -1;
+    let current: "thinking" | "text" | null = null;
     let text = "";
+
     try {
-      for await (const piece of contentPieces(canon, ctx.cfg, ctx.rand)) {
-        text += piece.text;
-        yield sse({ type: "content_block_delta", index, delta: { type: "text_delta", text: piece.text } }, "content_block_delta");
+      for await (const phase of phasesFor(answer, ctx.cfg, ctx.rand)) {
+        if (phase.channel !== current) {
+          if (current === "thinking") {
+            yield sse(
+              { type: "content_block_delta", index: blockIndex, delta: { type: "signature_delta", signature: `parrot-${randomId(ctx.rand, 16)}` } },
+              "content_block_delta",
+            );
+          }
+          if (current !== null) yield sse({ type: "content_block_stop", index: blockIndex }, "content_block_stop");
+          current = phase.channel;
+          blockIndex++;
+          yield sse(
+            {
+              type: "content_block_start",
+              index: blockIndex,
+              content_block: phase.channel === "thinking" ? { type: "thinking", thinking: "", signature: "" } : { type: "text", text: "" },
+            },
+            "content_block_start",
+          );
+        }
+        if (phase.channel === "thinking") {
+          yield sse({ type: "content_block_delta", index: blockIndex, delta: { type: "thinking_delta", thinking: phase.text } }, "content_block_delta");
+        } else {
+          text += phase.text;
+          yield sse({ type: "content_block_delta", index: blockIndex, delta: { type: "text_delta", text: phase.text } }, "content_block_delta");
+        }
       }
     } catch (error) {
       if (error instanceof FaultError) {
@@ -108,7 +123,14 @@ function streamMessages(canon: CanonRequest, ctx: Ctx): Response {
       throw error;
     }
 
-    yield sse({ type: "content_block_stop", index }, "content_block_stop");
+    if (current === "thinking") {
+      yield sse(
+        { type: "content_block_delta", index: blockIndex, delta: { type: "signature_delta", signature: `parrot-${randomId(ctx.rand, 16)}` } },
+        "content_block_delta",
+      );
+    }
+    if (current !== null) yield sse({ type: "content_block_stop", index: blockIndex }, "content_block_stop");
+
     yield sse(
       { type: "message_delta", delta: { stop_reason: "end_turn", stop_sequence: null }, usage: { output_tokens: estimateTokens(text) } },
       "message_delta",

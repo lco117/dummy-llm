@@ -45,7 +45,7 @@ export function landingPage(ctx: Ctx): Response {
 <main>
   <h1>parrot-llm</h1>
   <p class="answer">${text}</p>
-  <p class="tagline">The LLM that always says the same thing. Mode: <code>${mode}</code>.</p>
+  <p class="tagline">It says whatever you said — after thinking about it. Mode: <code>${mode}</code>.</p>
   <table>
     <tr><td>OpenAI</td><td><code>POST /v1/chat/completions</code> &middot; <code>POST /v1/responses</code> &middot; <code>GET /v1/models</code></td></tr>
     <tr><td>Anthropic</td><td><code>POST /v1/messages</code> &middot; <code>POST /v1/messages/count_tokens</code></td></tr>

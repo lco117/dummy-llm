@@ -6,17 +6,23 @@ export interface Env {
   [key: string]: string | undefined;
 }
 
+/** Hardcoded "reasoning". {input} is what the user said, {reply} is what we will say back. */
+export const DEFAULT_THINKING =
+  'We need answer to user. User just said "{input}". Need infer? Probably minimal. We need respond maybe "{reply}".';
+
 export const DEFAULTS = {
   text: "6",
-  mode: "fixed" as Mode,
+  mode: "echo" as Mode,
   chunk: 1 as ChunkMode,
   delayMs: 20,
   ttftMs: 0,
   seed: 1,
   cors: "*",
+  thinking: DEFAULT_THINKING as string | null,
 };
 
 const MODES: Mode[] = ["fixed", "echo", "random", "canned"];
+const OFF = new Set(["", "off", "none", "false", "no", "0", "disable", "disabled"]);
 
 function wholeNumber(value: string | undefined, fallback: number): number {
   if (value === undefined || value.trim() === "") return fallback;
@@ -35,6 +41,11 @@ function list(value: string | undefined, fallback: string[]): string[] {
   if (!value) return fallback;
   const items = value.split(",").map((item) => item.trim()).filter(Boolean);
   return items.length > 0 ? items : fallback;
+}
+
+function thinkingTemplate(value: string | undefined): string | null {
+  if (value === undefined) return DEFAULTS.thinking;
+  return OFF.has(value.trim().toLowerCase()) ? null : value;
 }
 
 /**
@@ -73,7 +84,7 @@ export function resolveConfig(env: Env = {}, overrides: Partial<Config> = {}): C
     cors: env.PARROT_CORS ?? DEFAULTS.cors,
     models: list(env.PARROT_MODELS, DEFAULT_MODELS),
     toolCall: env.PARROT_TOOLCALL && env.PARROT_TOOLCALL.trim() !== "" ? env.PARROT_TOOLCALL : null,
-    thinking: env.PARROT_THINKING && env.PARROT_THINKING.trim() !== "" ? env.PARROT_THINKING : null,
+    thinking: thinkingTemplate(env.PARROT_THINKING),
     now: () => Date.now(),
     ...overrides,
   };

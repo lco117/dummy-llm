@@ -27,7 +27,8 @@ Options:
       --fail <spec>       429 | 429:after=3 | rate_limit | off
       --hang <ms>         Delay before the first byte
       --tools <name>      Answer with a tool call when tools are offered
-      --thinking <text>   Emit an Anthropic thinking block first
+      --thinking <text>   Thinking template ({input} {reply}); default repeats your joke back
+      --no-thinking       Do not emit a thinking block at all
   -h, --help              Show this help
   -v, --version           Show the version
 
@@ -107,6 +108,7 @@ apply("PARROT_FAIL", "fail");
 apply("PARROT_HANG_MS", "hang");
 apply("PARROT_TOOLCALL", "tools");
 apply("PARROT_THINKING", "thinking");
+if (flags["no-thinking"] === true) env.PARROT_THINKING = "off";
 
 const config = resolveConfig(env);
 const app = createApp(config);
