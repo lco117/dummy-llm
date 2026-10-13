@@ -141,6 +141,7 @@ export function resolveConfig(env: Env = {}, overrides: Partial<Config> = {}): C
     echoRaw: boolean(env.PARROT_ECHO_RAW),
     log: logLevel(env.PARROT_LOG),
     maxBodyBytes: wholeNumber(env.PARROT_MAX_BODY, DEFAULTS.maxBodyBytes),
+    strip: env.PARROT_STRIP ? env.PARROT_STRIP.split("|").map((item) => item.trim()).filter(Boolean) : [],
     now: () => Date.now(),
     ...overrides,
   };

@@ -30,7 +30,8 @@ Options:
       --tools <name>      Answer with a tool call when tools are offered
       --thinking <text>   Thinking template ({input} {reply}); default repeats your joke back
       --no-thinking       Do not emit a thinking block at all
-      --echo-raw          Echo the message verbatim, without stripping <system-reminder> blocks
+      --echo-raw          Echo the message verbatim, without stripping harness noise
+      --strip <regex|regex>  Extra patterns to strip from user messages, |-separated
       --log <level>       off | summary | full — log what was received (default off)
       --max-body <bytes>  Reject larger request bodies      (default 1000000, 0 = unlimited)
   -h, --help              Show this help
@@ -106,6 +107,7 @@ apply("PARROT_TPS", "tps");
 apply("PARROT_DELAY_MS", "delay");
 apply("PARROT_LOG", "log");
 apply("PARROT_MAX_BODY", "max-body");
+apply("PARROT_STRIP", "strip");
 apply("PARROT_TTFT_MS", "ttft");
 apply("PARROT_SEED", "seed");
 apply("PARROT_API_KEY", "api-key");

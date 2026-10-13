@@ -150,6 +150,14 @@ test("harness reminder blocks are stripped before deciding what the user said", 
   assert.equal(stripReminders("x <system-reminder>unclosed"), "x");
   assert.equal(stripReminders("no reminders here"), "no reminders here");
 
+  const metadata =
+    "Time sampled while preparing turn 1, step 1: 2026-10-13T18:09:13+08:00[Asia/Shanghai]\n" +
+    "Browser time zone for this request: Asia/Shanghai. Interpret otherwise-unqualified dates and times in this zone.\n" +
+    "Elapsed since the preceding model-visible message: unavailable.";
+  assert.equal(stripReminders(metadata), "", "untagged harness metadata is not something a human said");
+  assert.equal(stripReminders("hi\n\n" + metadata), "hi", "and it does not contaminate a real message");
+  assert.equal(stripReminders("keep me", ["keep"]) , "me", "operator-supplied patterns are applied");
+
   const noisy: CanonRequest = {
     protocol: "openai-chat",
     model: "parrot-1",

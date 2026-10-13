@@ -16,13 +16,34 @@ const REMINDER_BLOCK = /<system-reminder>[\s\S]*?<\/system-reminder>/gi;
 const REMINDER_UNCLOSED = /<system-reminder>[\s\S]*$/i;
 
 /**
- * Agent harnesses append their own noise to the conversation as *user* messages —
- * DSH, for instance, injects "<system-reminder>Updated instructions from: AGENTS.md…".
- * A parrot that repeats that is technically correct and completely useless,
- * so we drop those blocks before deciding what the human actually said.
+ * Harness metadata that arrives as plain *user* text, with no tags around it.
+ * DSH, for example, appends this to every turn:
+ *
+ *   Time sampled while preparing turn 1, step 1: 2026-10-13T18:09:13+08:00[Asia/Shanghai]
+ *   Browser time zone for this request: Asia/Shanghai. …
+ *   Elapsed since the preceding model-visible message: unavailable.
+ *
+ * A human did not type that, so echoing it is technically correct and completely useless.
  */
-export function stripReminders(text: string): string {
-  return text.replace(REMINDER_BLOCK, "").replace(REMINDER_UNCLOSED, "").trim();
+const HARNESS_LINE =
+  /^(Time sampled while preparing turn .*|Browser time zone for this request:.*|Elapsed since the preceding model-visible message:.*|Current runtime context\..*|Current DSH file policy:.*|Approval policy:.*)$/gim;
+
+/**
+ * Agent harnesses append their own noise to the conversation as *user* messages.
+ * Drop the tagged blocks, the plain metadata lines, then any extra patterns the
+ * operator configured through PARROT_STRIP.
+ */
+export function stripReminders(text: string, extra: string[] = []): string {
+  let out = text.replace(REMINDER_BLOCK, "").replace(REMINDER_UNCLOSED, "").replace(HARNESS_LINE, "");
+  for (const pattern of extra) {
+    if (pattern === "") continue;
+    try {
+      out = out.replace(new RegExp(pattern, "gim"), "");
+    } catch {
+      // an operator-supplied pattern that does not compile is simply ignored
+    }
+  }
+  return out.replace(/\n{3,}/g, "\n\n").trim();
 }
 
 /**
@@ -33,7 +54,7 @@ export function stripReminders(text: string): string {
 export function userInput(canon: CanonRequest, cfg: Config): string {
   const users = canon.messages.filter((message) => message.role === "user");
   for (let i = users.length - 1; i >= 0; i--) {
-    const text = cfg.echoRaw ? users[i].content : stripReminders(users[i].content);
+    const text = cfg.echoRaw ? users[i].content : stripReminders(users[i].content, cfg.strip);
     if (text !== "") return text;
   }
   return "";

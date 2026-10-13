@@ -56,6 +56,8 @@ export interface Config {
   log: LogLevel;
   /** Reject request bodies larger than this. 0 disables the check. */
   maxBodyBytes: number;
+  /** Extra regexes removed from user messages before echoing (on top of the built-in rules). */
+  strip: string[];
   now: () => number;
 }
 

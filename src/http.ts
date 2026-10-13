@@ -68,7 +68,7 @@ function logRequest(ctx: Ctx, method: string, body: Record<string, any>): void {
   if (ctx.cfg.log === "off") return;
   const messages = collectMessages(body);
   const users = messages.filter((message) => message.role === "user");
-  const lastUser = users.length > 0 ? stripReminders(users[users.length - 1].content) : "";
+  const lastUser = users.length > 0 ? stripReminders(users[users.length - 1].content, ctx.cfg.strip) : "";
   const line: Record<string, unknown> = {
     parrot: "request",
     method,

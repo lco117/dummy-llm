@@ -99,6 +99,26 @@ export const CASES: Case[] = [
     config: { echoRaw: true, chunk: "whole" },
   },
 
+  {
+    name: "openai-chat-strips-harness-metadata",
+    method: "POST",
+    path: "/v1/chat/completions",
+    body: {
+      model: "parrot-1",
+      messages: [
+        { role: "user", content: "hi" },
+        {
+          role: "user",
+          content:
+            "Time sampled while preparing turn 1, step 1: 2026-10-13T18:09:13+08:00[Asia/Shanghai]\n" +
+            "Browser time zone for this request: Asia/Shanghai. Interpret otherwise-unqualified dates and times in this zone.\n" +
+            "Elapsed since the preceding model-visible message: unavailable.",
+        },
+      ],
+    },
+    config: { chunk: "whole" },
+  },
+
   // --- OpenAI Responses ---
   { name: "openai-responses-stream", method: "POST", path: "/v1/responses", body: { model: "gpt-4o", input: "hi", stream: true } },
   { name: "openai-responses-sync", method: "POST", path: "/v1/responses", body: { model: "gpt-4o", input: "abc" } },
