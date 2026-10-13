@@ -1,0 +1,10 @@
+node_modules
+dist
+dist-worker
+.git
+.github
+coverage
+*.log
+.env
+.vercel
+.wrangler

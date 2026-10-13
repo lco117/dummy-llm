@@ -1,0 +1,31 @@
+services:
+  parrot:
+    image: ghcr.io/lco117/parrot-llm:latest
+    # build: .            # uncomment to build locally instead of pulling
+    restart: unless-stopped
+    environment:
+      PARROT_TEXT: "6"
+      PARROT_MODE: fixed
+      PARROT_CHUNK: "1"
+      PARROT_DELAY_MS: "20"
+      # PARROT_API_KEY: sk-parrot
+    expose:
+      - "8080"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # set this in a .env file next to this compose file
+      PARROT_DOMAIN: ${PARROT_DOMAIN:-localhost}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

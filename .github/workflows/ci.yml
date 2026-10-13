@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (node 22)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Bundle the Cloudflare Worker
+        run: npx esbuild src/adapters/worker.ts --bundle --format=esm --outfile=/tmp/worker.js
+
+  smoke:
+    name: smoke (live server)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - name: Start the server and stream from it
+        run: |
+          node dist/cli.js --port 8080 --delay 0 &
+          sleep 1
+          curl -sf http://127.0.0.1:8080/healthz
+          out=$(curl -sN http://127.0.0.1:8080/v1/chat/completions \
+            -H 'content-type: application/json' \
+            -d '{"model":"gpt-4o","messages":[{"role":"user","content":"hi"}],"stream":true}')
+          echo "$out"
+          echo "$out" | grep -q '^data: \[DONE\]'

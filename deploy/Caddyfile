@@ -1,0 +1,12 @@
+# Caddy terminates TLS automatically and flushes SSE frames immediately —
+# unlike Nginx, it needs no extra configuration to stream text/event-stream.
+{$PARROT_DOMAIN:localhost} {
+	reverse_proxy parrot:8080 {
+		# belt and braces: never buffer the upstream body
+		flush_interval -1
+	}
+	log {
+		output stdout
+		format console
+	}
+}
