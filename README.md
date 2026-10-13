@@ -2,9 +2,10 @@
 
 # 🧍 npc-llm
 
-**An LLM with exactly one line of dialogue: yours.**
+**A fake LLM that repeats what you send — in the real streaming protocols of OpenAI, Anthropic, Gemini and Ollama.**
 
-It thinks about it first, obviously.
+You send any text; it "thinks" for a moment (ten hardcoded templates), then streams your own words back,
+frame by frame, byte-exact. Zero runtime dependencies.
 
 Zero runtime dependencies. Byte-exact streaming. Runs on a VPS, a Raspberry Pi, Cloudflare Workers or Vercel.
 
