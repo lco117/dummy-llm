@@ -25,10 +25,10 @@ That reframing removes most of the confusion: there is one list to manage (perso
 | a persona's id | it appears in `/v1/models`; clients can select it |
 | a persona's `reply` / `thinking` | what that model id answers with |
 | the default `reply` / `thinking` | what an *unknown* model id falls through to |
-| `tps` / `chunk` / `ttft` | pacing for everyone (global, not per persona) |
+| `tps` / `chunk` / `ttft` | pacing for everyone, so it is a *global* setting and belongs in a defaults panel rather than on a persona |
 
-Deliberately **not** editable in v1: fault injection, logging, auth. Those are deployment concerns, not
-content, and they stay environment-only.
+The admin page edits runtime values only. It cannot edit the deployment shape, the environment bindings or
+the secrets, and that is a property of the platform rather than a decision — see section 4.1.
 
 ## 2. Three surfaces, one codebase
 
@@ -104,24 +104,77 @@ DUMMY_ADMIN_AUTH=access                 -> trust Cf-Access-Jwt-Assertion; the ke
 DUMMY_ADMIN_AUTH=off                    -> 404 even if a key is set (panic switch)
 ```
 
-## 4. Storage
+## 4. Storage, and the two sources of truth
 
-The server is stateless today and that is a documented security property, so persistence is opt-in and
-declared explicitly.
+### 4.1 The boundary is not a design choice
 
-| `DUMMY_STORE` | where | notes |
+A Worker cannot change its own environment variables. The `env` object is read-only at runtime, and no
+Cloudflare interface lets a Worker rewrite its own bindings, its own routes, or its own name. Secrets are
+write-only from the outside and cannot be listed or rewritten from inside the Worker either.
+
+Therefore the sentence "let the admin page write back into the Cloudflare environment variables" describes
+something that cannot be built. It is not a matter of effort or permission; the platform does not offer it.
+Everything below follows from that one fact.
+
+### 4.2 What each layer is for
+
+| layer | where it lives | who writes it | when it takes effect | can the admin edit it? |
+| --- | --- | --- | --- | --- |
+| deployment shape: worker name, routes, `workers_dev`, preview URLs, compatibility date, KV and D1 bindings | `wrangler.jsonc` | the operator, by running `wrangler deploy` | on the next deploy | **no** |
+| runtime baseline: reply, thinking, tps, chunk, ttft, log level, model list, and the rest | environment variables, coming from the `vars` block in `wrangler.jsonc` or from the Cloudflare dashboard | the operator | on the next deploy, or immediately when set in the dashboard | **no** |
+| runtime override | the store: a KV namespace, or one JSON file on disk | **the admin page** | immediately | **yes** |
+| secrets: the API key and the admin key | `wrangler secret put`, or the dashboard | the operator | when written | **no**; the admin page cannot read them either |
+
+The admin page therefore edits exactly one layer, and it is the only layer a running server can write.
+
+### 4.3 The rule: store over environment over built-in
+
+A running server resolves every setting in that order. The environment block keeps working exactly as it
+does today, and the store is an overlay that the operator turns on by setting `DUMMY_STORE`.
+
+| `DUMMY_STORE` | where the overlay lives | notes |
 | --- | --- | --- |
-| `off` *(default)* | nowhere | admin is **read-only**: it can preview and copy config, not save it |
-| `kv` | an `ADMIN_KV` namespace | Cloudflare; declared without an id it is auto-provisioned by the deploy button |
-| `file:./data` | one JSON file | Node / VPS / Docker (needs a volume) |
-| `d1` | an `ADMIN_DB` database | later, if the blob ever outgrows KV |
+| `off` — the default | nowhere | the admin page is **read-only**: it can preview and copy configuration, but it cannot save |
+| `kv` | a KV namespace bound as `ADMIN_KV` | on Cloudflare; declared without an id, the Deploy to Cloudflare button creates it automatically |
+| `file:./data` | one JSON file | on a VPS or in Docker, where the file is a mounted volume |
 
-Shape: **one key, one document** — `config = { version: 1, personas: {...}, defaults: {...} }`. Atomic
-writes, no half-saved persona, and the whole thing is a handful of KB. Never one key per persona.
+The document is a single key holding a single object, ```{ version, personas, defaults }```, not one key per
+persona. That keeps every write atomic, and the whole document is a few kilobytes.
 
-**Precedence: store over env over built-ins.** The env keeps working as the initial seed, and the UI labels
-each persona `inherited` (from env) or `overridden` (in the store), with a **Reset to env** action that
-drops the stored document. That is what stops "why did my env var stop working" becoming a support thread.
+### 4.4 Why the Cloudflare dashboard can then look wrong
+
+The confusing case is a setting that exists in two places at once:
+
+1. The operator writes `DUMMY_TPS = 100` in `wrangler.jsonc` and deploys.
+2. They open the admin page and set tps to 40. The store now holds 40, and the running server uses 40.
+3. The Cloudflare dashboard still displays `DUMMY_TPS = 100`, because the dashboard displays the binding,
+   and the binding was not changed. Nothing is broken, but it looks broken.
+4. They later edit `wrangler.jsonc` and deploy. The binding becomes whatever the file says, and the server
+   still uses 40, because the store takes precedence.
+
+Four things turn that from a mystery into something a person can reason about:
+
+- `/admin/api/state` returns, for every setting, the environment value, the stored override if one
+  exists, and the effective value.
+- The admin page renders that as "environment 100, overridden to 40" with a **Reset to environment** button
+  on each row.
+- Every override is stored together with a `basedOn` snapshot of the environment value at the moment the
+  override was created, so the page can also report "the environment changed from 100 to 200 after you set
+  this override".
+- A **Copy for wrangler.jsonc** button produces the exact lines that reproduce the current effective state.
+  Making a change permanent is then mechanical: paste, deploy, reset the override.
+
+### 4.5 What is true on the Cloudflare side, for the record
+
+- Cloudflare's own Wrangler configuration page states: "If you change your environment variables in the
+  Cloudflare dashboard, Wrangler will override them the next time you deploy." For every variable that
+  appears in `wrangler.jsonc`, the file is the source of truth.
+- A variable that does not appear in `wrangler.jsonc` may survive a deploy, but that behaviour has changed
+  between Wrangler versions, so it should not be relied on.
+- Practical consequence: nothing the admin page writes can ever appear in the Cloudflare dashboard, because
+  the admin page writes to the store and the dashboard displays bindings. The place to make a change
+  permanent is `wrangler.jsonc`, which is what the copy button is for.
+
 
 ## 5. API
 
@@ -230,15 +283,102 @@ Everything here must land in [security.md](security.md) in the same PR that impl
   request*. It changes nothing persistent, but it is off by default and the docs say why.
 - **No secrets in the store**: personas and defaults only. Never write API keys into KV.
 
-## 10. Open decisions
+## 10. Decisions
 
-1. **Do we ship the public playground at all?** It is the growth loop (shareable `?t=` links) but it lets
-   visitors change responses. Harmless on a joke server, off by default.
-2. **Should `DUMMY_STORE` default to `off` or `file` on Node?** `off` is honest; `file` is more
-   useful. I lean `off` and let the docs show the one-line enable.
-3. **Does the admin edit pacing (`tps`/`chunk`) or only content?** Editing pacing is global, not per
-   persona, which is a different kind of change and might deserve its own panel or none at all.
-4. **Single shared key, or per-user accounts?** Recommendation: shared key. This is a personal deployment,
-   not a product.
-5. **Same bundle or a separate package?** Same bundle (~+15 KB on a Worker that is currently ~69 KB), so the
-   deploy button keeps giving you everything in one step.
+| # | question | decision |
+| --- | --- | --- |
+| 1 | Ship the public playground? | **open** — the full explanation of what it would do and what could go wrong is section 11 |
+| 2 | `DUMMY_STORE` default | **`off`** — the server stays stateless unless an operator opts in |
+| 3 | Does the admin edit global settings too? | **yes**, using the two-source-of-truth model in section 4. Every runtime value takes the same edit path; pacing is global, so it lives in a defaults panel rather than on a persona |
+| 4 | Single key, or per-person accounts? | **single shared key** |
+| 5 | Same package, or a separate one? | **same package**, so the deploy button keeps delivering everything in one step |
+
+## 11. The public playground, explained in full (open decision)
+
+This section exists so that the decision can be made by reading one page instead of reconstructing an
+argument from a conversation.
+
+### 11.1 What exists today
+
+The server answers requests at several addresses. One of them is the root address, `/`. A browser that
+opens that address receives a small web page. The page contains a text box, a button labelled Send, and an
+area below them where text appears.
+
+When a person types something into the box and presses Send, the page sends a real chat request to the same
+server, to the same endpoint that any program would use. The answer comes back as a stream, and the page
+prints the answer as it arrives.
+
+What the server answers with is whatever the operator configured. A visitor chooses the message. A visitor
+does not choose the answer.
+
+### 11.2 What the proposal would add
+
+The proposal adds a second text box to that page, above the first one. The second box holds the template
+that decides the answer.
+
+A person could type `{input|upper}` into the second box, press Send, and watch the server answer in
+capital letters. The operator would not need to change anything, restart anything, or deploy anything.
+
+The second box is filled in when the page loads, from a value carried in the page address. After a person
+edits the box, the page rewrites its own address so that the address contains the current template. Copying
+that address and sending it to another person produces a link that opens the page with the same template
+already in the box.
+
+### 11.3 Why this is worth considering
+
+Without the link, explaining this project requires asking a person to install something, or to read a page
+of configuration, or to trust a description. With the link, a person opens a page and sees the behaviour in
+two seconds.
+
+The specific thing that becomes possible is a sentence such as "open this and type anything":
+
+```
+https://dummy.example.com/?t=%7Binput%7Cascii%7D
+```
+
+The part after the question mark is the template `{input|ascii}`, encoded so that it can travel inside an
+address. Whoever opens that address sees the template already present and can press Send immediately.
+
+This is the only mechanism in the project that turns the server into something a non-programmer can
+experience. Everything else requires a terminal.
+
+### 11.4 What could go wrong, and how each problem is handled
+
+**A visitor can make the server produce text that the operator did not choose, and can then take a
+screenshot of it.** The text appears under the operator's own domain, so the screenshot is attributable to
+the operator even though a visitor chose the words. On a project that is openly a fake language model the
+realistic harm is small, but it is not zero. Two mitigations, neither of which removes the problem:
+
+- the page states, next to the answer, that the template was supplied by the visitor;
+- the feature is absent unless the operator sets `DUMMY_PLAYGROUND=1`, so a deployment that does not want
+  the behaviour never has it.
+
+**A visitor can make the server emit a very large answer.** The reply currently has no upper bound. A
+template such as `{input|repeat:100000}` would ask the server to stream an enormous response, and the
+message the caller sends can itself be large. Two limits address this: the template accepted from a request
+is limited to 2000 characters, and the rendered reply is limited to 100000 characters, with streaming
+stopping when the limit is reached. Both limits apply only to the per-request override; the operator's own
+configured template is not limited, because the operator is not an adversary towards their own server.
+
+**A crafted template could inject markup into the page.** This is already handled by a rule the current page
+follows: every value that came from the server is written into the page as text rather than as markup. The
+template box must follow the same rule. The rule is recorded here because a later change could break it
+silently.
+
+**An optional feature is one more thing that can be misconfigured.** The feature is absent unless it is
+turned on, and the environment table in the README will say so.
+
+### 11.5 The smaller versions of the same idea
+
+Three options, in increasing order of exposure:
+
+| option | what a visitor can do | what is lost |
+| --- | --- | --- |
+| do not build it | read a fixed demonstration | the shareable link, and with it the only path into the project that does not require a terminal |
+| build the link, leave the box read-only | open a link and press Send; can still edit the address by hand | almost nothing for an honest visitor, because the address can always be edited by hand; the box becomes a display rather than an editor |
+| build the link and the editable box | as above, and can author new templates without touching the address | the operator can no longer say that every answer this page shows was chosen by them |
+
+The middle option deserves serious consideration. It keeps nearly all of the demonstration value, because
+the link is the thing people share, and it removes the sentence "a visitor made my server say that". A
+person who edits an address on purpose is acting deliberately, which is a different situation from a page
+that invites them to.
