@@ -1,6 +1,212 @@
 # status: 200
 # content-type: text/event-stream; charset=utf-8
-data: {"candidates":[{"content":{"parts":[{"text":"6"}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+data: {"candidates":[{"content":{"parts":[{"text":"W","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
 
-data: {"candidates":[{"content":{"parts":[{"text":"6"}],"role":"model"},"finishReason":"STOP","index":0,"safetyRatings":[]}],"usageMetadata":{"promptTokenCount":1,"candidatesTokenCount":1,"totalTokenCount":2},"modelVersion":"gemini-2.5-flash"}
+data: {"candidates":[{"content":{"parts":[{"text":"e","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":" ","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"n","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"e","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"e","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"d","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":" ","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"a","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"n","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"s","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"w","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"e","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"r","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":" ","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"t","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"o","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":" ","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"u","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"s","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"e","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"r","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":".","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":" ","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"U","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"s","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"e","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"r","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":" ","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"j","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"u","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"s","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"t","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":" ","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"s","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"a","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"i","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"d","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":" ","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"\"","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"h","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"i","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"\"","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":".","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":" ","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"N","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"e","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"e","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"d","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":" ","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"i","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"n","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"f","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"e","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"r","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"?","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":" ","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"P","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"r","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"o","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"b","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"a","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"b","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"l","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"y","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":" ","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"m","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"i","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"n","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"i","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"m","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"a","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"l","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":".","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":" ","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"W","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"e","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":" ","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"n","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"e","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"e","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"d","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":" ","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"r","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"e","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"s","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"p","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"o","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"n","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"d","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":" ","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"m","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"a","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"y","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"b","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"e","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":" ","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"\"","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"h","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"i","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"\"","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":".","thought":true}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"h"}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"i"}],"role":"model"},"index":0,"safetyRatings":[]}],"modelVersion":"gemini-2.5-flash"}
+
+data: {"candidates":[{"content":{"parts":[{"text":"We need answer to user. User just said \"hi\". Need infer? Probably minimal. We need respond maybe \"hi\".","thought":true},{"text":"hi"}],"role":"model"},"finishReason":"STOP","index":0,"safetyRatings":[]}],"usageMetadata":{"promptTokenCount":1,"candidatesTokenCount":1,"totalTokenCount":2},"modelVersion":"gemini-2.5-flash"}
 

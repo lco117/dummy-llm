@@ -2,7 +2,9 @@
 # content-type: text/event-stream; charset=utf-8
 data: {"id":"chatcmpl-ID","object":"chat.completion.chunk","created":1786000000,"model":"gpt-4o","system_fingerprint":"fp_parrot","choices":[{"index":0,"delta":{"role":"assistant","content":""},"logprobs":null,"finish_reason":null}]}
 
-data: {"id":"chatcmpl-ID","object":"chat.completion.chunk","created":1786000000,"model":"gpt-4o","system_fingerprint":"fp_parrot","choices":[{"index":0,"delta":{"content":"6"},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-ID","object":"chat.completion.chunk","created":1786000000,"model":"gpt-4o","system_fingerprint":"fp_parrot","choices":[{"index":0,"delta":{"content":"h"},"logprobs":null,"finish_reason":null}]}
+
+data: {"id":"chatcmpl-ID","object":"chat.completion.chunk","created":1786000000,"model":"gpt-4o","system_fingerprint":"fp_parrot","choices":[{"index":0,"delta":{"content":"i"},"logprobs":null,"finish_reason":null}]}
 
 data: {"id":"chatcmpl-ID","object":"chat.completion.chunk","created":1786000000,"model":"gpt-4o","system_fingerprint":"fp_parrot","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_ID","type":"function","function":{"name":"get_weather","arguments":"{}"}}]},"logprobs":null,"finish_reason":null}]}
 

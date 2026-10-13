@@ -1,3 +1,3 @@
 # status: 200
 # content-type: application/json; charset=utf-8
-{"id":"chatcmpl-ID","object":"chat.completion","created":1786000000,"model":"gpt-4o","system_fingerprint":"fp_parrot","choices":[{"index":0,"message":{"role":"assistant","content":"6"},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2}}
+{"id":"chatcmpl-ID","object":"chat.completion","created":1786000000,"model":"gpt-4o","system_fingerprint":"fp_parrot","choices":[{"index":0,"message":{"role":"assistant","content":"hi","reasoning_content":"We need answer to user. User just said \"hi\". Need infer? Probably minimal. We need respond maybe \"hi\"."},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2}}
