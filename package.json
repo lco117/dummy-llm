@@ -1,8 +1,9 @@
 {
   "name": "parrot-llm",
   "version": "0.1.0",
-  "description": "A fake LLM that always says the same thing - and speaks fluent OpenAI, Anthropic, Gemini and Ollama, with byte-exact streaming.",
+  "description": "An LLM that says whatever you said - after a hardcoded thinking step. Speaks OpenAI, Anthropic, Gemini and Ollama with byte-exact streaming.",
   "keywords": [
+    "reasoning",
     "llm",
     "mock",
     "fake",
