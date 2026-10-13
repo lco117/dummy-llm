@@ -287,13 +287,17 @@ Everything here must land in [security.md](security.md) in the same PR that impl
 
 | # | question | decision |
 | --- | --- | --- |
-| 1 | Ship the public playground? | **open** — the full explanation of what it would do and what could go wrong is section 11 |
+| 1 | Ship the public playground? | **yes**, with the four sub-decisions below |
 | 2 | `DUMMY_STORE` default | **`off`** — the server stays stateless unless an operator opts in |
 | 3 | Does the admin edit global settings too? | **yes**, using the two-source-of-truth model in section 4. Every runtime value takes the same edit path; pacing is global, so it lives in a defaults panel rather than on a persona |
 | 4 | Single key, or per-person accounts? | **single shared key** |
 | 5 | Same package, or a separate one? | **same package**, so the deploy button keeps delivering everything in one step |
 
-## 11. The public playground, explained in full (open decision)
+## 11. The public playground, explained in full (decided: build it)
+
+**Decisions taken.** The editor ships with an editable box. The box is collapsed until a visitor clicks to
+open it. When a visitor has supplied a template, the page prints, next to the answer, that the template came
+from the visitor and not from the site's owner. The shareable address is the only storage.
 
 This section exists so that the decision can be made by reading one page instead of reconstructing an
 argument from a conversation.

@@ -107,6 +107,8 @@ curl -N http://localhost:8080/v1/chat/completions \
 | `DUMMY_MAX_BODY` | `1000000` | 超过这个字节数的请求体直接拒绝（`0` 表示不限制） |
 | `DUMMY_MODELS` | 全部 persona | 逗号分隔 |
 | `DUMMY_PERSONAS` | — | 额外 persona 的 JSON 映射：`{"dummy-ascii-1":{"reply":"{input|ascii}","thinking":[]}}` |
+| `DUMMY_PLAYGROUND` | — | `1` 时允许调用方用 `?t=<模板>` 回答那一次请求；什么都不存储 |
+| `DUMMY_MAX_REPLY` | `0` | 把渲染后的回答截断到这个字符数（`0` 表示不限制） |
 | `DUMMY_TOOLCALL` | — | 需要时返回固定 function call |
 | `DUMMY_THINKING` | 内置 10 个模板 | 硬编码的思考。用 `\|` 分隔多个模板，每次请求随机取一个；会替换 `{input}`、`{reply}`；`off` 关闭 |
 
@@ -133,6 +135,21 @@ curl -N http://localhost:8080/v1/chat/completions \
 
 **其他任何** model 字符串都会落回服务端自己的 `DUMMY_REPLY`，所以写死 `gpt-4o` 的客户端
 依然能正常工作。
+
+## 可分享的链接
+
+打开 `DUMMY_PLAYGROUND=1` 之后，落地页会多出一个默认折叠的模板输入框。访客在这里写的内容会同步进地址栏，
+于是"演示"本身就变成了一个链接：
+
+```
+https://dummy.example.com/?t=%7Binput%7Cascii%7D
+```
+
+打开这个地址，输入框里已经填好 `{input|ascii}`，任何人立刻就能按 Send。这个模板只回答那一次请求，之后就
+被忘掉：什么都不存，也不影响其他调用者。模板上限 2000 字符，回答上限 100000 字符，而且页面会注明"这条回答的
+模板由访客提供"，而不是运营者的。
+
+默认关闭。没有 `DUMMY_PLAYGROUND` 时输入框根本不渲染，`?t=` 也会被忽略。
 
 ## 模板与过滤器
 

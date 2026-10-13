@@ -70,7 +70,7 @@ ship `packs/ascii-banner`, `packs/rickroll`, `packs/pirate`, `packs/haiku-only` 
 `packs/adversarial` (for testing agent guardrails). A remote `https://` pack would be the first
 outbound request this server ever makes, so it stays opt-in and documented.
 
-### 4. Playground editor on the landing page
+### 4. Playground editor on the landing page — **shipped** (collapsed editor, `?t=` links, `DUMMY_PLAYGROUND`)
 
 The landing page already streams from the real API. Add a template textarea and a mode switch,
 backed by a per-request override (`?template=…&mode=…`, enabled by `DUMMY_PLAYGROUND=1`), plus a

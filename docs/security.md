@@ -35,6 +35,7 @@ not a proxy to a real model, and not multi-tenant. The realistic risks are:
 | Public URL | Free plan is ~100k requests/day | Add a Cloudflare **Rate Limiting** rule or WAF rule in front of the Worker |
 | `DUMMY_HANG_MS` | Holds connections open on purpose | Keep it at 0 in production; it exists to test client timeouts |
 | `DUMMY_CORS=*` (default) | Any web page can call the endpoint from a browser | Set `DUMMY_CORS=https://your.app` |
+| `DUMMY_PLAYGROUND=1` | Any visitor can make your server answer with a template of their own, and screenshot the result | Off by default. Templates are capped at 2000 characters, answers at 100000, the page says who supplied the template, and nothing is stored |
 | Echo mode | It mirrors whatever you send | Do not point it at traffic containing secrets. It stores nothing, but your client and your logs might |
 
 ## Known gaps

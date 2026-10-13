@@ -135,6 +135,8 @@ Unknown routes return a 404 **in the error shape of the protocol you were speaki
 | `DUMMY_MAX_BODY` | `1000000` | Reject request bodies larger than this (`0` = unlimited) |
 | `DUMMY_MODELS` | every persona | Comma separated model ids to advertise |
 | `DUMMY_PERSONAS` | — | JSON map of extra personas: `{"dummy-ascii-1":{"reply":"{input|ascii}","thinking":[]}}` |
+| `DUMMY_PLAYGROUND` | — | `1` lets a caller pass `?t=<template>` and have it answer that one request; nothing is stored |
+| `DUMMY_MAX_REPLY` | `0` | Truncate a rendered reply at this many characters (`0` = no limit) |
 | `DUMMY_TOOLCALL` | — | Function name, or JSON `{"name":…,"arguments":…}` |
 | `DUMMY_THINKING` | a pool of 10 | The "reasoning". `\|`-separated templates, one picked at random per request; `{input}` and `{reply}` are substituted; `off` disables it |
 
@@ -190,7 +192,39 @@ noise it walks back to the previous real one. Add your own rules with `DUMMY_STR
 (`|`-separated regexes), or turn all of it off with `--echo-raw` to see the request body byte
 for byte.
 
+## A shareable link
+
+With `DUMMY_PLAYGROUND=1` the landing page grows a collapsed template box. Whatever a visitor types
+there travels in the address bar, which turns the demonstration itself into a link:
+
+```
+https://dummy.example.com/?t=%7Binput%7Cascii%7D
+```
+
+Opening that address fills the box with `{input|ascii}` and lets anyone press Send immediately. The
+template answers that one request and is then forgotten: nothing is stored, and no other caller is
+affected. Templates are capped at 2000 characters, answers at 100000, and the page labels the answer as
+visitor-supplied rather than the operator's.
+
+It is off by default. Without `DUMMY_PLAYGROUND` the box is not rendered at all and `?t=` is ignored.
+
 ## Templates and filters
+## A shareable link
+
+With `DUMMY_PLAYGROUND=1` the landing page grows a collapsed template box. Whatever a visitor types
+there travels in the address bar, which turns the demonstration itself into a link:
+
+```
+https://dummy.example.com/?t=%7Binput%7Cascii%7D
+```
+
+Opening that address fills the box with `{input|ascii}` and lets anyone press Send immediately. The
+template answers that one request and is then forgotten: nothing is stored, and no other caller is
+affected. Templates are capped at 2000 characters, answers at 100000, and the page labels the answer as
+visitor-supplied rather than the operator's.
+
+It is off by default. Without `DUMMY_PLAYGROUND` the box is not rendered at all and `?t=` is ignored.
+
 ## Templates and filters
 
 Templates live in `DUMMY_REPLY` and `DUMMY_THINKING`. Placeholders:

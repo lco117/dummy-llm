@@ -22,6 +22,8 @@
     "DUMMY_TPS": "100",
     // One JSON line per request, visible in Workers Logs / `npx wrangler tail dummy-llm`.
     // Set to "off" (or "full" to include whole request bodies).
-    "DUMMY_LOG": "summary"
+    "DUMMY_LOG": "summary",
+    // Lets the landing page offer a shareable ?t=<template> link (nothing is stored).
+    "DUMMY_PLAYGROUND": "1"
   }
 }
