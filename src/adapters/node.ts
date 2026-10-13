@@ -18,7 +18,8 @@ Options:
       --mode <mode>       fixed | echo | random | canned    (default fixed)
       --lines <a|b|c>     Replies for random mode
       --chunk <n|word|line|whole>                          (default 1)
-      --delay <ms>        Delay between streamed chunks     (default 20)
+      --tps <n>           Streamed pieces per second      (default 100)
+      --delay <ms>        Delay between pieces, overrides --tps
       --ttft <ms>         Time to first token               (default 0)
       --seed <n>          Seed for ids and jitter           (default 1)
       --api-key <key>     Require this key on API routes
@@ -30,6 +31,7 @@ Options:
       --thinking <text>   Thinking template ({input} {reply}); default repeats your joke back
       --no-thinking       Do not emit a thinking block at all
       --echo-raw          Echo the message verbatim, without stripping <system-reminder> blocks
+      --log <level>       off | summary | full — log what was received (default off)
   -h, --help              Show this help
   -v, --version           Show the version
 
@@ -99,7 +101,9 @@ apply("PARROT_TEXT", "text", "t");
 apply("PARROT_MODE", "mode");
 apply("PARROT_LINES", "lines");
 apply("PARROT_CHUNK", "chunk");
+apply("PARROT_TPS", "tps");
 apply("PARROT_DELAY_MS", "delay");
+apply("PARROT_LOG", "log");
 apply("PARROT_TTFT_MS", "ttft");
 apply("PARROT_SEED", "seed");
 apply("PARROT_API_KEY", "api-key");

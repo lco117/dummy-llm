@@ -1,6 +1,6 @@
 import { DEFAULT_MODELS } from "./models.ts";
 import { parseFaultSpec } from "./errors.ts";
-import type { ChunkMode, Config, Mode } from "./types.ts";
+import type { ChunkMode, Config, LogLevel, Mode } from "./types.ts";
 
 export interface Env {
   [key: string]: string | undefined;
@@ -14,7 +14,8 @@ export const DEFAULTS = {
   text: "6",
   mode: "echo" as Mode,
   chunk: 1 as ChunkMode,
-  delayMs: 20,
+  tps: 100,
+  log: "off" as LogLevel,
   ttftMs: 0,
   seed: 1,
   cors: "*",
@@ -41,6 +42,20 @@ function list(value: string | undefined, fallback: string[]): string[] {
   if (!value) return fallback;
   const items = value.split(",").map((item) => item.trim()).filter(Boolean);
   return items.length > 0 ? items : fallback;
+}
+
+function tpsToDelay(tps: number): number {
+  // 0 means "as fast as the runtime can go"
+  if (!Number.isFinite(tps) || tps <= 0) return 0;
+  return Math.max(0, Math.round(1000 / tps));
+}
+
+function logLevel(value: string | undefined): LogLevel {
+  if (value === undefined) return DEFAULTS.log;
+  const normalised = value.trim().toLowerCase();
+  if (["full", "verbose", "all", "body"].includes(normalised)) return "full";
+  if (["summary", "1", "true", "yes", "on"].includes(normalised)) return "summary";
+  return "off";
 }
 
 function boolean(value: string | undefined): boolean {
@@ -74,13 +89,17 @@ export function resolveConfig(env: Env = {}, overrides: Partial<Config> = {}): C
     }
   }
 
+  const tps = wholeNumber(env.PARROT_TPS, DEFAULTS.tps);
+  const explicitDelay = env.PARROT_DELAY_MS !== undefined && env.PARROT_DELAY_MS.trim() !== "";
+
   return {
     text,
     mode: MODES.includes(mode) ? mode : DEFAULTS.mode,
     lines: lines.length > 0 ? lines : [text],
     canned,
     chunk: chunkMode(env.PARROT_CHUNK),
-    delayMs: wholeNumber(env.PARROT_DELAY_MS, DEFAULTS.delayMs),
+    tps,
+    delayMs: explicitDelay ? wholeNumber(env.PARROT_DELAY_MS, tpsToDelay(tps)) : tpsToDelay(tps),
     ttftMs: wholeNumber(env.PARROT_TTFT_MS, DEFAULTS.ttftMs),
     seed: wholeNumber(env.PARROT_SEED, DEFAULTS.seed),
     fail: parseFaultSpec(env.PARROT_FAIL),
@@ -91,6 +110,7 @@ export function resolveConfig(env: Env = {}, overrides: Partial<Config> = {}): C
     toolCall: env.PARROT_TOOLCALL && env.PARROT_TOOLCALL.trim() !== "" ? env.PARROT_TOOLCALL : null,
     thinking: thinkingTemplate(env.PARROT_THINKING),
     echoRaw: boolean(env.PARROT_ECHO_RAW),
+    log: logLevel(env.PARROT_LOG),
     now: () => Date.now(),
     ...overrides,
   };

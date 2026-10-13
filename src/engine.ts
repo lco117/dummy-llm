@@ -39,37 +39,57 @@ export function userInput(canon: CanonRequest, cfg: Config): string {
   return "";
 }
 
-/** The entire "intelligence" of this project. */
-export function buildText(canon: CanonRequest, cfg: Config, rand: () => number): string {
-  switch (cfg.mode) {
-    case "echo":
-      // It says whatever you said. That is the whole trick.
-      return userInput(canon, cfg) || cfg.text;
-    case "random":
-      return pick(rand, cfg.lines.length > 0 ? cfg.lines : [cfg.text]);
-    case "canned": {
-      const haystack = canon.messages.map((message) => message.content).join(" ").toLowerCase();
-      for (const [keyword, reply] of Object.entries(cfg.canned)) {
-        if (keyword !== "" && haystack.includes(keyword.toLowerCase())) return reply;
-      }
-      return cfg.text;
-    }
-    default:
-      return cfg.text;
-  }
+export interface TemplateVars {
+  input: string;
+  raw: string;
+  model: string;
+  reply?: string;
+  text?: string;
 }
 
 /**
- * The "reasoning" is hardcoded too: a template with the user's words dropped in.
- * Placeholders: {input} {reply} {model} {text}
+ * Substitutes placeholders. Used both for the answer template (`PARROT_TEXT` in
+ * fixed mode) and for the thinking template:
+ *   {input} the cleaned-up user message   {raw} the untouched last user message
+ *   {model} the requested model           {reply} the answer   {text} PARROT_TEXT
  */
+export function renderTemplate(template: string, vars: TemplateVars): string {
+  let out = template.split("{input}").join(vars.input).split("{raw}").join(vars.raw).split("{model}").join(vars.model);
+  if (vars.reply !== undefined) out = out.split("{reply}").join(vars.reply);
+  if (vars.text !== undefined) out = out.split("{text}").join(vars.text);
+  return out;
+}
+
+export function templateVars(canon: CanonRequest, cfg: Config, reply?: string): TemplateVars {
+  return { input: userInput(canon, cfg), raw: lastUserMessage(canon), model: canon.model, reply, text: cfg.text };
+}
+
+/** The entire "intelligence" of this project. */
+export function buildText(canon: CanonRequest, cfg: Config, rand: () => number): string {
+  const vars = templateVars(canon, cfg);
+  switch (cfg.mode) {
+    case "echo":
+      // It says whatever you said. That is the whole trick.
+      return vars.input || cfg.text;
+    case "random":
+      return renderTemplate(pick(rand, cfg.lines.length > 0 ? cfg.lines : [cfg.text]), vars);
+    case "canned": {
+      const haystack = canon.messages.map((message) => message.content).join(" ").toLowerCase();
+      for (const [keyword, reply] of Object.entries(cfg.canned)) {
+        if (keyword !== "" && haystack.includes(keyword.toLowerCase())) return renderTemplate(reply, vars);
+      }
+      return renderTemplate(cfg.text, vars);
+    }
+    default:
+      // fixed: the same template every time, with the user's words dropped in.
+      return renderTemplate(cfg.text, vars);
+  }
+}
+
+/** The "reasoning" is a template too. */
 export function renderThinking(canon: CanonRequest, cfg: Config, reply: string): string | null {
   if (!cfg.thinking) return null;
-  return cfg.thinking
-    .split("{input}").join(userInput(canon, cfg))
-    .split("{reply}").join(reply)
-    .split("{model}").join(canon.model)
-    .split("{text}").join(cfg.text);
+  return renderTemplate(cfg.thinking, templateVars(canon, cfg, reply));
 }
 
 export interface Answer {
@@ -121,9 +141,10 @@ export interface Phase {
 
 /**
  * Produces the answer piece by piece — the thinking channel first, then the reply —
- * paying the simulated latency bill. Throws FaultError when a mid-stream fault is
- * configured, which is exactly the case every client's retry logic gets wrong.
- * `PARROT_FAIL=500:after=N` counts every streamed piece, thinking included.
+ * paying the simulated latency bill (`delayMs` per piece, derived from PARROT_TPS).
+ * Throws FaultError when a mid-stream fault is configured, which is exactly the case
+ * every client's retry logic gets wrong. `PARROT_FAIL=500:after=N` counts every
+ * streamed piece, thinking included.
  */
 export async function* phasesFor(
   answer: Answer,

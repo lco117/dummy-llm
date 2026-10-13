@@ -1,3 +1,4 @@
+import { stripReminders } from "./engine.ts";
 import { errorResponse, HttpError } from "./errors.ts";
 import { landingPage } from "./landing.ts";
 import { mulberry32 } from "./random.ts";
@@ -29,13 +30,63 @@ function isAnthropicRequest(request: Request): boolean {
   return request.headers.has("anthropic-version") || (request.headers.has("x-api-key") && !request.headers.has("authorization"));
 }
 
-async function readJson(request: Request): Promise<Record<string, any>> {
+function truncate(value: string, max: number): string {
+  return value.length <= max ? value : value.slice(0, max) + "…";
+}
+
+/** Best-effort message extraction across all four request shapes. */
+function collectMessages(body: Record<string, any>): Array<{ role: string; content: string }> {
+  const source = body.messages ?? body.input ?? body.contents;
+  const flat = (content: unknown): string => {
+    if (typeof content === "string") return content;
+    if (Array.isArray(content)) {
+      return content
+        .map((part: any) => (typeof part === "string" ? part : part?.text ?? part?.content ?? ""))
+        .join("");
+    }
+    return content === null || content === undefined ? "" : JSON.stringify(content);
+  };
+  if (typeof source === "string") return [{ role: "user", content: source }];
+  if (Array.isArray(source)) {
+    return source.map((entry: any) => {
+      if (typeof entry === "string") return { role: "user", content: entry };
+      return { role: String(entry?.role ?? "user"), content: flat(entry?.content ?? entry?.parts ?? "") };
+    });
+  }
+  if (typeof body.prompt === "string") return [{ role: "user", content: body.prompt }];
+  return [];
+}
+
+/**
+ * PARROT_LOG=summary prints one line per request — what the server actually received.
+ * On Cloudflare that shows up in Workers Logs and in `npx wrangler tail parrot-llm`.
+ */
+function logRequest(ctx: Ctx, method: string, body: Record<string, any>): void {
+  if (ctx.cfg.log === "off") return;
+  const messages = collectMessages(body);
+  const users = messages.filter((message) => message.role === "user");
+  const lastUser = users.length > 0 ? stripReminders(users[users.length - 1].content) : "";
+  const line: Record<string, unknown> = {
+    parrot: "request",
+    method,
+    path: ctx.url.pathname,
+    model: body.model ?? null,
+    stream: body.stream === true,
+    messages: messages.length,
+    lastUser: truncate(lastUser, 500),
+  };
+  if (ctx.cfg.log === "full") line.body = body;
+  console.log(JSON.stringify(line));
+}
+
+async function readJson(request: Request, ctx: Ctx): Promise<Record<string, any>> {
   const text = await request.text();
   if (text.trim() === "") return {};
   try {
     const parsed = JSON.parse(text) as unknown;
-    if (parsed === null || typeof parsed !== "object") return { value: parsed };
-    return parsed as Record<string, any>;
+    const body = parsed !== null && typeof parsed === "object" ? (parsed as Record<string, any>) : { value: parsed };
+    logRequest(ctx, request.method, body);
+    return body;
   } catch {
     throw new HttpError(400, "We could not parse the JSON body of your request. (Please check the body is valid JSON.)");
   }
@@ -67,7 +118,18 @@ async function route(request: Request, ctx: Ctx): Promise<Response> {
   if (method === "OPTIONS") return new Response(null, { status: 204 });
   if (method === "GET" && (path === "/" || path === "/index.html")) return landingPage(ctx);
   if (method === "GET" && path === "/healthz") {
-    return json({ ok: true, status: "ok", mode: ctx.cfg.mode, text: ctx.cfg.text, uptime: 0, version: "0.1.0" });
+    return json({
+      ok: true,
+      status: "ok",
+      mode: ctx.cfg.mode,
+      text: ctx.cfg.text,
+      thinking: ctx.cfg.thinking !== null,
+      tps: ctx.cfg.tps,
+      delayMs: ctx.cfg.delayMs,
+      log: ctx.cfg.log,
+      uptime: 0,
+      version: "0.1.0",
+    });
   }
 
   const unauthorized = checkAuth(request, ctx);
@@ -79,25 +141,25 @@ async function route(request: Request, ctx: Ctx): Promise<Response> {
     return isAnthropicRequest(request) ? anthropic.models(ctx) : openaiChat.model(id, ctx);
   }
 
-  if (method === "POST" && path === "/v1/chat/completions") return openaiChat.chat(await readJson(request), ctx);
-  if (method === "POST" && path === "/v1/completions") return openaiChat.completions(await readJson(request), ctx);
-  if (method === "POST" && path === "/v1/embeddings") return openaiChat.embeddings(await readJson(request), ctx);
-  if (method === "POST" && path === "/v1/responses") return openaiResponses.responses(await readJson(request), ctx);
-  if (method === "POST" && path === "/v1/messages") return anthropic.messages(await readJson(request), ctx);
-  if (method === "POST" && path === "/v1/messages/count_tokens") return anthropic.countTokens(await readJson(request), ctx);
+  if (method === "POST" && path === "/v1/chat/completions") return openaiChat.chat(await readJson(request, ctx), ctx);
+  if (method === "POST" && path === "/v1/completions") return openaiChat.completions(await readJson(request, ctx), ctx);
+  if (method === "POST" && path === "/v1/embeddings") return openaiChat.embeddings(await readJson(request, ctx), ctx);
+  if (method === "POST" && path === "/v1/responses") return openaiResponses.responses(await readJson(request, ctx), ctx);
+  if (method === "POST" && path === "/v1/messages") return anthropic.messages(await readJson(request, ctx), ctx);
+  if (method === "POST" && path === "/v1/messages/count_tokens") return anthropic.countTokens(await readJson(request, ctx), ctx);
 
   if (method === "GET" && path === "/v1beta/models") return gemini.models(ctx);
   const geminiRoute = path.match(/^\/v1beta\/models\/(.+?):(generateContent|streamGenerateContent|countTokens)$/);
   if (geminiRoute && method === "POST") {
-    return gemini.generate(geminiRoute[2], decodeURIComponent(geminiRoute[1]), await readJson(request), ctx);
+    return gemini.generate(geminiRoute[2], decodeURIComponent(geminiRoute[1]), await readJson(request, ctx), ctx);
   }
 
   if (method === "GET" && path === "/api/version") return ollama.version();
   if (method === "GET" && path === "/api/tags") return ollama.tags(ctx);
   if (method === "GET" && path === "/api/ps") return ollama.ps(ctx);
-  if (method === "POST" && path === "/api/chat") return ollama.chat(await readJson(request), ctx);
-  if (method === "POST" && path === "/api/generate") return ollama.generate(await readJson(request), ctx);
-  if (method === "POST" && path === "/api/embed") return ollama.embed(await readJson(request), ctx);
+  if (method === "POST" && path === "/api/chat") return ollama.chat(await readJson(request, ctx), ctx);
+  if (method === "POST" && path === "/api/generate") return ollama.generate(await readJson(request, ctx), ctx);
+  if (method === "POST" && path === "/api/embed") return ollama.embed(await readJson(request, ctx), ctx);
 
   return errorResponse(
     protocolFor(path),

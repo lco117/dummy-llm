@@ -2,6 +2,8 @@ export type ProtocolId = "openai-chat" | "openai-responses" | "anthropic" | "gem
 
 export type Mode = "fixed" | "echo" | "random" | "canned";
 
+export type LogLevel = "off" | "summary" | "full";
+
 export type ChunkMode = number | "word" | "line" | "whole";
 
 export interface CanonMessage {
@@ -33,6 +35,8 @@ export interface Config {
   lines: string[];
   canned: Record<string, string>;
   chunk: ChunkMode;
+  /** Streamed pieces per second. delayMs is derived from this unless set explicitly. */
+  tps: number;
   delayMs: number;
   ttftMs: number;
   seed: number;
@@ -45,6 +49,8 @@ export interface Config {
   thinking: string | null;
   /** Echo the user's message untouched, without stripping <system-reminder> blocks. */
   echoRaw: boolean;
+  /** Log every received request (visible via "wrangler tail" on Cloudflare). */
+  log: LogLevel;
   now: () => number;
 }
 
