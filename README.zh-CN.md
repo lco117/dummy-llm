@@ -86,8 +86,8 @@ curl -N http://localhost:8080/v1/chat/completions \
 | `PARROT_TEXT` | `6` | `fixed` 模式的回答模板（会替换 `{input}`、`{model}`），也是用户什么都没说时的兜底 |
 | `PARROT_MODE` | `echo` | `echo`（复读用户）/ `fixed` / `random` / `canned` |
 | `PARROT_ECHO_RAW` | — | 原样复读，不剥离 `<system-reminder>` 块 |
-| `PARROT_CHUNK` | `1` | 每帧几个字符，或 `word` / `line` / `whole` |
-| `PARROT_TPS` | `100` | 每秒输出多少个流式片段，帧间隔由它换算（`0` 表示不限速） |
+| `PARROT_CHUNK` | `4` | 每个流式片段几个字符——4 个字符约等于一个英文 token。也支持 `word` / `line` / `whole` |
+| `PARROT_TPS` | `100` | 每秒输出多少 token，一个片段多大取决于 `PARROT_CHUNK`（`0` 表示不限速） |
 | `PARROT_DELAY_MS` | 由 `PARROT_TPS` 换算 | 显式设置后会覆盖 `PARROT_TPS` |
 | `PARROT_TTFT_MS` | `0` | 首 token 延迟 |
 | `PARROT_SEED` | `1` | 让 id 和抖动可复现 |
@@ -97,7 +97,7 @@ curl -N http://localhost:8080/v1/chat/completions \
 | `PARROT_LOG` | `off` | `off` / `summary` / `full`，记录收到的每个请求 |
 | `PARROT_MODELS` | `parrot-1, parrot-1-mini, definitely-not-a-model` | 逗号分隔 |
 | `PARROT_TOOLCALL` | — | 需要时返回固定 function call |
-| `PARROT_THINKING` | 内置模板 | 硬编码的思考模板，支持 `{input}`、`{reply}` 占位符；`off` 关闭 |
+| `PARROT_THINKING` | 内置 10 个模板 | 硬编码的思考。用 `\|` 分隔多个模板，每次请求随机取一个；会替换 `{input}`、`{reply}`；`off` 关闭 |
 
 全部同时是 CLI 参数：`parrot-llm --help`。
 
@@ -107,7 +107,7 @@ curl -N http://localhost:8080/v1/chat/completions \
 
 ## 思考
 
-它回答问题前会先"推理"——当然也是硬编码的模板：
+它回答问题前会先"推理"——从 10 个硬编码模板里随机抽一个：
 
 ```bash
 curl -s http://localhost:8080/v1/chat/completions -H 'content-type: application/json' \

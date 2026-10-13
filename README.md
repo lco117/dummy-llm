@@ -114,8 +114,8 @@ Unknown routes return a 404 **in the error shape of the protocol you were speaki
 | `PARROT_LINES` | — | `a\|b\|c` replies for `random` mode |
 | `PARROT_CANNED` | — | JSON map of keyword → reply for `canned` mode |
 | `PARROT_ECHO_RAW` | — | Repeat the message verbatim, without stripping `<system-reminder>` blocks |
-| `PARROT_CHUNK` | `1` | `1`, `2` … code points per frame, or `word` / `line` / `whole` |
-| `PARROT_TPS` | `100` | Streamed pieces per second; the inter-piece delay is derived from it (`0` = no delay) |
+| `PARROT_CHUNK` | `4` | Code points per streamed piece — 4 is about one English token. Also accepts `word` / `line` / `whole` |
+| `PARROT_TPS` | `100` | Tokens per second. What a piece is depends on `PARROT_CHUNK`; `0` means no artificial delay |
 | `PARROT_DELAY_MS` | derived from `PARROT_TPS` | Set explicitly to override `PARROT_TPS` |
 | `PARROT_TTFT_MS` | `0` | Time to first token |
 | `PARROT_HANG_MS` | `0` | Delay before the first byte |
@@ -126,7 +126,7 @@ Unknown routes return a 404 **in the error shape of the protocol you were speaki
 | `PARROT_LOG` | `off` | `off` / `summary` / `full` — log every request that arrives |
 | `PARROT_MODELS` | `parrot-1, parrot-1-mini, definitely-not-a-model` | Comma separated model ids to advertise |
 | `PARROT_TOOLCALL` | — | Function name, or JSON `{"name":…,"arguments":…}` |
-| `PARROT_THINKING` | a hardcoded template | The "reasoning", with `{input}` and `{reply}` placeholders; `off` disables it |
+| `PARROT_THINKING` | a pool of 10 | The "reasoning". `\|`-separated templates, one picked at random per request; `{input}` and `{reply}` are substituted; `off` disables it |
 
 Every one of them is also a CLI flag: `parrot-llm --help`.
 
@@ -149,7 +149,7 @@ request body byte for byte.
 
 ## Thinking
 
-It "reasons" before it answers — through a hardcoded template, obviously:
+It "reasons" before it answers — by drawing one of ten hardcoded templates at random, obviously:
 
 ```bash
 curl -s http://localhost:8080/v1/chat/completions -H 'content-type: application/json' \

@@ -101,14 +101,21 @@ Timers are wall-clock, not CPU — this matters for the Workers free tier (secti
 
 ### 3.5 Rate, templates and logging
 
-`PARROT_TPS` (default 100) is the primary rate knob: the delay between pieces is
-`round(1000 / tps)`, and `PARROT_DELAY_MS` overrides it when set explicitly. One "piece" is one
-chunk (`PARROT_CHUNK`, default one code point), so "tokens per second" means streamed pieces
-per second — documented rather than pretended.
+`PARROT_TPS` (default 100) is the primary rate knob: the interval between pieces is
+`round(1000 / tps)`, and `PARROT_DELAY_MS` overrides it when set explicitly. `PARROT_CHUNK`
+defaults to **4 code points** — roughly one English token — so `PARROT_TPS` matches what a
+client's "tokens/s" readout actually counts.
+
+Pacing targets an **absolute schedule** (`piece i is due at start + i * interval`) rather than
+sleeping a fixed delay per piece. Timers in workerd and Node overshoot by a millisecond or two
+every time, and a fixed sleep compounds that error: a stream configured for 100 tps measured
+48 tps on the Cloudflare edge. With a deadline, a late timer shortens the next wait instead.
 
 `PARROT_TEXT` is a template, not a literal, in `fixed` / `random` / `canned` mode: `{input}`
 (the cleaned-up user message) and `{model}` are substituted. `PARROT_THINKING` additionally
-gets `{reply}` and `{text}`. Placeholders never appear in `echo` mode, where the answer is
+gets `{reply}` and `{text}`. It is a pool, not a string: templates are
+`\|`-separated (ten ship by default) and `renderThinking()` draws one per request, so a chat
+never gets the same fake reasoning twice. Pinning `PARROT_SEED` makes the draw reproducible. Placeholders never appear in `echo` mode, where the answer is
 the user's own words.
 
 `PARROT_LOG` = `off` | `summary` | `full`. Logging happens in `readJson()` in
