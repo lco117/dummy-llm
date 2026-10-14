@@ -7,6 +7,11 @@ coverage/
 .env
 .env.*
 !.env.example
+# Wrangler's local secrets file and any local-only config: never commit these.
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+wrangler.local.jsonc
 .wrangler/
 .vercel/
 .output/
