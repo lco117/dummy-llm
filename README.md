@@ -209,23 +209,6 @@ visitor-supplied rather than the operator's.
 It is off by default. Without `DUMMY_PLAYGROUND` the box is not rendered at all and `?t=` is ignored.
 
 ## Templates and filters
-## A shareable link
-
-With `DUMMY_PLAYGROUND=1` the landing page grows a collapsed template box. Whatever a visitor types
-there travels in the address bar, which turns the demonstration itself into a link:
-
-```
-https://dummy.example.com/?t=%7Binput%7Cascii%7D
-```
-
-Opening that address fills the box with `{input|ascii}` and lets anyone press Send immediately. The
-template answers that one request and is then forgotten: nothing is stored, and no other caller is
-affected. Templates are capped at 2000 characters, answers at 100000, and the page labels the answer as
-visitor-supplied rather than the operator's.
-
-It is off by default. Without `DUMMY_PLAYGROUND` the box is not rendered at all and `?t=` is ignored.
-
-## Templates and filters
 
 Templates live in `DUMMY_REPLY` and `DUMMY_THINKING`. Placeholders:
 `{input}` (the cleaned-up user message), `{raw}` (untouched), `{reply}` (the answer being built),
