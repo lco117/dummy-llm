@@ -183,7 +183,7 @@ function topBar(lang: Lang, signOut: boolean): string {
 export function adminPage(lang: Lang): string {
   return [
     head(lang, "dummy-llm admin", "admin"),
-    '<div class="doc">',
+    '<div class="doc wide">',
     topBar(lang, true),
     '<div id="boot" class="boot"><p class="hint">' + t(lang, "admin.loading") + "</p></div>",
     '<div id="main" hidden>',
@@ -208,9 +208,9 @@ export function adminPage(lang: Lang): string {
     '<option value="pool">' + t(lang, "admin.shape.pool") + "</option>",
     '<option value="keys">' + t(lang, "admin.shape.keys") + "</option>",
     "</select></label>",
-    '<label class="field"><span>' + t(lang, "admin.reply") + '</span><textarea id="p-reply" rows="5" spellcheck="false"></textarea></label>',
+    '<label class="field"><span>' + t(lang, "admin.reply") + '</span><textarea id="p-reply" rows="10" spellcheck="false"></textarea></label>',
     "<details class=\"help\"><summary>" + t(lang, "admin.format") + "</summary>" + helpHtml(lang) + "</details>",
-    '<label class="field"><span>' + t(lang, "admin.thinking") + '</span><textarea id="p-thinking" rows="3" spellcheck="false"></textarea></label>',
+    '<label class="field"><span>' + t(lang, "admin.thinking") + '</span><textarea id="p-thinking" rows="6" spellcheck="false"></textarea></label>',
     '<label class="field"><span>' + t(lang, "admin.description") + '</span><input id="p-description" spellcheck="false"></label>',
     '<div class="row">',
     '<button class="btn primary" id="p-save" type="button">' + t(lang, "admin.save") + "</button>",

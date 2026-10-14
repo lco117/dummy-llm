@@ -324,7 +324,14 @@ test("the landing page only offers the editor when the playground is on", async 
   assert.match(on, /id="editor"/);
   assert.doesNotMatch(on, /id="editor" hidden/);
   assert.match(on, /Edit the reply template/);
-  assert.match(on, /not by this site's owner/);
+  assert.match(on, /data-playground="1"/, "the page tells the script whether the template box is live");
+
+  // the visitor notice and the other client-side strings travel with the script, not in the page
+  const script = await (await makeApp({ playground: true })(new Request("http://localhost/app.js?lang=en"))).text();
+  assert.match(script, /window\.__DUMMY_I18N/, "the dictionary is the script's prelude");
+  assert.match(script, /not by this site's owner/);
+  const zhScript = await (await makeApp({ playground: true })(new Request("http://localhost/app.js?lang=zh"))).text();
+  assert.match(zhScript, /模板由访客/, "and it follows the requested language");
 });
 
 test("the format help is generated from the real filter registry", async () => {

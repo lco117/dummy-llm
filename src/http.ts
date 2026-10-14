@@ -1,11 +1,12 @@
 import { createAdmin } from "./admin.ts";
 import { playgroundOverride } from "./config.ts";
 import { describeReply, stripReminders } from "./engine.ts";
-import { isLang, langCookie } from "./i18n.ts";
+import { isLang, langCookie, resolveLang } from "./i18n.ts";
 import { redact, redactedJson } from "./redact.ts";
 import { applyStore, createStoreLayer, type Store } from "./store.ts";
 import { errorResponse, HttpError } from "./errors.ts";
-import { landingPage } from "./landing.ts";
+import { APP_JS } from "./app-client.ts";
+import { landingPage, landingStrings } from "./landing.ts";
 import { LOGO_SVG } from "./logo.ts";
 import { mulberry32 } from "./random.ts";
 import { json } from "./sse.ts";
@@ -152,6 +153,14 @@ async function route(request: Request, ctx: Ctx): Promise<Response> {
 
   if (method === "OPTIONS") return new Response(null, { status: 204 });
   if (method === "GET" && (path === "/" || path === "/index.html")) return landingPage(ctx, request);
+  if (method === "GET" && path === "/app.js") {
+    // The dictionary is a prelude on the script rather than an inline block, so one file carries both
+    // the strings and the behaviour and the language is pinned by the URL.
+    const lang = resolveLang(request, ctx.url);
+    return new Response("window.__DUMMY_I18N = " + landingStrings(lang) + ";\n" + APP_JS, {
+      headers: { "content-type": "text/javascript; charset=utf-8", "cache-control": "no-store" },
+    });
+  }
   if (method === "GET" && path === "/logo.svg") {
     return new Response(LOGO_SVG, {
       headers: { "content-type": "image/svg+xml; charset=utf-8", "cache-control": "public, max-age=86400" },
