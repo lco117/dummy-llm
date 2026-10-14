@@ -1,6 +1,7 @@
 import { createAdmin } from "./admin.ts";
 import { playgroundOverride } from "./config.ts";
 import { describeReply, stripReminders } from "./engine.ts";
+import { isLang, langCookie } from "./i18n.ts";
 import { redact, redactedJson } from "./redact.ts";
 import { applyStore, createStoreLayer, type Store } from "./store.ts";
 import { errorResponse, HttpError } from "./errors.ts";
@@ -150,7 +151,7 @@ async function route(request: Request, ctx: Ctx): Promise<Response> {
   const path = normalizePath(ctx.url.pathname);
 
   if (method === "OPTIONS") return new Response(null, { status: 204 });
-  if (method === "GET" && (path === "/" || path === "/index.html")) return landingPage(ctx);
+  if (method === "GET" && (path === "/" || path === "/index.html")) return landingPage(ctx, request);
   if (method === "GET" && path === "/logo.svg") {
     return new Response(LOGO_SVG, {
       headers: { "content-type": "image/svg+xml; charset=utf-8", "cache-control": "public, max-age=86400" },
@@ -244,7 +245,7 @@ export function createApp(config: Config, options: AppOptions = {}): App {
 
     // The admin surface has its own authentication and must never pick up the permissive CORS
     // headers or the DUMMY_API_KEY gate that the inference routes use.
-    if (adminPath === "/admin" || adminPath.startsWith("/admin/")) return admin(request);
+    if (adminPath === "/admin" || adminPath.startsWith("/admin/")) return withLangCookie(await admin(request), url);
 
     const seed = nextSeed(config);
     const protocol = protocolFor(url.pathname);
@@ -260,6 +261,19 @@ export function createApp(config: Config, options: AppOptions = {}): App {
         response = errorResponse(protocol, 500, error instanceof Error ? error.message : String(error));
       }
     }
-    return withCors(response, request, config);
+    return withLangCookie(withCors(response, request, config), url);
   };
+}
+
+/**
+ * The language switch is a plain link, so the choice travels in the URL and is remembered here.
+ * Every page then resolves its own language from the same three places: \`?lang=\`, the cookie, then
+ * Accept-Language.
+ */
+function withLangCookie(response: Response, url: URL): Response {
+  const requested = url.searchParams.get("lang");
+  if (!isLang(requested)) return response;
+  const headers = new Headers(response.headers);
+  headers.append("set-cookie", langCookie(requested));
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }

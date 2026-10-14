@@ -59,7 +59,7 @@ You want: a `200` with `text/event-stream`, several `delta` frames, and a final 
 - **The admin page.** `src/admin.ts` is the `/admin` surface, `src/admin-auth.ts` is its cookie and CSRF handling, `src/admin-access.ts` verifies Cloudflare Access JWTs, `src/admin-ui.ts` is the page, and `src/store.ts` is the writable overlay. Rules that must not be broken:
   - `/admin*` stays **404** unless `DUMMY_ADMIN_KEY` is set or Access is configured, and it is routed **before** the CORS wrapper and the `DUMMY_API_KEY` check.
   - No secret reaches a log line, a response or a page. Use `src/redact.ts`; never `console.log` a body or a key directly.
-  - The admin page is static HTML with **zero interpolation**: the client writes every value with `textContent`. Add one `innerHTML` and the XSS story the CSP depends on is gone.
+  - The pages interpolate **only authored strings from `src/i18n.ts`**. No user, persona, store or request value is ever interpolated into HTML: the client writes those with `textContent`. Add one `innerHTML` and the XSS story the CSP depends on is gone.
   - Writes go through the store layer, never the environment, and are validated before they land. Resolution order is **store > environment > built-in**.
   - The preview must call `openaiChat.chat()` with a synthesised request. Never re-implement the engine in the browser — a test asserts the preview is byte-identical to a client request.
   - Changing any of this means updating `docs/admin.md` and the security deltas in `docs/security.md` in the same commit.

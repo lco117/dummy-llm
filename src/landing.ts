@@ -1,210 +1,277 @@
 import { describeReply } from "./engine.ts";
-import { TEMPLATE_HELP_HTML } from "./help.ts";
+import { helpHtml } from "./help.ts";
+import { langSwitch, resolveLang, t, type Lang } from "./i18n.ts";
+import { BASE_CSS, escapeHtml } from "./ui.ts";
 import type { Ctx } from "./types.ts";
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-const STYLE = `
-  :root {
-    color-scheme: dark;
-    --bg: #070b08;
-    --panel: #0d1410;
-    --line: rgba(110, 231, 135, .16);
-    --green: #6ee787;
-    --dim: #7c8f82;
-    --text: #d8f3de;
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; }
-  body {
-    min-height: 100vh;
-    background:
-      radial-gradient(900px 500px at 12% -10%, rgba(110, 231, 135, .13), transparent 60%),
-      radial-gradient(700px 400px at 100% 0%, rgba(56, 189, 248, .07), transparent 55%),
-      var(--bg);
-    color: var(--text);
-    font: 15px/1.65 ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-    padding: 3.5rem 1.25rem 4rem;
-  }
-  main { max-width: 60rem; margin: 0 auto; display: grid; gap: 2.25rem; }
-  a { color: var(--green); text-decoration: none; border-bottom: 1px solid rgba(110,231,135,.3); }
-  a:hover { border-bottom-color: var(--green); }
-  h1 { font-size: 1.6rem; letter-spacing: .02em; margin: 0; }
-  h2 { font-size: .72rem; letter-spacing: .28em; text-transform: uppercase; color: var(--dim); margin: 0 0 .9rem; font-weight: 600; }
-  header { display: grid; gap: .85rem; }
-  .brand { display: flex; align-items: center; gap: .75rem; }
-  .brand .bird { width: 46px; height: 46px; border-radius: 12px; filter: drop-shadow(0 0 22px rgba(56,168,248,.35)); }
-  .tagline { margin: 0; color: var(--dim); max-width: 44rem; }
-  .chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .35rem; }
-  .chip {
-    font-size: .72rem; padding: .22rem .6rem; border: 1px solid var(--line);
-    border-radius: 999px; color: var(--green); background: rgba(110,231,135,.06);
-  }
-  .chip.dim { color: var(--dim); border-color: rgba(255,255,255,.08); background: transparent; }
-  .panel { border: 1px solid var(--line); border-radius: 16px; background: var(--panel); overflow: hidden; }
-  form { display: flex; gap: .5rem; padding: .85rem; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.015); }
+const LANDING_CSS = `
+  .ask { display: flex; align-items: center; gap: .5rem; padding: .7rem .9rem; border-bottom: 1px solid var(--line); }
+  .ask .p { color: var(--teal); font-family: var(--mono); }
+  .ask input { flex: 1; border: 0; background: transparent; padding: .4rem .1rem; }
+  .ask input:focus { outline: none; }
   details.editor { border-bottom: 1px solid var(--line); }
-  details.editor > summary { cursor: pointer; padding: .75rem 1.15rem; color: var(--dim); font-size: .78rem; letter-spacing: .04em; }
-  details.editor > summary:hover { color: var(--green); }
-  details.editor > summary::marker { color: var(--green); }
-  .editor-body { padding: 0 1.15rem 1rem; display: grid; gap: .55rem; }
-  textarea {
-    width: 100%; box-sizing: border-box; resize: vertical; font: inherit; font-size: .82rem;
-    background: rgba(0,0,0,.28); color: var(--text); border: 1px solid var(--line);
-    border-radius: 9px; padding: .6rem .7rem;
-  }
-  textarea:focus { outline: 1px solid var(--green); border-color: transparent; }
-  .hint { margin: 0; color: rgba(124,143,130,.9); font-size: .74rem; line-height: 1.6; }
-  code { color: var(--green); background: rgba(110,231,135,.07); border-radius: 4px; padding: 0 .25rem; }
+  details.editor > summary { cursor: pointer; padding: .7rem 1rem; color: var(--muted); font-size: .8rem; font-family: var(--mono); }
+  details.editor > summary:hover { color: var(--text); }
+  details.editor > summary::marker { color: var(--accent); }
+  .editor-body { padding: 0 1rem 1rem; display: grid; gap: .55rem; }
   details.format { border-top: 1px solid var(--line); margin-top: .2rem; }
-  details.format > summary { cursor: pointer; padding: .55rem 0 .3rem; color: var(--dim); font-size: .74rem; letter-spacing: .04em; }
-  details.format > summary:hover { color: var(--green); }
-  details.format > summary::marker { color: var(--green); }
-  ul.help-list { margin: .35rem 0 .55rem; padding-left: 1.15rem; }
-  ul.help-list li { margin: .12rem 0; }
-  .help-body { padding-bottom: .4rem; }
-  .note { margin: 0 0 .1rem; color: #ffd479; font-size: .74rem; }
-  form .prompt { color: var(--green); padding-top: .55rem; }
-  input {
-    flex: 1; min-width: 0; background: transparent; border: 0; outline: 0;
-    color: var(--text); font: inherit; padding: .55rem .2rem;
-  }
-  input::placeholder { color: rgba(124,143,130,.65); }
-  button {
-    font: inherit; font-size: .82rem; cursor: pointer; color: #06110a; background: var(--green);
-    border: 0; border-radius: 9px; padding: .55rem 1.1rem; font-weight: 600;
-  }
-  button:disabled { opacity: .45; cursor: progress; }
-  .stream { padding: 1.1rem 1.15rem 1.35rem; min-height: 7.5rem; display: grid; gap: 1rem; align-content: start; }
-  .empty { color: rgba(124,143,130,.7); }
-  .label { font-size: .68rem; letter-spacing: .22em; text-transform: uppercase; color: var(--green); }
-  .thinking-text {
-    margin-top: .4rem; color: var(--dim); font-style: italic; white-space: pre-wrap; word-break: break-word;
-    max-height: 9.5rem; overflow: auto; border-left: 2px solid var(--line); padding-left: .8rem;
-  }
-  .answer { font-size: 1.05rem; white-space: pre-wrap; word-break: break-word; }
-  .caret { display: inline-block; width: .55ch; height: 1.05em; background: var(--green); vertical-align: -.15em; animation: blink 1.05s steps(1) infinite; }
-  @keyframes blink { 50% { opacity: 0; } }
-  .error { color: #ff8a8a; }
-  .grid { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
-  .card { border: 1px solid var(--line); border-radius: 13px; padding: .85rem 1rem; background: rgba(255,255,255,.012); }
-  .card b { color: var(--green); font-weight: 600; font-size: .82rem; }
-  .card code { display: block; margin-top: .45rem; color: var(--dim); font-size: .74rem; line-height: 1.75; word-break: break-all; }
-  pre { margin: 0; padding: 1rem 1.15rem; overflow-x: auto; font-size: .78rem; color: #bfe9c9; }
-  pre .c { color: rgba(124,143,130,.75); }
-  footer { color: rgba(124,143,130,.75); font-size: .78rem; display: flex; flex-wrap: wrap; gap: .35rem 1rem; }
+  details.format > summary { cursor: pointer; padding: .55rem 0 .3rem; color: var(--muted); font-size: .78rem; font-family: var(--mono); }
+  details.format > summary::marker { color: var(--accent); }
+  .stream { padding: 1.1rem 1rem 1.35rem; min-height: 6.5rem; display: grid; gap: .9rem; align-content: start; }
+  .stream .label { font-family: var(--mono); font-size: .66rem; letter-spacing: .2em; text-transform: uppercase; color: var(--accent-hi); }
+  .thinking-text { margin-top: .35rem; color: var(--muted); font-style: italic; white-space: pre-wrap; word-break: break-word; border-left: 2px solid var(--line); padding-left: .8rem; max-height: 9rem; overflow: auto; }
+  .answer { font-size: 1.02rem; white-space: pre-wrap; word-break: break-word; margin-top: .3rem; }
+  .caret { display: inline-block; width: .55ch; height: 1em; background: var(--accent); vertical-align: -.14em; animation: blink 1.05s steps(1) infinite; }
+  .visitor { color: var(--warn); font-size: .78rem; margin: 0; }
+  .error { color: var(--bad); }
+  .empty { color: var(--faint); }
+  .cmd-head { display: flex; align-items: center; gap: .5rem; padding: .55rem .7rem .55rem .95rem; border-bottom: 1px solid var(--line); }
+  .cmd-head .spacer { flex: 1; }
+  .cmd-head .copy { font: inherit; font-family: var(--mono); font-size: .7rem; color: var(--muted); background: transparent; border: 0; cursor: pointer; }
+  .cmd-head .copy:hover { color: var(--text); }
+  .endpoint-note { margin-top: 1rem; }
 `;
 
-export function landingPage(ctx: Ctx): Response {
+interface Run {
+  id: string;
+  label: string;
+  lines: string[];
+  note: string;
+}
+
+function runs(lang: Lang): Run[] {
+  return [
+    {
+      id: "curl",
+      label: "curl",
+      lines: ["git clone https://github.com/lco117/dummy-llm && cd dummy-llm", "npm install && npm run dev"],
+      note: t(lang, "install.curl.note"),
+    },
+    {
+      id: "npm",
+      label: "npm",
+      lines: ["npx dummy-llm --port 8080"],
+      note: t(lang, "install.npm.note"),
+    },
+    {
+      id: "docker",
+      label: "docker",
+      lines: ["docker build -t dummy-llm https://github.com/lco117/dummy-llm.git", "docker run --rm -p 8080:8080 dummy-llm"],
+      note: t(lang, "install.docker.note"),
+    },
+    {
+      id: "workers",
+      label: "Workers",
+      lines: ["npx wrangler deploy --domain your.example.com"],
+      note: t(lang, "install.workers.note"),
+    },
+  ];
+}
+
+function protocolRows(lang: Lang): Array<[string, string, string]> {
+  return [
+    ["OpenAI", "POST /v1/chat/completions<br>POST /v1/completions<br>POST /v1/responses<br>POST /v1/embeddings<br>GET /v1/models", t(lang, "proto.openai.note")],
+    ["Anthropic", "POST /v1/messages<br>POST /v1/messages/count_tokens", t(lang, "proto.anthropic.note")],
+    ["Gemini", "POST /v1beta/models/{model}:generateContent<br>POST /v1beta/models/{model}:streamGenerateContent", t(lang, "proto.gemini.note")],
+    ["Ollama", "POST /api/chat<br>POST /api/generate<br>GET /api/tags", t(lang, "proto.ollama.note")],
+    ["—", "GET /healthz<br>GET /admin", t(lang, "proto.other.note")],
+  ];
+}
+
+export function landingPage(ctx: Ctx, request: Request): Response {
   const cfg = ctx.cfg;
-  const models = cfg.models.map((id) => `<span class="chip dim">${escapeHtml(id)}</span>`).join("");
-  const replyChip = `<span class="chip">reply: ${escapeHtml(describeReply(cfg.reply).slice(0, 32))}</span>`;
-  const tpsChip = `<span class="chip">${cfg.tps} tps</span>`;
-  const thinkingChip = cfg.thinking.length > 0
-    ? `<span class="chip">thinking: ${cfg.thinking.length} template${cfg.thinking.length === 1 ? "" : "s"}</span>`
-    : `<span class="chip dim">thinking: off</span>`;
-  const logChip = cfg.log === "off" ? "" : `<span class="chip dim">log: ${escapeHtml(cfg.log)}</span>`;
+  const lang = resolveLang(request, ctx.url);
+  const origin = escapeHtml(new URL(ctx.url).origin);
+  const first = cfg.models[0] ?? "dummy-echo-1";
+
+  const commandTabs = runs(lang)
+    .map((run, index) => '<button class="cmd-tab" type="button" role="tab" data-tab="' + run.id + '" aria-selected="' + (index === 0 ? "true" : "false") + '">' + run.label + "</button>")
+    .join("");
+
+  const commandPanels = runs(lang)
+    .map((run, index) => {
+      const lines = run.lines.map((line) => '<span class="p">$</span> ' + escapeHtml(line)).join("\n");
+      return (
+        '<div class="cmd-panel" data-tab="' + run.id + '"' + (index === 0 ? " data-on" : "") + ">" +
+        '<pre>' + lines + "</pre>" +
+        '<p class="hint">' + escapeHtml(run.note) + "</p>" +
+        "</div>"
+      );
+    })
+    .join("");
+
+  const protocols = protocolRows(lang)
+    .map(([name, endpoints, note]) =>
+      "<tr><td class=\"k\">" + escapeHtml(name) + '</td><td class="m">' + endpoints + '</td><td class="note">' + escapeHtml(note) + "</td></tr>",
+    )
+    .join("");
+
+  const models = cfg.models
+    .map((id) => {
+      const persona = cfg.personas[id];
+      const behaviour = persona?.description ?? "reply: " + describeReply(persona?.reply ?? cfg.reply);
+      return '<tr><td class="k">' + escapeHtml(id) + '</td><td class="note">' + escapeHtml(behaviour) + "</td></tr>";
+    })
+    .join("");
+
+  const chips = [
+    '<span class="chip on">' + t(lang, "hero.chip.protocols") + "</span>",
+    '<span class="chip">' + t(lang, "hero.chip.deps") + "</span>",
+    '<span class="chip">' + t(lang, "hero.chip.deterministic") + "</span>",
+    '<span class="chip">' + cfg.tps + " tps</span>",
+    cfg.thinking.length > 0
+      ? '<span class="chip">thinking × ' + cfg.thinking.length + "</span>"
+      : '<span class="chip">thinking off</span>',
+  ].join("");
+
+  const clientStrings = JSON.stringify({
+    thinking: t(lang, "demo.thinking"),
+    answer: t(lang, "demo.answer"),
+    visitor: t(lang, "demo.visitor"),
+    httpError: t(lang, "demo.httpError"),
+    networkError: t(lang, "demo.networkError"),
+    copy: t(lang, "demo.copy"),
+    copied: t(lang, "demo.copied"),
+    empty: t(lang, "demo.empty"),
+  }).replace(/</g, "\\u003c");
 
   const html = `<!doctype html>
-<html lang="en">
+<html lang="${lang === "zh" ? "zh-CN" : "en"}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
 <link rel="icon" type="image/svg+xml" href="/logo.svg">
-<title>dummy-llm — it says whatever you said</title>
-<style>${STYLE}</style>
+<title>dummy-llm — ${escapeHtml(t(lang, "hero.chip.protocols"))}</title>
+<style>${BASE_CSS}${LANDING_CSS}</style>
 </head>
 <body>
-<main>
-  <header>
-    <div class="brand">
-      <img class="bird" src="/logo.svg" alt="" width="46" height="46">
-      <h1>dummy-llm</h1>
-    </div>
-    <p class="tagline">It says whatever you said — after thinking about it. No model, no weights, no GPU: one template, four protocols, byte-exact streaming.</p>
-    <div class="chips">${replyChip}${tpsChip}${thinkingChip}${logChip}</div>
+<div class="doc">
+  <header class="top">
+    <a class="brand" href="/"><strong>dummy-llm</strong><span class="cursor"></span></a>
+    <nav class="nav">
+      <a href="#run">${t(lang, "install.title")}</a>
+      <a href="#demo">${t(lang, "nav.demo")}</a>
+      <a href="#protocols">${t(lang, "nav.protocols")}</a>
+      <a href="#models">${t(lang, "nav.models")}</a>
+      <a href="/admin">${t(lang, "nav.admin")}</a>
+    </nav>
+    ${langSwitch(lang, "/")}
   </header>
 
-  <section>
-    <h2>Try it — this really calls the API</h2>
+  <section class="hero">
+    <h1>dummy-llm<span class="cursor"></span></h1>
+    <p class="lede">${escapeHtml(t(lang, "hero.tagline"))}</p>
+    <p class="lede-sub">${escapeHtml(t(lang, "hero.sub"))}</p>
+    <div class="chips">${chips}</div>
+  </section>
+
+  <section class="sec" id="run">
+    <h2>${t(lang, "install.title")}</h2>
+    <p class="sub">${escapeHtml(t(lang, "install.sub"))}</p>
+    <div class="cmd">
+      <div class="cmd-tabs" role="tablist">${commandTabs}</div>
+      ${commandPanels}
+    </div>
+  </section>
+
+  <section class="sec" id="demo">
+    <h2>${t(lang, "demo.title")}</h2>
+    <p class="sub">${escapeHtml(t(lang, "demo.sub"))}</p>
     <div class="panel">
       <details class="editor" id="editor"${cfg.playground ? "" : " hidden"}>
-        <summary>Edit the reply template</summary>
+        <summary>${t(lang, "demo.editor")}</summary>
         <div class="editor-body">
           <textarea id="template" rows="3" spellcheck="false" placeholder="{input}"></textarea>
-          <p class="hint">
-            Anything you write here is used for your next message and then forgotten — nothing is stored.
-            The address bar keeps a copy, so you can share this exact demonstration as a link.
-            Templates are limited to 2000 characters and answers to 100000.
-          </p>
+          <p class="hint">${escapeHtml(t(lang, "demo.editorHint"))} ${escapeHtml(t(lang, "demo.limits"))}</p>
           <details class="format">
-            <summary>What you can write here</summary>
-            ${TEMPLATE_HELP_HTML}
+            <summary>${t(lang, "demo.format")}</summary>
+            ${helpHtml(lang)}
           </details>
         </div>
       </details>
-      <form id="ask" autocomplete="off">
-        <span class="prompt">❯</span>
-        <input id="prompt" value="hello" spellcheck="false" aria-label="Your message">
-        <button id="send" type="submit">send</button>
+      <form class="ask" id="ask" autocomplete="off">
+        <span class="p">❯</span>
+        <input id="prompt" value="hello" spellcheck="false" aria-label="${escapeHtml(t(lang, "demo.input"))}">
+        <button class="btn primary" id="send" type="submit">${t(lang, "demo.send")}</button>
       </form>
-      <div class="stream" id="stream">
-        <div class="empty">Type anything. It will think about it, then say it back.</div>
+      <div class="stream" id="stream"><div class="empty" id="empty">${escapeHtml(t(lang, "demo.empty"))}</div></div>
+    </div>
+  </section>
+
+  <section class="sec" id="protocols">
+    <h2>${t(lang, "proto.title")}</h2>
+    <p class="sub">${escapeHtml(t(lang, "proto.sub"))}</p>
+    <table class="tbl">
+      <thead><tr><th>${t(lang, "proto.col.protocol")}</th><th>${t(lang, "proto.col.endpoint")}</th><th>${t(lang, "proto.col.note")}</th></tr></thead>
+      <tbody>${protocols}</tbody>
+    </table>
+    <div class="cmd endpoint-note">
+      <div class="cmd-head"><span class="hint mono">curl -N ${origin}/v1/chat/completions</span><span class="spacer"></span><button class="copy" type="button">${t(lang, "demo.copy")}</button></div>
+      <div class="cmd-panel" data-on data-tab="curl-example">
+<pre><span class="p">$</span> curl -N ${origin}/v1/chat/completions \\
+    -H 'content-type: application/json' \\
+    -d '{"model":"${escapeHtml(first)}","stream":true,"messages":[{"role":"user","content":"hello"}]}'</pre>
       </div>
     </div>
   </section>
 
-  <section>
-    <h2>Protocols</h2>
-    <div class="grid">
-      <div class="card"><b>OpenAI</b><code>POST /v1/chat/completions<br>POST /v1/responses<br>POST /v1/embeddings<br>GET&nbsp; /v1/models</code></div>
-      <div class="card"><b>Anthropic</b><code>POST /v1/messages<br>POST /v1/messages/count_tokens</code></div>
-      <div class="card"><b>Gemini</b><code>POST /v1beta/models/{model}<br>&nbsp;&nbsp;&nbsp;&nbsp;:generateContent<br>&nbsp;&nbsp;&nbsp;&nbsp;:streamGenerateContent</code></div>
-      <div class="card"><b>Ollama</b><code>POST /api/chat<br>POST /api/generate<br>GET&nbsp; /api/tags</code></div>
-    </div>
+  <section class="sec" id="models">
+    <h2>${t(lang, "models.title")}</h2>
+    <p class="sub">${escapeHtml(t(lang, "models.sub"))}</p>
+    <table class="tbl">
+      <thead><tr><th>${t(lang, "models.col.id")}</th><th>${t(lang, "models.col.behaviour")}</th></tr></thead>
+      <tbody>${models}</tbody>
+    </table>
   </section>
 
-  <section>
-    <h2>Point anything at this origin</h2>
-    <div class="panel">
-<pre><span class="c"># OpenAI SDK</span>
-export OPENAI_BASE_URL=<span class="c">${escapeHtml(new URL(ctx.url).origin)}</span>/v1
-export OPENAI_API_KEY=sk-dummy
-
-<span class="c"># Anthropic SDK</span>
-export ANTHROPIC_BASE_URL=${escapeHtml(new URL(ctx.url).origin)}
-export ANTHROPIC_API_KEY=sk-dummy
-
-<span class="c"># curl — watch it think, then repeat you</span>
-curl -N ${escapeHtml(new URL(ctx.url).origin)}/v1/chat/completions \\
-  -H 'content-type: application/json' \\
-  -d '{"model":"${escapeHtml(cfg.models[0] ?? "dummy-1")}","stream":true,
-       "messages":[{"role":"user","content":"hello"}]}'</pre>
-    </div>
-  </section>
-
-  <section>
-    <h2>Models</h2>
-    <div class="chips">${models}</div>
-  </section>
-
-  <footer>
-    <span>MIT licensed</span>
+  <footer class="foot">
+    <span>${t(lang, "foot.license")}</span>
     <span>·</span>
     <a href="https://github.com/lco117/dummy-llm">github.com/lco117/dummy-llm</a>
     <span>·</span>
+    <a href="https://github.com/lco117/dummy-llm/blob/main/docs/security.md">${t(lang, "foot.security")}</a>
+    <span class="grow"></span>
     <span>GET /healthz</span>
   </footer>
-</main>
+</div>
+<script type="application/json" id="page-i18n">${clientStrings}</script>
 <script>
 (function () {
+  var strings = {};
+  try { strings = JSON.parse(document.getElementById("page-i18n").textContent); } catch (error) {}
+  function fill(text, vars) {
+    var out = text || "";
+    for (var key in vars) out = out.replace("{" + key + "}", vars[key]);
+    return out;
+  }
+
+  var tabs = document.querySelectorAll(".cmd-tab");
+  function select(el) {
+    var id = el.getAttribute("data-tab");
+    for (var i = 0; i < tabs.length; i++) tabs[i].setAttribute("aria-selected", tabs[i] === el ? "true" : "false");
+    var panels = document.querySelectorAll(".cmd-panel[data-tab]");
+    for (var j = 0; j < panels.length; j++) {
+      if (panels[j].getAttribute("data-tab") === id) panels[j].setAttribute("data-on", "");
+      else panels[j].removeAttribute("data-on");
+    }
+  }
+  for (var t = 0; t < tabs.length; t++) tabs[t].addEventListener("click", function (event) { select(event.currentTarget); });
+
+  var copies = document.querySelectorAll("button.copy");
+  for (var c = 0; c < copies.length; c++) {
+    copies[c].addEventListener("click", function (event) {
+      var button = event.currentTarget;
+      var box = button.closest(".cmd");
+      var text = box ? box.querySelector("pre").textContent.replace(/^\\$ /gm, "") : "";
+      if (!navigator.clipboard) return;
+      navigator.clipboard.writeText(text).then(function () {
+        button.textContent = strings.copied || "Copied";
+        setTimeout(function () { button.textContent = strings.copy || "Copy"; }, 1400);
+      });
+    });
+  }
+
   var form = document.getElementById("ask");
   var input = document.getElementById("prompt");
   var button = document.getElementById("send");
@@ -212,10 +279,13 @@ curl -N ${escapeHtml(new URL(ctx.url).origin)}/v1/chat/completions \\
   var editor = document.getElementById("template");
   var playground = ${cfg.playground ? "true" : "false"};
 
-  // The template travels in the address, so a link reproduces this exact demonstration.
-  function currentTemplate() {
-    return playground && editor ? editor.value.trim() : "";
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
   }
+  function currentTemplate() { return playground && editor ? editor.value.trim() : ""; }
   if (playground && editor) {
     var initial = new URLSearchParams(location.search).get("t");
     if (initial) editor.value = initial;
@@ -227,54 +297,45 @@ curl -N ${escapeHtml(new URL(ctx.url).origin)}/v1/chat/completions \\
     });
   }
 
-  function el(tag, className, text) {
-    var node = document.createElement(tag);
-    if (className) node.className = className;
-    if (text !== undefined) node.textContent = text;
-    return node;
-  }
-
-  function render(prompt) {
+  function render() {
     stream.textContent = "";
-    var thinkWrap = el("div", "thinking");
-    thinkWrap.appendChild(el("div", "label", "thinking"));
-    var thinkText = el("div", "thinking-text");
-    thinkWrap.appendChild(thinkText);
-    var answer = el("div", "answer");
-    var answerText = el("span", "answer-text");
+    if (currentTemplate()) stream.appendChild(el("p", "visitor", strings.visitor || ""));
+    var thinking = el("div");
+    thinking.appendChild(el("div", "label", strings.thinking || "thinking"));
+    var thinkingText = el("div", "thinking-text");
+    thinking.appendChild(thinkingText);
+    var answer = el("div");
+    answer.appendChild(el("div", "label", strings.answer || "answer"));
+    var answerText = el("div", "answer");
     var caret = el("span", "caret");
+    answerText.appendChild(caret);
     answer.appendChild(answerText);
-    answer.appendChild(caret);
-    if (currentTemplate()) {
-      stream.appendChild(el("p", "note", "Reply template supplied by you, the visitor — not by this site's owner."));
-    }
-    stream.appendChild(thinkWrap);
+    stream.appendChild(thinking);
     stream.appendChild(answer);
-    return { thinkWrap: thinkWrap, thinkText: thinkText, answerText: answerText, caret: caret };
+    return { thinking: thinking, thinkingText: thinkingText, answerText: answerText, caret: caret };
   }
 
   form.addEventListener("submit", async function (event) {
     event.preventDefault();
     var prompt = (input.value || "").trim() || "hello";
-    var ui = render(prompt);
+    var ui = render();
     button.disabled = true;
-
     try {
       var template = currentTemplate();
       var endpoint = "/v1/chat/completions" + (template ? "?t=" + encodeURIComponent(template) : "");
-      var res = await fetch(endpoint, {
+      var response = await fetch(endpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ model: "${escapeHtml(cfg.models[0] ?? "dummy-1")}", stream: true, messages: [{ role: "user", content: prompt }] }),
+        body: JSON.stringify({ model: "${escapeHtml(first)}", stream: true, messages: [{ role: "user", content: prompt }] }),
       });
-      if (!res.ok || !res.body) {
-        ui.thinkWrap.remove();
-        ui.answerText.textContent = "HTTP " + res.status + " — check DUMMY_API_KEY";
-        ui.answerText.className = "error";
+      if (!response.ok || !response.body) {
+        ui.thinking.remove();
+        ui.answerText.textContent = fill(strings.httpError, { status: response.status });
+        ui.answerText.className = "answer error";
         ui.caret.remove();
         return;
       }
-      var reader = res.body.getReader();
+      var reader = response.body.getReader();
       var decoder = new TextDecoder();
       var buffer = "";
       while (true) {
@@ -284,7 +345,7 @@ curl -N ${escapeHtml(new URL(ctx.url).origin)}/v1/chat/completions \\
         var frames = buffer.split("\\n\\n");
         buffer = frames.pop() || "";
         for (var i = 0; i < frames.length; i++) {
-          var line = frames[i].split("\\n").filter(function (l) { return l.indexOf("data: ") === 0; })[0];
+          var line = frames[i].split("\\n").filter(function (part) { return part.indexOf("data: ") === 0; })[0];
           if (!line) continue;
           var payload = line.slice(6);
           if (payload === "[DONE]") continue;
@@ -292,17 +353,21 @@ curl -N ${escapeHtml(new URL(ctx.url).origin)}/v1/chat/completions \\
           try { chunk = JSON.parse(payload); } catch (error) { continue; }
           var delta = (chunk.choices && chunk.choices[0] && chunk.choices[0].delta) || {};
           if (typeof delta.reasoning_content === "string") {
-            ui.thinkText.textContent += delta.reasoning_content;
-            ui.thinkText.scrollTop = ui.thinkText.scrollHeight;
+            ui.thinkingText.textContent += delta.reasoning_content;
+            ui.thinkingText.scrollTop = ui.thinkingText.scrollHeight;
           }
-          if (typeof delta.content === "string") ui.answerText.textContent += delta.content;
+          if (typeof delta.content === "string") {
+            ui.caret.remove();
+            ui.answerText.textContent += delta.content;
+            ui.answerText.appendChild(ui.caret);
+          }
         }
       }
-      if (ui.thinkText.textContent === "") ui.thinkWrap.remove();
+      if (ui.thinkingText.textContent === "") ui.thinking.remove();
       ui.caret.remove();
     } catch (error) {
-      ui.answerText.textContent = String(error);
-      ui.answerText.className = "error";
+      ui.answerText.textContent = strings.networkError || String(error);
+      ui.answerText.className = "answer error";
       ui.caret.remove();
     } finally {
       button.disabled = false;
