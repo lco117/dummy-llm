@@ -411,6 +411,7 @@ export const ADMIN_JS = `(function () {
       button.type = "button";
       button.setAttribute("data-model", option.id);
       button.appendChild(el("span", "name", option.label));
+      button.appendChild(el("span", "check", "\u2713"));
       button.addEventListener("click", function () {
         previewModel = option.id;
         setText($("preview-name"), option.label);
@@ -423,6 +424,9 @@ export const ADMIN_JS = `(function () {
     });
     previewModel = state.models.length ? state.models[0] : "";
     setText($("preview-name"), previewModel || (S.previewDefaults || "defaults"));
+    previewButtons.forEach(function (button) {
+      button.className = button.getAttribute("data-model") === previewModel ? "on" : "";
+    });
   }
   if ($("preview-pick")) {
     $("preview-pick").addEventListener("click", function (event) {

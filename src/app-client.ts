@@ -45,14 +45,18 @@ export const APP_JS = `(function () {
   for (var c = 0; c < copies.length; c++) {
     copies[c].addEventListener("click", function (event) {
       var button = event.currentTarget;
-      var block = button.closest(".cmd");
-      var pres = block ? block.querySelectorAll("pre") : [];
+      var panel = button.closest(".cmd-panel") || button.closest(".cmd");
+      var pres = panel ? panel.querySelectorAll("pre") : [];
       var text = "";
       for (var i = 0; i < pres.length; i++) if (!pres[i].hidden) text = pres[i].textContent;
       if (!navigator.clipboard || !text) return;
       navigator.clipboard.writeText(text.replace(/^\\$ /gm, "")).then(function () {
-        button.textContent = S.copied || "Copied";
-        setTimeout(function () { button.textContent = S.copy || "Copy"; }, 1400);
+        button.className = "copy done";
+        button.setAttribute("aria-label", S.copied || "Copied");
+        setTimeout(function () {
+          button.className = "copy";
+          button.setAttribute("aria-label", S.copy || "Copy");
+        }, 1400);
       });
     });
   }

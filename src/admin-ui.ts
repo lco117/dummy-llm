@@ -18,7 +18,7 @@ import { BASE_CSS, escapeHtml } from "./ui.ts";
 
 export { ADMIN_JS };
 
-export const ADMIN_CSS = BASE_CSS + `  .who { font-family: var(--mono); font-size: .82rem; color: var(--faint); }
+export const ADMIN_CSS = BASE_CSS + `  .who { font-family: var(--mono); font-size: .9rem; color: var(--faint); }
   .brand { align-items: center; }
   .brand .mark { width: 1.7rem; height: 1.7rem; display: block; }
   .brand .mark svg { width: 100%; height: 100%; display: block; }
@@ -26,20 +26,20 @@ export const ADMIN_CSS = BASE_CSS + `  .who { font-family: var(--mono); font-siz
   .top form.inline-form { margin-left: auto; }
   .admin-grid { display: grid; gap: 1rem; grid-template-columns: minmax(13rem, 17rem) 1fr; margin-top: 1.6rem; }
   @media (max-width: 58rem) { .admin-grid { grid-template-columns: 1fr; } }
-  .panel h2 { font-family: var(--mono); font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); margin-bottom: .8rem; }
+  .panel h2 { font-family: var(--mono); font-size: .75rem; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); margin-bottom: .8rem; }
   ul.personas { list-style: none; margin: 0 0 .7rem; padding: 0; display: grid; gap: .2rem; max-height: 24rem; overflow: auto; }
   ul.personas li { display: flex; align-items: baseline; gap: .5rem; padding: .34rem .5rem; border: 1px solid transparent; border-radius: var(--radius-sm); cursor: pointer; }
   ul.personas li:hover { background: rgba(255,255,255,.04); }
   ul.personas li.active { border-color: var(--line-strong); background: rgba(77,107,254,.10); }
-  ul.personas li .id { flex: 1; font-family: var(--mono); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  ul.personas li .tag { font-family: var(--mono); font-size: .64rem; color: var(--faint); border: 1px solid var(--line); border-radius: 999px; padding: 0 .4rem; }
+  ul.personas li .id { flex: 1; font-family: var(--mono); font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  ul.personas li .tag { font-family: var(--mono); font-size: .7rem; color: var(--faint); border: 1px solid var(--line); border-radius: 999px; padding: 0 .42rem; }
   ul.personas li .tag.on { color: var(--accent-hi); border-color: rgba(77,107,254,.4); }
   ul.personas li .tag.gone { color: var(--bad); border-color: rgba(248,113,113,.3); }
   .row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
   label.field { display: block; margin-bottom: .6rem; }
-  label.field > span { display: block; font-family: var(--mono); font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); margin-bottom: .25rem; }
+  label.field > span { display: block; font-family: var(--mono); font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); margin-bottom: .28rem; }
   details.help { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: .5rem .7rem; margin: .2rem 0 .8rem; background: rgba(0,0,0,.16); }
-  details.help > summary { cursor: pointer; font-family: var(--mono); font-size: .72rem; color: var(--muted); }
+  details.help > summary { cursor: pointer; font-family: var(--mono); font-size: .8rem; color: var(--muted); }
   details.help > summary::marker { color: var(--accent); }
   td.m { max-width: 24rem; white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
   td.ctrl input, td.ctrl select { max-width: 100%; }
@@ -47,18 +47,18 @@ export const ADMIN_CSS = BASE_CSS + `  .who { font-family: var(--mono); font-siz
   td.actions { width: 5rem; text-align: right; }
   td.faint { opacity: .55; }
   .stream { margin-top: .9rem; min-height: 5rem; display: grid; gap: .8rem; align-content: start; }
-  .stream .label { font-family: var(--mono); font-size: .66rem; letter-spacing: .2em; text-transform: uppercase; color: var(--accent-hi); }
+  .stream .label { font-family: var(--mono); font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--accent-hi); }
   .thinking-text { margin-top: .3rem; color: var(--muted); font-style: italic; white-space: pre-wrap; word-break: break-word; border-left: 2px solid var(--line); padding-left: .8rem; max-height: 8rem; overflow: auto; }
-  .answer { margin-top: .3rem; white-space: pre-wrap; word-break: break-word; font-size: 1rem; }
+  .answer { margin-top: .3rem; white-space: pre-wrap; word-break: break-word; font-size: 1.08rem; }
   .caret { display: inline-block; width: .55ch; height: 1em; background: var(--accent); vertical-align: -.14em; animation: blink 1.05s steps(1) infinite; }
   .error { color: var(--bad); }
   .empty { color: var(--faint); }
-  #pack-out { margin: .8rem 0 0; padding: .7rem .85rem; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: auto; font-size: .78rem; color: #d7dee8; }
+  #pack-out { margin: .8rem 0 0; padding: .7rem .85rem; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: auto; font-size: .86rem; color: #d7dee8; }
   .wide { flex: 1; min-width: 0; }
   .row.spaced { margin-top: .9rem; }
   .panel.spaced { margin-top: 1rem; }
   .row select { width: auto; }
-  .boot-title { font-size: 1.4rem; margin-bottom: .8rem; }
+  .boot-title { font-size: 1.6rem; margin-bottom: .8rem; }
   .boot { margin-top: 2.2rem; }
   .boot .btn { margin-top: .4rem; }
 `;
@@ -260,13 +260,13 @@ export function adminPage(lang: Lang): string {
     '<input id="preview-input" class="wide" value="hello" spellcheck="false" aria-label="' + escapeHtml(t(lang, "admin.preview.input")) + '">',
     "</div>",
     '<div class="foot">',
+    '<span class="stats" id="preview-stats"></span>',
     '<div class="pick">',
     '<button class="pick-btn" id="preview-pick" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="' + escapeHtml(t(lang, "admin.preview.model")) + '">',
     '<span class="name" id="preview-name">' + escapeHtml(t(lang, "admin.preview.defaults")) + '</span><span class="chev">⌄</span>',
     "</button>",
     '<ul class="pick-menu" id="preview-menu" role="listbox" hidden></ul>',
     "</div>",
-    '<span class="stats" id="preview-stats"></span>',
     '<button class="send" type="submit" aria-label="' + escapeHtml(t(lang, "admin.preview.run")) + '">',
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>',
     "</button>",

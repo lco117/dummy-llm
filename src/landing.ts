@@ -11,26 +11,26 @@ const LANDING_CSS = `
   .hero-top .mark svg { width: 100%; height: 100%; display: block; }
 
   .term-bar { display: flex; align-items: center; gap: .25rem; padding: .5rem .6rem .1rem; }
-  .term-bar .term-btn { font: inherit; font-family: var(--mono); font-size: .72rem; color: var(--faint); background: none; border: 0; border-radius: 999px; padding: .18rem .55rem; cursor: pointer; }
+  .term-bar .term-btn { font: inherit; font-family: var(--mono); font-size: .8rem; color: var(--faint); background: none; border: 0; border-radius: 999px; padding: .2rem .6rem; cursor: pointer; }
   .term-bar .term-btn:hover { color: var(--text); }
   .term-bar .term-btn[aria-selected="true"] { color: var(--text); background: rgba(255,255,255,.06); }
   .term-bar .spacer { flex: 1; }
 
-  .stream .label { font-family: var(--mono); font-size: .66rem; letter-spacing: .2em; text-transform: uppercase; color: var(--accent-hi); }
+  .stream .label { font-family: var(--mono); font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--accent-hi); }
   .thinking-text { margin-top: .35rem; color: var(--muted); font-style: italic; white-space: pre-wrap; word-break: break-word; border-left: 2px solid var(--line); padding-left: .8rem; max-height: 9rem; overflow: auto; }
-  .answer { font-size: 1.06rem; white-space: pre-wrap; word-break: break-word; margin-top: .3rem; }
+  .answer { font-size: 1.15rem; white-space: pre-wrap; word-break: break-word; margin-top: .3rem; }
   .caret { display: inline-block; width: .55ch; height: 1em; background: var(--accent); vertical-align: -.14em; animation: blink 1.05s steps(1) infinite; }
-  .visitor { color: var(--warn); font-size: .8rem; margin: 0; }
+  .visitor { color: var(--warn); font-size: .88rem; margin: 0; }
   .error { color: var(--bad); }
   .empty { color: var(--faint); }
 
   details.editor { border-top: 1px solid var(--line); }
-  details.editor > summary { cursor: pointer; padding: .7rem 1rem; color: var(--muted); font-size: .8rem; font-family: var(--mono); }
+  details.editor > summary { cursor: pointer; padding: .75rem 1rem; color: var(--muted); font-size: .88rem; font-family: var(--mono); }
   details.editor > summary:hover { color: var(--text); }
   details.editor > summary::marker { color: var(--accent); }
   .editor-body { padding: 0 1rem 1rem; display: grid; gap: .55rem; }
   details.format { border-top: 1px solid var(--line); margin-top: .2rem; }
-  details.format > summary { cursor: pointer; padding: .55rem 0 .3rem; color: var(--muted); font-size: .78rem; font-family: var(--mono); }
+  details.format > summary { cursor: pointer; padding: .55rem 0 .3rem; color: var(--muted); font-size: .86rem; font-family: var(--mono); }
   details.format > summary::marker { color: var(--accent); }
   .endpoint-note { margin-top: 1.1rem; }
 `;
@@ -86,7 +86,16 @@ function protocolRows(lang: Lang): Array<[string, string, string]> {
   ];
 }
 
-/** A command block: bash/PowerShell switch on the left, copy on the right. */
+const COPY_ICON = '<svg class="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2.4"/><path d="M5 15H4.2A2.2 2.2 0 0 1 2 12.8V4.2A2.2 2.2 0 0 1 4.2 2h8.6A2.2 2.2 0 0 1 15 4.2V5"/></svg>';
+const CHECK_ICON = '<svg class="i-done" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+
+/** The copy affordance: one icon button that becomes a tick for a moment. No text, no reflow. */
+function copyButton(lang: Lang): string {
+  const label = escapeHtml(t(lang, "demo.copy"));
+  return '<button class="copy" type="button" title="' + label + '" aria-label="' + label + '">' + COPY_ICON + CHECK_ICON + "</button>";
+}
+
+/** A command block: bash/PowerShell switch on top, the command slab with its copy button below. */
 function commandBlock(id: string, lang: Lang, bash: string[], pwsh: string[], note: string, on: boolean): string {
   const lines = (list: string[]) => list.map((line) => '<span class="p">$</span> ' + escapeHtml(line)).join("\n");
   return [
@@ -94,11 +103,12 @@ function commandBlock(id: string, lang: Lang, bash: string[], pwsh: string[], no
     '<div class="term-bar">',
     '<button class="term-btn" type="button" data-term-btn="bash" aria-selected="true">bash</button>',
     '<button class="term-btn" type="button" data-term-btn="pwsh" aria-selected="false">PowerShell</button>',
-    '<span class="spacer"></span>',
-    '<button class="copy" type="button">' + t(lang, "demo.copy") + "</button>",
     "</div>",
+    '<div class="cmd-body">',
     '<pre data-term-panel="bash">' + lines(bash) + "</pre>",
     '<pre data-term-panel="pwsh" hidden>' + lines(pwsh) + "</pre>",
+    copyButton(lang),
+    "</div>",
     note ? '<p class="hint">' + escapeHtml(note) + "</p>" : "",
     "</div>",
   ].join("");
@@ -156,16 +166,14 @@ export function landingPage(ctx: Ctx, request: Request): Response {
     '<span class="chip">' + t(lang, "hero.chip.offline") + "</span>",
   ].join("");
 
+  // One line per model, the current one ticked on the right: a switcher, not a catalogue.
   const modelMenu = cfg.models
-    .map((id) => {
-      const desc = cfg.personas[id]?.description ?? "";
-      return (
-        '<li role="option"><button type="button" data-model="' + escapeHtml(id) + '">' +
-        '<span class="name">' + escapeHtml(id) + "</span>" +
-        (desc ? '<span class="desc">' + escapeHtml(desc) + "</span>" : "") +
-        "</button></li>"
-      );
-    })
+    .map((id, index) =>
+      '<li role="option"><button type="button"' + (index === 0 ? ' class="on"' : "") + ' data-model="' + escapeHtml(id) + '">' +
+      '<span class="name">' + escapeHtml(id) + "</span>" +
+      '<span class="check" aria-hidden="true">\u2713</span>' +
+      "</button></li>",
+    )
     .join("");
 
   const curlExample = commandBlock(
@@ -232,13 +240,13 @@ export function landingPage(ctx: Ctx, request: Request): Response {
           <input id="prompt" value="hello" spellcheck="false" aria-label="${escapeHtml(t(lang, "demo.input"))}">
         </div>
         <div class="foot">
+          <span class="stats" id="stats"></span>
           <div class="pick">
             <button class="pick-btn" id="model-pick" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="${escapeHtml(t(lang, "demo.model"))}">
               <span class="name" id="model-name">${escapeHtml(first)}</span><span class="chev">⌄</span>
             </button>
             <ul class="pick-menu" id="model-menu" role="listbox" hidden>${modelMenu}</ul>
           </div>
-          <span class="stats" id="stats"></span>
           <button class="send" id="send" type="submit" aria-label="${escapeHtml(t(lang, "demo.send"))}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
           </button>
