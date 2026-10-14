@@ -1,0 +1,21 @@
+{
+  "name": "mirror",
+  "description": "Two personas: one reverses everything, one answers from a keyword map.",
+  "personas": {
+    "dummy-mirror-1": {
+      "description": "Reverses the message (the reverse filter).",
+      "reply": "{input|reverse}"
+    },
+    "dummy-oracle-1": {
+      "description": "A keyword -> reply map with a fallback.",
+      "reply": {
+        "weather": "raining, obviously",
+        "time": "it is always now",
+        "*": "I am a config file, not a prophet."
+      }
+    }
+  },
+  "defaults": {
+    "tps": 60
+  }
+}

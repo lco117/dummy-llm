@@ -1,0 +1,13 @@
+{
+  "name": "shout",
+  "description": "Screams your message back inside a box, using the upper and box filters.",
+  "personas": {
+    "dummy-shout-1": {
+      "description": "Repeats the message in capitals, inside an ASCII box.",
+      "reply": "{input|upper|box}",
+      "thinking": [
+        "The user said \"{input}\". They clearly want it louder. Saying \"{reply}\"."
+      ]
+    }
+  }
+}

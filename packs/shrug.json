@@ -1,0 +1,14 @@
+{
+  "name": "shrug",
+  "description": "A one-answer persona with a quieter thinking pool.",
+  "personas": {
+    "dummy-shrug-1": {
+      "description": "Answers everything with a shrug.",
+      "reply": { "*": "¯\\_(ツ)_/¯" },
+      "thinking": [
+        "Input: \"{input}\". No weights, no opinions, no problem.",
+        "Considering \"{input}\". The honest answer is \"{reply}\"."
+      ]
+    }
+  }
+}
