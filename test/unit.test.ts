@@ -306,7 +306,8 @@ test("the playground override is opt-in, length-limited and one-request-only", (
 });
 
 test("both editors document the template format", async () => {
-  const { ADMIN_HTML } = await import("../src/admin-ui.ts");
+  const { adminPage } = await import("../src/admin-ui.ts");
+  const ADMIN_HTML = adminPage("en");
   const on = makeApp({ playground: true });
   const landing = await (await on(new Request("http://localhost/"))).text();
   assert.match(landing, /What you can write here/);

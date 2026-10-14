@@ -12,8 +12,9 @@ import {
   verifySession,
   ADMIN_COOKIE,
 } from "./admin-auth.ts";
-import { ACCESS_DENIED_HTML, ADMIN_CSS, ADMIN_HTML, ADMIN_JS, LOGIN_HTML } from "./admin-ui.ts";
+import { ADMIN_CSS, ADMIN_JS, accessDeniedPage, adminPage, loginPage } from "./admin-ui.ts";
 import { HttpError } from "./errors.ts";
+import { resolveLang } from "./i18n.ts";
 import { BUILTIN_PERSONAS } from "./personas.ts";
 import { PACK_INDEX, diffDoc, docToPack, mergeDoc, packToDoc, parsePack } from "./packs.ts";
 import * as openaiChat from "./protocols/openai-chat.ts";
@@ -409,6 +410,7 @@ export function createAdmin(deps: AdminDeps): (request: Request) => Promise<Resp
     const url = new URL(request.url);
     const method = request.method.toUpperCase();
     const path = url.pathname.replace(/\/+$/, "") || "/admin";
+    const lang = resolveLang(request, url);
 
     try {
       if (adminCfg.misconfigured) {
@@ -421,9 +423,9 @@ export function createAdmin(deps: AdminDeps): (request: Request) => Promise<Resp
 
       if (method === "GET" && path === "/admin") {
         const grant = await authorize(request, url);
-        if (grant) return page(ADMIN_HTML);
-        if (adminCfg.mode === "key") return page(LOGIN_HTML);
-        return page(ACCESS_DENIED_HTML, 403);
+        if (grant) return page(adminPage(lang));
+        if (adminCfg.mode === "key") return page(loginPage(lang));
+        return page(accessDeniedPage(lang), 403);
       }
 
       if (method === "POST" && path === "/admin/login") return await handleLogin(request, url);

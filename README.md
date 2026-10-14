@@ -236,6 +236,10 @@ DUMMY_ADMIN_KEY="$(node -e "console.log(require('crypto').randomBytes(32).toStri
 | precedence | **store > environment > built-in**, rendered as three columns per setting with a Reset button on each row |
 | packs | fetch a persona pack in the browser, read the diff, apply it, export your own |
 
+The page speaks **English and Chinese** (switch in the top bar: `?lang=`, then a cookie, then
+Accept-Language), and the two shipped personas are editable and deletable right there — editing writes
+an override into the store, deleting writes a tombstone, and the environment copy stays where it is.
+
 The admin edits runtime values only. A Worker cannot rewrite its own environment variables or bindings,
 so the store is the one layer it writes and `wrangler.jsonc` stays the source of truth. Failed logins
 are throttled per address, every write is same-origin JSON, and no credential of any kind reaches a log

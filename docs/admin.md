@@ -392,10 +392,18 @@ the page, stop: that is the bug this design exists to prevent.
 
 ## 8. The page
 
-One page, vanilla JavaScript, same origin, no build step.
+One page, vanilla JavaScript, same origin, no build step. It speaks **English or Chinese**, switched
+from the top bar: `?lang=` wins, then a cookie, then Accept-Language, then English (see
+`src/i18n.ts`). The client script reads the strings the server embedded, so a language change is one
+implementation rather than two.
+
+Loading is a state, not a blank page: the page says it is loading, and a failure shows the message, the
+HTTP status and a **Retry** button. (Before that, a state request that had not landed yet looked exactly
+like a server with no personas.)
 
 - **Personas** on the left, with a tag saying where each one comes from (`builtin`, `env`, `store`,
-  or `deleted`).
+  or `deleted`). The built-in personas are listed like any other and can be edited or deleted: editing
+  writes an override into the store, deleting writes a tombstone, and the environment copy is untouched.
 - **The editor** in the middle, with a shape-aware reply box: *one template*, *a pool* (one entry per
   line) or *a keyword map* (`key = template` per line, `*` for the fallback). The shape is the
   behaviour, so the editor shows the shape instead of teaching a mode.
