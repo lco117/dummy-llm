@@ -331,15 +331,16 @@ Requests may name **any** model string; only this endpoint is filtered.
 | concern | decision |
 | --- | --- |
 | routing | table of `{method, path pattern, handler}`, matched before protocol dispatch |
+| admin | `/admin*` is matched **before** the CORS wrapper and before `DUMMY_API_KEY`, and answers 404 unless an operator turns it on — see [admin.md](admin.md) |
 | auth | `DUMMY_API_KEY` unset -> accept anything; set -> require it (`Authorization: Bearer`, `x-api-key`, or `?key=`) |
-| CORS | permissive by default (browser demos are the point), `DUMMY_CORS` to restrict |
+| CORS | permissive by default (browser demos are the point), `DUMMY_CORS` to restrict; the admin surface never receives it |
 | `OPTIONS` | 204 with preflight headers |
-| health | `GET /healthz` -> `{"ok":true,"mode":"fixed"}` |
-| root | `GET /` -> tiny HTML page that prints the fixed string |
+| health | `GET /healthz` -> `{"ok":true,"reply":…,"thinking":…,"tps":…,"version":…}` |
+| root | `GET /` -> the landing page, which streams from the real API |
 | unknown route | 404 shaped like the protocol the client is speaking, when inferable |
-| logging | one line per request: method, path, model, stream, duration, bytes |
+| logging | one line per request when `DUMMY_LOG` is on: method, path, model, stream, message count; every line passes through the secret redactor |
 
-## 6. Repository layout (planned)
+## 6. Repository layout (the original plan; the shipped tree is in [README.md](../README.md#repository-layout))
 
 ```
 src/
