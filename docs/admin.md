@@ -117,26 +117,36 @@ the request path is byte-for-byte unchanged.
 
 ### 4.2 `kv` on Cloudflare, step by step
 
-```bash
-# 1. create the namespace (one line, once)
-npx wrangler kv namespace create DUMMY_ADMIN_KV
-#    -> prints an id: { binding = "DUMMY_ADMIN_KV", id = "abcdef0123456789..." }
-
-# 2. declare the binding in wrangler.jsonc
-#    "kv_namespaces": [{ "binding": "DUMMY_ADMIN_KV", "id": "<that id>" }]
-
-# 3. turn the store on
-#    "vars": { "DUMMY_STORE": "kv" }
-
-# 4. deploy
-npx wrangler deploy
-```
-
-If you deploy through the **Deploy to Cloudflare** button, you can declare the namespace *without* an
-id and Cloudflare provisions it for you:
+Declare the binding **without an id** and let Wrangler provision the namespace. This is what this
+repository does, and it is the only form that belongs in a public template: a namespace id belongs to
+one account, so a committed id makes everybody else's deploy fail.
 
 ```jsonc
+// wrangler.jsonc
+"vars": { "DUMMY_STORE": "kv" },
 "kv_namespaces": [{ "binding": "DUMMY_ADMIN_KV" }]
+```
+
+```bash
+npx wrangler deploy --domain your.example.com
+# Experimental: The following bindings need to be provisioned:
+#   env.DUMMY_ADMIN_KV   KV Namespace
+# Provisioning DUMMY_ADMIN_KV (KV Namespace)...
+# 🌀 Creating new KV Namespace "my-worker-dummy-admin-kv"...
+# ✨ DUMMY_ADMIN_KV provisioned 🎉
+```
+
+The first deploy creates the namespace (named after the Worker and the binding); every deploy after that
+reports the same binding as `(inherited)`, so nothing is duplicated and no id is ever written down.
+
+If you would rather create and own the namespace yourself, that works too - put the id back:
+
+```bash
+npx wrangler kv namespace create DUMMY_ADMIN_KV   # prints the id
+```
+
+```jsonc
+"kv_namespaces": [{ "binding": "DUMMY_ADMIN_KV", "id": "<printed id>" }]
 ```
 
 Two footnotes worth knowing:

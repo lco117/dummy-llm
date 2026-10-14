@@ -1,49 +1,54 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "dummy-llm",
-  "main": "src/adapters/worker.ts",
-  "compatibility_date": "2025-09-01",
-  // No *.workers.dev route and no preview URLs: bind your own domain instead
-  // (Cloudflare dashboard -> the Worker -> Settings -> Domains & Routes).
-  // Flip either to true (or delete the line) to get the free workers.dev URL back.
-  "workers_dev": false,
-  "preview_urls": false,
-  // No hostname is committed on purpose. This repository is a public template, and your domain is
-  // yours - not something to publish in a config file, and not something a cloner should inherit.
-  // Pick whichever you prefer when you deploy:
-  //
-  //   npx wrangler deploy --domain your.example.com     # nothing committed, nothing to forget
-  //   npm run deploy:domain -- your.example.com
-  //
-  // ...or add a route of your own below and keep that edit out of your commits:
-  //
-  //   "routes": [{ "pattern": "your.example.com", "custom_domain": true }],
-  //
-  // ...or bind the domain once in the dashboard (Worker -> Settings -> Domains & Routes).
-  //
-  // With no route and no --domain, a deploy has no public URL at all (workers_dev is also off),
-  // which is the intended default.
-  "observability": {
-    "enabled": true
-  },
-  // The admin page is off until an operator turns it on, and its key is a SECRET, not a var:
-  //   npx wrangler secret put DUMMY_ADMIN_KEY
-  // See docs/admin.md. To let the page save changes, create the namespace and uncomment this:
-  //   npx wrangler kv namespace create DUMMY_ADMIN_KV
-  // "kv_namespaces": [{ "binding": "DUMMY_ADMIN_KV", "id": "<printed id>" }],
-  // (Omitting the id works with the Deploy to Cloudflare button, which provisions the namespace.)
-  // Then set "DUMMY_STORE": "kv" in the vars block below.
-
-  // Non-secret defaults. Everything can be overridden in the Cloudflare dashboard.
-  "vars": {
-    "DUMMY_REPLY": "{input}",
-    // DUMMY_CHUNK is left unset on purpose: the code default is 4 code points
-    // (~one token), which is what makes DUMMY_TPS mean tokens per second.
-    "DUMMY_TPS": "100",
-    // One JSON line per request, visible in Workers Logs / `npx wrangler tail dummy-llm`.
-    // Set to "off" (or "full" to include whole request bodies).
-    "DUMMY_LOG": "summary",
-    // Lets the landing page offer a shareable ?t=<template> link (nothing is stored).
-    "DUMMY_PLAYGROUND": "1"
-  }
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "dummy-llm",
+	"main": "src/adapters/worker.ts",
+	"compatibility_date": "2025-09-01",
+	// No *.workers.dev route and no preview URLs: bind your own domain instead
+	// (Cloudflare dashboard -> the Worker -> Settings -> Domains & Routes).
+	// Flip either to true (or delete the line) to get the free workers.dev URL back.
+	"workers_dev": false,
+	"preview_urls": false,
+	// No hostname is committed on purpose. This repository is a public template, and your domain is
+	// yours - not something to publish in a config file, and not something a cloner should inherit.
+	// Pick whichever you prefer when you deploy:
+	//
+	//   npx wrangler deploy --domain your.example.com     # nothing committed, nothing to forget
+	//   npm run deploy:domain -- your.example.com
+	//
+	// ...or add a route of your own below and keep that edit out of your commits:
+	//
+	//   "routes": [{ "pattern": "your.example.com", "custom_domain": true }],
+	//
+	// ...or bind the domain once in the dashboard (Worker -> Settings -> Domains & Routes).
+	//
+	// With no route and no --domain, a deploy has no public URL at all (workers_dev is also off),
+	// which is the intended default.
+	"observability": {
+		"enabled": true
+	},
+	// The admin page is off until an operator turns it on, and its key is a SECRET, not a var:
+	//   npx wrangler secret put DUMMY_ADMIN_KEY   (and, for Access, DUMMY_ADMIN_AUTH + the two CF_ACCESS_*)
+	// See docs/admin.md.
+	//
+	// Non-secret defaults. Everything can be overridden in the Cloudflare dashboard.
+	"vars": {
+		"DUMMY_REPLY": "{input}",
+		// DUMMY_CHUNK is left unset on purpose: the code default is 4 code points
+		// (~one token), which is what makes DUMMY_TPS mean tokens per second.
+		"DUMMY_TPS": "100",
+		// One JSON line per request, visible in Workers Logs / `npx wrangler tail dummy-llm`.
+		// Set to "off" (or "full" to include whole request bodies).
+		"DUMMY_LOG": "summary",
+		// Lets the landing page offer a shareable ?t=<template> link (nothing is stored).
+		"DUMMY_PLAYGROUND": "1",
+		// Where the admin page saves personas and defaults. "off" (the default) keeps it read-only;
+		// "kv" writes to the namespace bound below. Resolution order is store > environment > built-in.
+		"DUMMY_STORE": "kv"
+	},
+	// The admin store. The id is deliberately absent: a namespace id belongs to one account, and this
+	// repository is a public template - hard-coding an id would make every other clone fail to deploy.
+	// Wrangler provisions the namespace on the first deploy and reuses it afterwards, so each operator
+	// gets their own and nothing account-specific is ever committed. Add "id": "<your id>" if you would
+	// rather create and manage the namespace yourself.
+	"kv_namespaces": [{ "binding": "DUMMY_ADMIN_KV" }]
 }

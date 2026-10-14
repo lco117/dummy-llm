@@ -49,16 +49,20 @@ Worker resource. The dashboard walkthrough, the two Access modes and the differe
 
 The page is **read-only** until a store is configured. On Workers that is a KV namespace:
 
-```bash
-npx wrangler kv namespace create DUMMY_ADMIN_KV
-# then in wrangler.jsonc:
-#   "kv_namespaces": [{ "binding": "DUMMY_ADMIN_KV", "id": "<printed id>" }]
-#   "vars": { "DUMMY_STORE": "kv" }
-npx wrangler deploy
+```jsonc
+// wrangler.jsonc - no namespace id in the file, on purpose
+"vars": { "DUMMY_STORE": "kv" },
+"kv_namespaces": [{ "binding": "DUMMY_ADMIN_KV" }]
 ```
 
-Declaring the namespace **without** an id works with the Deploy to Cloudflare button, which provisions it
-for you. Every step, including what to do when the page still says read-only, is in
+```bash
+npx wrangler deploy        # provisions the namespace on the first deploy, inherits it afterwards
+```
+
+A namespace id belongs to one account, so committing one would make every other clone fail to deploy.
+Declaring the binding without an id means each operator provisions their own. To create and own it
+yourself instead, run `npx wrangler kv namespace create DUMMY_ADMIN_KV` and add the id back. Every step,
+including what to do when the page still says read-only, is in
 [admin.md](admin.md#4-the-store-making-edits-permanent).
 
 ## Which target should you pick?
