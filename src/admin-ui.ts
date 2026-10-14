@@ -136,7 +136,7 @@ export const ACCESS_DENIED_HTML = `<!doctype html>
 <main>
   <h1>Access required</h1>
   <p class="banner bad">This deployment authenticates the admin page with Cloudflare Access, and this request did not arrive with a valid Access identity.</p>
-  <p class="hint">If you are the operator: sign in through the Access application (a fresh navigation normally redirects you there), then reload this page. If the Worker is also reachable through a route that does not pass through Access, use DUMMY_ADMIN_AUTH=access-jwt so the token is verified instead of trusted.</p>
+  <p class="hint">If you are the operator: sign in through the Access application (a fresh navigation normally redirects you there), then reload this page. Refusals are logged with the exact check that failed, so read them with <code>npx wrangler tail dummy-llm</code> &mdash; a team domain or an audience tag that no longer matches the application is the usual cause.</p>
 </main>
 </body>
 </html>`;

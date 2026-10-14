@@ -113,7 +113,17 @@ export function createAdmin(deps: AdminDeps): (request: Request) => Promise<Resp
       return { identity: "key", mode: "key" };
     }
     const token = accessJwtFrom(request);
-    if (!token) return null;
+    if (!token) {
+      // Silence here would be ambiguous in the log: it can mean "Access is no longer in front of this
+      // path" or "the request reached the Worker without passing through it". Both are exactly the
+      // situation an operator needs to see, so say which one it is.
+      audit(
+        "access_rejected",
+        { reason: "no Cf-Access-Jwt-Assertion header", path: url.pathname, ip: clientIp(request) },
+        true,
+      );
+      return null;
+    }
     if (adminCfg.mode === "access") return { identity: "access (edge trust)", mode: "access" };
     const result = await verifyAccessJwt(token, {
       teamDomain: adminCfg.accessTeamDomain as string,
