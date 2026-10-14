@@ -54,7 +54,7 @@
     "build": "node scripts/build.mjs",
     "dev": "node src/adapters/node.ts",
     "start": "node dist/cli.js",
-    "test": "node --test test/golden.test.ts test/unit.test.ts",
+    "test": "node --test test/golden.test.ts test/unit.test.ts test/admin.test.ts",
     "golden": "node scripts/golden.ts",
     "typecheck": "tsc --noEmit",
     "deploy": "wrangler deploy",

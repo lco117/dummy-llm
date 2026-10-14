@@ -1,5 +1,8 @@
+import { createAdmin } from "./admin.ts";
 import { playgroundOverride } from "./config.ts";
 import { describeReply, stripReminders } from "./engine.ts";
+import { redact, redactedJson } from "./redact.ts";
+import { applyStore, createStoreLayer, type Store } from "./store.ts";
 import { errorResponse, HttpError } from "./errors.ts";
 import { landingPage } from "./landing.ts";
 import { LOGO_SVG } from "./logo.ts";
@@ -15,7 +18,20 @@ import { version } from "./version.ts";
 
 export type App = (request: Request) => Promise<Response>;
 
+export interface AppOptions {
+  /**
+   * The writable overlay. Absent by default, which keeps the server stateless and means the store
+   * is only ever read when an operator has actually configured one.
+   */
+  store?: Store;
+}
+
 let requestCounter = 0;
+
+/** Locked seed keeps runs reproducible; otherwise every request gets fresh randomness. */
+function nextSeed(config: Config): number {
+  return config.deterministic ? config.seed : (Date.now() ^ (requestCounter++ * 0x9e3779b9)) >>> 0;
+}
 
 /** Which error envelope should an unknown path use? */
 export function protocolFor(pathname: string): ProtocolId {
@@ -80,8 +96,10 @@ function logRequest(ctx: Ctx, method: string, body: Record<string, any>): void {
     messages: messages.length,
     lastUser: truncate(lastUser, 500),
   };
-  if (ctx.cfg.log === "full") line.body = body;
-  console.log(JSON.stringify(line));
+  // Nothing reaches a log line without going through the redactor: DUMMY_LOG=full must not turn a
+  // request body into a place where a credential survives.
+  if (ctx.cfg.log === "full") line.body = redact(body);
+  console.log(redactedJson(line));
 }
 
 async function readJson(request: Request, ctx: Ctx): Promise<Record<string, any>> {
@@ -188,6 +206,20 @@ async function route(request: Request, ctx: Ctx): Promise<Response> {
   );
 }
 
+/**
+ * Environment and built-in values, with the store layered on top: store > environment > built-in.
+ * With no store configured this is the identity function, and the server stays exactly as it was.
+ */
+async function effectiveConfig(config: Config, store: ReturnType<typeof createStoreLayer>): Promise<Config> {
+  if (!store.writable) return config;
+  try {
+    return applyStore(config, await store.read());
+  } catch (error) {
+    console.error(redactedJson({ dummy: "store", event: "read_failed", detail: error instanceof Error ? error.message : String(error) }));
+    return config;
+  }
+}
+
 function withCors(response: Response, request: Request, config: Config): Response {
   const headers = new Headers(response.headers);
   headers.set("access-control-allow-origin", config.cors);
@@ -202,17 +234,24 @@ function withCors(response: Response, request: Request, config: Config): Respons
  * The whole server. It is a plain Web Fetch handler, which is why the same object
  * runs on Node, Cloudflare Workers, Vercel Edge and Deno Deploy.
  */
-export function createApp(config: Config): App {
+export function createApp(config: Config, options: AppOptions = {}): App {
+  const store = createStoreLayer(options.store ?? null);
+  const admin = createAdmin({ base: config, store, seed: () => nextSeed(config) });
+
   return async function app(request: Request): Promise<Response> {
     const url = new URL(request.url);
-    // Locked seed (tests, DUMMY_SEED) keeps runs reproducible; otherwise every
-    // request gets its own stream of randomness so the thinking template varies.
-    const seed = config.deterministic ? config.seed : (Date.now() ^ (requestCounter++ * 0x9e3779b9)) >>> 0;
+    const adminPath = normalizePath(url.pathname);
+
+    // The admin surface has its own authentication and must never pick up the permissive CORS
+    // headers or the DUMMY_API_KEY gate that the inference routes use.
+    if (adminPath === "/admin" || adminPath.startsWith("/admin/")) return admin(request);
+
+    const seed = nextSeed(config);
     const protocol = protocolFor(url.pathname);
     let response: Response;
     try {
       // A caller may hand us a reply template for this one request (?t=), when the operator allows it.
-      const ctx: Ctx = { cfg: playgroundOverride(config, url), url, rand: mulberry32(seed) };
+      const ctx: Ctx = { cfg: playgroundOverride(await effectiveConfig(config, store), url), url, rand: mulberry32(seed) };
       response = await route(request, ctx);
     } catch (error) {
       if (error instanceof HttpError) {

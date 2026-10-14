@@ -7,6 +7,7 @@ import type { Env } from "../config.ts";
 import { createApp, version } from "../index.ts";
 import { describeReply } from "../engine.ts";
 import { BUILTIN_PERSONAS } from "../personas.ts";
+import { fileStore } from "../store-file.ts";
 
 const HELP = `
 dummy-llm ${version} - an LLM that always says the same thing.
@@ -42,6 +43,14 @@ Options:
       --strip <regex|regex>  Extra patterns to strip from user messages, |-separated
       --log <level>       off | summary | full — log what was received (default off)
       --max-body <bytes>  Reject larger request bodies      (default 1000000, 0 = unlimited)
+
+  Admin (off unless you set a key or Cloudflare Access):
+      --admin-key <key>   Enable /admin behind this key (signed session cookie)
+      --admin-auth <mode> key | access | access-jwt | off   (default: key when a key is set)
+      --admin-ttl <sec>   Admin session lifetime            (default 604800)
+      --store <spec>      off (default) | kv | file:./data — where the admin page writes
+      --access-team-domain <host>  Cloudflare Access team domain (access-jwt)
+      --access-aud <tag>           Cloudflare Access application audience (access-jwt)
   -h, --help              Show this help
   -v, --version           Show the version
 
@@ -129,6 +138,12 @@ apply("DUMMY_FAIL", "fail");
 apply("DUMMY_HANG_MS", "hang");
 apply("DUMMY_TOOLCALL", "tools");
 apply("DUMMY_THINKING", "thinking");
+apply("DUMMY_ADMIN_KEY", "admin-key");
+apply("DUMMY_ADMIN_AUTH", "admin-auth");
+apply("DUMMY_ADMIN_TTL", "admin-ttl");
+apply("DUMMY_STORE", "store");
+apply("CF_ACCESS_TEAM_DOMAIN", "access-team-domain");
+apply("CF_ACCESS_AUD", "access-aud");
 if (flags["no-thinking"] === true) env.DUMMY_THINKING = "off";
 if (flags["echo-raw"] === true) env.DUMMY_ECHO_RAW = "1";
 if (flags.playground === true) env.DUMMY_PLAYGROUND = "1";
@@ -146,7 +161,8 @@ if (personaStart !== undefined) {
 }
 
 const config = resolveConfig(env);
-const app = createApp(config);
+const store = config.store === "file" && config.storePath ? fileStore(config.storePath) : undefined;
+const app = createApp(config, { store });
 const port = Number.parseInt(env.PORT ?? "8080", 10);
 const host = env.HOST ?? "0.0.0.0";
 
@@ -204,6 +220,13 @@ server.listen(port, host, () => {
   console.log(`    listening on http://localhost:${port}`);
   console.log(`    it will answer with: ${JSON.stringify(describeReply(config.reply))} (${config.chunk} chunk(s), ${config.delayMs}ms apart, ${config.tps} tps)`);
   console.log(`    point any SDK at http://localhost:${port} and use any API key`);
+  if (config.admin.misconfigured) {
+    console.error(`    admin: DISABLED by a configuration error — ${config.admin.misconfigured}`);
+  } else if (config.admin.enabled) {
+    const writable = config.store === "off" ? "read-only" : `writable (${config.store})`;
+    console.log(`    admin: http://localhost:${port}/admin — ${config.admin.mode}, ${writable}`);
+    if (config.store === "file" && config.storePath) console.log(`    store: ${config.storePath}`);
+  }
 });
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
