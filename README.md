@@ -111,6 +111,7 @@ data: [DONE]
 | Ollama embeddings | POST | `/api/embed` |
 | Health | GET | `/healthz` |
 | The joke itself | GET | `/` |
+| Private admin | GET/POST/PUT/DELETE | `/admin`, `/admin/api/*` — **404** unless `DUMMY_ADMIN_KEY` or Cloudflare Access is set (see **[docs/admin.md](docs/admin.md)**) |
 
 Unknown routes return a 404 **in the error shape of the protocol you were speaking**, so your error handling gets exercised too.
 
@@ -139,6 +140,13 @@ Unknown routes return a 404 **in the error shape of the protocol you were speaki
 | `DUMMY_MAX_REPLY` | `0` | Truncate a rendered reply at this many characters (`0` = no limit) |
 | `DUMMY_TOOLCALL` | — | Function name, or JSON `{"name":…,"arguments":…}` |
 | `DUMMY_THINKING` | a pool of 10 | The "reasoning". `\|`-separated templates, one picked at random per request; `{input}` and `{reply}` are substituted; `off` disables it |
+
+| `DUMMY_ADMIN_KEY` | — | Enables the private `/admin` page. Without it (and without Cloudflare Access) that whole path is a 404 |
+| `DUMMY_ADMIN_AUTH` | `key` when a key is set | `key` · `access` · `access-jwt` · `off` (the panic switch: 404 even with a key) |
+| `DUMMY_ADMIN_TTL` | `604800` | Admin session lifetime, in seconds |
+| `DUMMY_STORE` | `off` | Where the admin may write: `off` (read-only) · `kv` (Cloudflare KV bound as `ADMIN_KV`) · `file:./data` (one JSON file, Node only) |
+| `CF_ACCESS_TEAM_DOMAIN` | — | Cloudflare Access team domain, e.g. `https://team.cloudflareaccess.com`; needed by `access-jwt` |
+| `CF_ACCESS_AUD` | — | Cloudflare Access application audience tag; needed by `access-jwt` |
 
 Every one of them is also a CLI flag: `dummy-llm --help`.
 
@@ -207,6 +215,32 @@ affected. Templates are capped at 2000 characters, answers at 100000, and the pa
 visitor-supplied rather than the operator's.
 
 It is off by default. Without `DUMMY_PLAYGROUND` the box is not rendered at all and `?t=` is ignored.
+
+## The private admin page
+
+`DUMMY_ADMIN_KEY` turns on `/admin`: a key-protected page that lists every persona and default, edits
+them, and previews answers with the **real engine**. The preview runs the same protocol module a client
+talks to, so it is byte-identical to the response rather than a lookalike.
+
+```bash
+DUMMY_ADMIN_KEY="$(node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))")" npm run dev
+# then open http://localhost:8080/admin
+```
+
+| | |
+| --- | --- |
+| `/admin` without a key | **404** — the surface does not exist |
+| signing in | one key, compared in constant time. What comes back is a session cookie holding `<expiry>.<HMAC>`: HttpOnly, Secure, SameSite=Strict, scoped to `/admin`. The key is never stored or logged |
+| Cloudflare | `DUMMY_ADMIN_AUTH=access-jwt` verifies the Cloudflare Access JWT instead, for real SSO and MFA |
+| saving | read-only by default. `DUMMY_STORE=kv` on Workers or `DUMMY_STORE=file:./data` on a server makes it writable |
+| precedence | **store > environment > built-in**, rendered as three columns per setting with a Reset button on each row |
+| packs | fetch a persona pack in the browser, read the diff, apply it, export your own |
+
+The admin edits runtime values only. A Worker cannot rewrite its own environment variables or bindings,
+so the store is the one layer it writes and `wrangler.jsonc` stays the source of truth. Failed logins
+are throttled per address, every write is same-origin JSON, and no credential of any kind reaches a log
+line. The full walkthrough — Cloudflare Access and KV setup, the API, packs, limits, troubleshooting —
+is in **[docs/admin.md](docs/admin.md)**.
 
 ## Templates and filters
 
@@ -352,10 +386,18 @@ src/
   sse.ts           SSE / NDJSON framing and stream plumbing
   config.ts        env → Config, for Node and Workers alike
   http.ts          routing, CORS, auth, error envelopes
+  admin.ts         the private /admin surface: state, preview, writes, packs
+  admin-auth.ts    signed session cookies, constant-time compares, CSRF, headers
+  admin-access.ts  Cloudflare Access JWT verification (the only outbound request)
+  admin-ui.ts      the page: static HTML, one stylesheet, one script
+  store.ts         the writable overlay, and store > environment > default
+  store-kv.ts      Cloudflare KV adapter        store-file.ts  one JSON file (Node)
+  redact.ts        keeps secrets out of every log line
   protocols/       one file per wire format, pure framing
   adapters/        node.ts (CLI) · worker.ts · vercel.ts · deno.ts
 test/golden/       byte-exact expected streams, one file per case
-docs/              design.md · deployment.md · roadmap.md
+docs/              design.md · deployment.md · security.md · admin.md · roadmap.md
+packs/             curated persona packs anyone can import
 AGENTS.md          instructions for AI coding agents
 ```
 

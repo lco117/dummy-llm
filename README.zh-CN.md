@@ -84,6 +84,7 @@ curl -N http://localhost:8080/v1/chat/completions \
 | Gemini 流式 | POST | `/v1beta/models/{model}:streamGenerateContent?alt=sse` |
 | Ollama | GET/POST | `/api/chat`、`/api/generate`、`/api/tags`、`/api/version`、`/api/embed` |
 | 健康检查 / 主页 | GET | `/healthz`、`/` |
+| 私有管理页 | GET/POST/PUT/DELETE | `/admin`、`/admin/api/*` —— 没设 `DUMMY_ADMIN_KEY` 也没接 Cloudflare Access 时一律 **404**（详见 **[docs/admin.md](docs/admin.md)**） |
 
 未知路径返回的 404 会**使用你当前协议的报错结构**，顺带把你的错误处理也测了。
 
@@ -111,6 +112,13 @@ curl -N http://localhost:8080/v1/chat/completions \
 | `DUMMY_MAX_REPLY` | `0` | 把渲染后的回答截断到这个字符数（`0` 表示不限制） |
 | `DUMMY_TOOLCALL` | — | 需要时返回固定 function call |
 | `DUMMY_THINKING` | 内置 10 个模板 | 硬编码的思考。用 `\|` 分隔多个模板，每次请求随机取一个；会替换 `{input}`、`{reply}`；`off` 关闭 |
+
+| `DUMMY_ADMIN_KEY` | — | 打开私有管理页 `/admin`。不设置（也没接 Access）时整个路径就是 404 |
+| `DUMMY_ADMIN_AUTH` | 有 key 时为 `key` | `key` · `access` · `access-jwt` · `off`（急停开关：即使有 key 也 404） |
+| `DUMMY_ADMIN_TTL` | `604800` | 管理页会话有效期（秒） |
+| `DUMMY_STORE` | `off` | 管理页能写到哪里：`off`（只读）· `kv`（绑定为 `ADMIN_KV` 的 Cloudflare KV）· `file:./data`（单个 JSON 文件，仅 Node） |
+| `CF_ACCESS_TEAM_DOMAIN` | — | Cloudflare Access 团队域名；`access-jwt` 需要 |
+| `CF_ACCESS_AUD` | — | Cloudflare Access 应用的 AUD 标签；`access-jwt` 需要 |
 
 全部同时是 CLI 参数：`dummy-llm --help`。
 
@@ -150,6 +158,29 @@ https://dummy.example.com/?t=%7Binput%7Cascii%7D
 模板由访客提供"，而不是运营者的。
 
 默认关闭。没有 `DUMMY_PLAYGROUND` 时输入框根本不渲染，`?t=` 也会被忽略。
+
+## 私有管理页
+
+设置 `DUMMY_ADMIN_KEY` 后会打开 `/admin`：一个需要密钥的页面，列出并编辑所有 persona 和默认值，
+并用**真引擎**实时预览回答——预览走的就是客户端用的那个协议模块，因此和真实响应逐字节相同。
+
+```bash
+DUMMY_ADMIN_KEY="$(node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))")" npm run dev
+# 然后打开 http://localhost:8080/admin
+```
+
+| | |
+| --- | --- |
+| 没设 key 时访问 `/admin` | **404**，这个面板根本不存在 |
+| 登录方式 | 单个密钥，常数时间比较。返回的会话 cookie 里只有 `<过期时间>.<HMAC>`：HttpOnly、Secure、SameSite=Strict、作用域限定在 `/admin`。密钥本身从不落盘、从不进日志 |
+| Cloudflare | `DUMMY_ADMIN_AUTH=access-jwt` 改为校验 Cloudflare Access 的 JWT，可以获得真正的 SSO 和 MFA |
+| 保存 | 默认只读。Workers 上设 `DUMMY_STORE=kv`，服务器上设 `DUMMY_STORE=file:./data` 之后才可写 |
+| 优先级 | **存储层 > 环境层 > 内置默认**，页面上每个设置都并排列出三个值，每行都有「Reset」 |
+| Packs | 在浏览器里抓取 persona 包、看 diff、应用，或把自己这份导出成包 |
+
+管理页只改运行时值。Worker 无法改写自己的环境变量和绑定，所以它只能写存储层，`wrangler.jsonc`
+仍然是最终事实来源。登录失败会按地址限速，所有写操作都是同源 JSON，任何形式的凭据都不会进日志。
+完整教学（Cloudflare Access、KV 怎么开、API、packs、限额、排错）见 **[docs/admin.md](docs/admin.md)**。
 
 ## 模板与过滤器
 
