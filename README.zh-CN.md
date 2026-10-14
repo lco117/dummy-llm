@@ -116,7 +116,7 @@ curl -N http://localhost:8080/v1/chat/completions \
 | `DUMMY_ADMIN_KEY` | — | 打开私有管理页 `/admin`。不设置（也没接 Access）时整个路径就是 404 |
 | `DUMMY_ADMIN_AUTH` | 有 key 时为 `key` | `key` · `access` · `access-jwt` · `off`（急停开关：即使有 key 也 404） |
 | `DUMMY_ADMIN_TTL` | `604800` | 管理页会话有效期（秒） |
-| `DUMMY_STORE` | `off` | 管理页能写到哪里：`off`（只读）· `kv`（绑定为 `ADMIN_KV` 的 Cloudflare KV）· `file:./data`（单个 JSON 文件，仅 Node） |
+| `DUMMY_STORE` | `off` | 管理页能写到哪里：`off`（只读）· `kv`（绑定为 `DUMMY_ADMIN_KV` 的 Cloudflare KV）· `file:./data`（单个 JSON 文件，仅 Node） |
 | `CF_ACCESS_TEAM_DOMAIN` | — | Cloudflare Access 团队域名；`access-jwt` 需要 |
 | `CF_ACCESS_AUD` | — | Cloudflare Access 应用的 AUD 标签；`access-jwt` 需要 |
 

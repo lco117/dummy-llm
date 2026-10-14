@@ -354,7 +354,7 @@ export const ADMIN_JS = `(function () {
       banner.hidden = true;
     } else {
       banner.className = "banner warn";
-      setText(banner, "Read-only: this deployment has no store, so nothing here can be saved. Set DUMMY_STORE=kv on Cloudflare (bind a KV namespace as ADMIN_KV), or DUMMY_STORE=file:./data on a server, then reload.");
+      setText(banner, "Read-only: this deployment has no store, so nothing here can be saved. Set DUMMY_STORE=kv on Cloudflare (bind a KV namespace as DUMMY_ADMIN_KV), or DUMMY_STORE=file:./data on a server, then reload.");
       banner.hidden = false;
     }
     renderPersonas();

@@ -119,11 +119,11 @@ the request path is byte-for-byte unchanged.
 
 ```bash
 # 1. create the namespace (one line, once)
-npx wrangler kv namespace create ADMIN_KV
-#    -> prints an id: { binding = "ADMIN_KV", id = "abcdef0123456789..." }
+npx wrangler kv namespace create DUMMY_ADMIN_KV
+#    -> prints an id: { binding = "DUMMY_ADMIN_KV", id = "abcdef0123456789..." }
 
 # 2. declare the binding in wrangler.jsonc
-#    "kv_namespaces": [{ "binding": "ADMIN_KV", "id": "<that id>" }]
+#    "kv_namespaces": [{ "binding": "DUMMY_ADMIN_KV", "id": "<that id>" }]
 
 # 3. turn the store on
 #    "vars": { "DUMMY_STORE": "kv" }
@@ -136,13 +136,13 @@ If you deploy through the **Deploy to Cloudflare** button, you can declare the n
 id and Cloudflare provisions it for you:
 
 ```jsonc
-"kv_namespaces": [{ "binding": "ADMIN_KV" }]
+"kv_namespaces": [{ "binding": "DUMMY_ADMIN_KV" }]
 ```
 
 Two footnotes worth knowing:
 
-- Setting `DUMMY_STORE=kv` with **no** `ADMIN_KV` binding is a misconfiguration, not a silent
-  downgrade: the Worker logs `DUMMY_STORE=kv but no ADMIN_KV binding is present` and the page stays
+- Setting `DUMMY_STORE=kv` with **no** `DUMMY_ADMIN_KV` binding is a misconfiguration, not a silent
+  downgrade: the Worker logs `DUMMY_STORE=kv but no DUMMY_ADMIN_KV binding is present` and the page stays
   read-only.
 - KV is eventually consistent across the edge. The admin's own isolate sees its write immediately, and
   other isolates catch up within a few seconds. There is no way around that on Workers, and it does not
@@ -473,7 +473,7 @@ partially.
 | `/admin` is 500 with "needs both CF_ACCESS_TEAM_DOMAIN and CF_ACCESS_AUD" | `access-jwt` is on and a parameter is missing | set both, or use `access` |
 | 403 and the Access page | the request reached the Worker without an Access identity | sign in through the Access application; or you are on a route that bypasses Access, in which case use `access-jwt` |
 | Signed in, but every save says "read-only" | there is no store | set `DUMMY_STORE=kv` (plus the binding) or `file:<path>` |
-| `DUMMY_STORE=kv` and the page is still read-only | the `ADMIN_KV` binding is missing | `npx wrangler kv namespace create ADMIN_KV`, add the binding, redeploy (there is a log line saying exactly this) |
+| `DUMMY_STORE=kv` and the page is still read-only | the `DUMMY_ADMIN_KV` binding is missing | `npx wrangler kv namespace create DUMMY_ADMIN_KV`, add the binding, redeploy (there is a log line saying exactly this) |
 | The login form says the key is wrong but it is not | the cookie is not being stored | you are on plain HTTP on a non-localhost address; browse to `http://localhost` or put TLS in front |
 | A change works for one request and then reverts | the store is on but the request hit another isolate | wait a few seconds; KV is eventually consistent |
 | I edited `wrangler.jsonc` and the server ignored it | the store takes precedence | look at the **stored** column, press Reset on that row |

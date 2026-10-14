@@ -29,8 +29,8 @@
   // The admin page is off until an operator turns it on, and its key is a SECRET, not a var:
   //   npx wrangler secret put DUMMY_ADMIN_KEY
   // See docs/admin.md. To let the page save changes, create the namespace and uncomment this:
-  //   npx wrangler kv namespace create ADMIN_KV
-  // "kv_namespaces": [{ "binding": "ADMIN_KV", "id": "<printed id>" }],
+  //   npx wrangler kv namespace create DUMMY_ADMIN_KV
+  // "kv_namespaces": [{ "binding": "DUMMY_ADMIN_KV", "id": "<printed id>" }],
   // (Omitting the id works with the Deploy to Cloudflare button, which provisions the namespace.)
   // Then set "DUMMY_STORE": "kv" in the vars block below.
 

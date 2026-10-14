@@ -12,7 +12,7 @@
 # DUMMY_ADMIN_AUTH=key
 
 # Where the admin page may write. "off" (the default) keeps the page read-only.
-# On Workers, also declare a KV namespace bound as ADMIN_KV.
+# On Workers, also declare a KV namespace bound as DUMMY_ADMIN_KV.
 # DUMMY_STORE=kv
 
 # Cloudflare Access, for DUMMY_ADMIN_AUTH=access-jwt

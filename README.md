@@ -144,7 +144,7 @@ Unknown routes return a 404 **in the error shape of the protocol you were speaki
 | `DUMMY_ADMIN_KEY` | — | Enables the private `/admin` page. Without it (and without Cloudflare Access) that whole path is a 404 |
 | `DUMMY_ADMIN_AUTH` | `key` when a key is set | `key` · `access` · `access-jwt` · `off` (the panic switch: 404 even with a key) |
 | `DUMMY_ADMIN_TTL` | `604800` | Admin session lifetime, in seconds |
-| `DUMMY_STORE` | `off` | Where the admin may write: `off` (read-only) · `kv` (Cloudflare KV bound as `ADMIN_KV`) · `file:./data` (one JSON file, Node only) |
+| `DUMMY_STORE` | `off` | Where the admin may write: `off` (read-only) · `kv` (Cloudflare KV bound as `DUMMY_ADMIN_KV`) · `file:./data` (one JSON file, Node only) |
 | `CF_ACCESS_TEAM_DOMAIN` | — | Cloudflare Access team domain, e.g. `https://team.cloudflareaccess.com`; needed by `access-jwt` |
 | `CF_ACCESS_AUD` | — | Cloudflare Access application audience tag; needed by `access-jwt` |
 

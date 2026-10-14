@@ -50,9 +50,9 @@ Worker resource. The dashboard walkthrough, the two Access modes and the differe
 The page is **read-only** until a store is configured. On Workers that is a KV namespace:
 
 ```bash
-npx wrangler kv namespace create ADMIN_KV
+npx wrangler kv namespace create DUMMY_ADMIN_KV
 # then in wrangler.jsonc:
-#   "kv_namespaces": [{ "binding": "ADMIN_KV", "id": "<printed id>" }]
+#   "kv_namespaces": [{ "binding": "DUMMY_ADMIN_KV", "id": "<printed id>" }]
 #   "vars": { "DUMMY_STORE": "kv" }
 npx wrangler deploy
 ```
