@@ -103,11 +103,22 @@ export function clientIp(request: Request): string {
  * checks are the second layer, and they also cover the unauthenticated login form.
  */
 export function sameOrigin(request: Request, url: URL): boolean {
-  const site = request.headers.get("sec-fetch-site");
-  if (site === "cross-site") return false;
   const origin = request.headers.get("origin");
-  if (origin && origin !== url.origin) return false;
-  return true;
+  // Compare against the host the browser actually addressed, not against new URL(request.url).origin:
+  // anything sitting in front of the Worker (Cloudflare Access, a tunnel, a reverse proxy) can rewrite
+  // the URL while Origin and Host stay truthful. Getting this the wrong way round locks an operator out
+  // of their own deployment while looking like a CSRF control working.
+  const target = request.headers.get("host") ?? url.host;
+  if (origin && origin !== "null") {
+    try {
+      return new URL(origin).host === target;
+    } catch {
+      return false;
+    }
+  }
+  // No usable Origin: fall back to fetch metadata, and stay permissive when neither is present (curl,
+  // an older client), because the SameSite=Strict cookie is the control that actually holds.
+  return request.headers.get("sec-fetch-site") !== "cross-site";
 }
 
 export function adminHeaders(extra: Record<string, string> = {}): Record<string, string> {

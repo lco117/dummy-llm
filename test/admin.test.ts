@@ -184,6 +184,52 @@ test("logout clears the cookie", async () => {
   assert.match(response.headers.get("set-cookie") as string, /Max-Age=0/);
 });
 
+test("signing out works even when the origin check is unhappy", async () => {
+  // A refused logout would show the operator a JSON error and leave them signed in. It destroys
+  // nothing and a cross-site request cannot carry the Strict cookie, so it must always go through.
+  const app = adminApp({ DUMMY_ADMIN_KEY: KEY });
+  const cookie = await signIn(app);
+  for (const origin of ["https://somewhere-else.example", "null"]) {
+    const response = await call(app, "/admin/logout", {
+      method: "POST",
+      headers: { origin, cookie: "dummy_admin=" + cookie },
+    });
+    assert.equal(response.status, 303, "logout must not be refused for origin " + origin);
+    assert.match(response.headers.get("set-cookie") as string, /Max-Age=0/);
+  }
+});
+
+test("a same-host Origin is accepted even when fetch metadata says cross-site", async () => {
+  // Cloudflare Access can replay a form POST after its login redirect, which makes the browser label
+  // the request cross-site even though it came from the operator's own page. The Origin header is the
+  // authoritative one, so a matching host wins over Sec-Fetch-Site.
+  const app = adminApp({ DUMMY_ADMIN_KEY: KEY }, fakeStore(null));
+  const cookie = await signIn(app);
+  const accepted = await call(app, "/admin/api/personas/dummy-same-host", {
+    method: "PUT",
+    headers: {
+      "content-type": "application/json",
+      origin: "http://localhost",
+      "sec-fetch-site": "cross-site",
+      cookie: "dummy_admin=" + cookie,
+    },
+    body: JSON.stringify({ reply: "ok" }),
+  });
+  assert.equal(accepted.status, 200);
+
+  const refused = await call(app, "/admin/api/personas/dummy-other-host", {
+    method: "PUT",
+    headers: {
+      "content-type": "application/json",
+      origin: "https://evil.example",
+      "sec-fetch-site": "same-origin",
+      cookie: "dummy_admin=" + cookie,
+    },
+    body: JSON.stringify({ reply: "no" }),
+  });
+  assert.equal(refused.status, 403);
+});
+
 /* ------------------------------------------------------------------ CSRF and headers */
 
 test("a cross-origin write is refused", async () => {

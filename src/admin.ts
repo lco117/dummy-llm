@@ -69,6 +69,27 @@ export function createAdmin(deps: AdminDeps): (request: Request) => Promise<Resp
     return json({ error: message }, status, adminHeaders());
   }
 
+  /**
+   * A refused origin is always logged, with the four headers that decide it. Without this line a
+   * mismatch is invisible from the outside, and the operator sees a bare JSON error with nothing to
+   * act on. It records no secrets: an origin, a host and two fetch-metadata values.
+   */
+  function originRefused(request: Request, url: URL, where: string): void {
+    audit(
+      "origin_refused",
+      {
+        where,
+        method: request.method,
+        path: url.pathname,
+        origin: request.headers.get("origin"),
+        host: request.headers.get("host"),
+        urlOrigin: url.origin,
+        site: request.headers.get("sec-fetch-site"),
+      },
+      true,
+    );
+  }
+
   async function loadDoc(): Promise<StoreDoc | null> {
     try {
       return await deps.store.read();
@@ -118,7 +139,10 @@ export function createAdmin(deps: AdminDeps): (request: Request) => Promise<Resp
 
   async function handleLogin(request: Request, url: URL): Promise<Response> {
     if (adminCfg.mode !== "key" || !adminCfg.key) return notFound();
-    if (!sameOrigin(request, url)) return json({ error: "cross-origin request refused" }, 403, adminHeaders());
+    if (!sameOrigin(request, url)) {
+      originRefused(request, url, "login");
+      return json({ error: "cross-origin request refused" }, 403, adminHeaders());
+    }
     const ip = clientIp(request);
     const at = now();
     const retryAfter = throttle.retryAfter(ip, at);
@@ -155,7 +179,10 @@ export function createAdmin(deps: AdminDeps): (request: Request) => Promise<Resp
   }
 
   function handleLogout(request: Request, url: URL): Response {
-    if (!sameOrigin(request, url)) return json({ error: "cross-origin request refused" }, 403, adminHeaders());
+    // Signing out always succeeds. It destroys nothing, it is idempotent, and a cross-site request
+    // cannot carry the SameSite=Strict cookie anyway - so refusing here could only ever show the
+    // operator a JSON error instead of logging them out. A mismatch is logged and otherwise ignored.
+    if (!sameOrigin(request, url)) originRefused(request, url, "logout");
     audit("logout", { ip: clientIp(request) }, true);
     if (adminCfg.mode !== "key") {
       const target = adminCfg.accessTeamDomain ? accessLogoutUrl(adminCfg.accessTeamDomain) : "/admin";
@@ -230,7 +257,10 @@ export function createAdmin(deps: AdminDeps): (request: Request) => Promise<Resp
   }
 
   function requireWrite(request: Request, url: URL): void {
-    if (!sameOrigin(request, url)) throw new HttpError(403, "cross-origin request refused");
+    if (!sameOrigin(request, url)) {
+      originRefused(request, url, "write");
+      throw new HttpError(403, "cross-origin request refused");
+    }
     if (!deps.store.writable) throw new HttpError(409, "this deployment is read-only; set DUMMY_STORE=kv or file:<path> to edit");
   }
 
@@ -283,7 +313,10 @@ export function createAdmin(deps: AdminDeps): (request: Request) => Promise<Resp
   /* ---------------------------------------------------------------- preview */
 
   async function preview(request: Request, url: URL, doc: StoreDoc | null): Promise<Response> {
-    if (!sameOrigin(request, url)) throw new HttpError(403, "cross-origin request refused");
+    if (!sameOrigin(request, url)) {
+      originRefused(request, url, "preview");
+      throw new HttpError(403, "cross-origin request refused");
+    }
     const body = await readJsonBody(request, base.maxBodyBytes);
     const input = typeof body.input === "string" ? body.input.slice(0, PREVIEW_INPUT_MAX) : "hello";
     const model = typeof body.model === "string" ? body.model.slice(0, 120) : "";
