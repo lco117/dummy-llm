@@ -60,15 +60,26 @@ suite. Nothing here is aspirational any more — when it lands, it moves up.
 - [x] harness-noise stripping, extensible with `DUMMY_STRIP`
 - [x] a hardcoded thinking pool, one template drawn per request
 
+### M7 — The admin page and the store
+
+- [x] `/admin`, absent (404) unless `DUMMY_ADMIN_KEY` or Cloudflare Access is configured
+- [x] signed session cookie: constant-time compare, HttpOnly, Secure, SameSite=Strict, scoped to `/admin`
+- [x] Cloudflare Access, both the edge-trust and the JWKS-verified mode
+- [x] a writable overlay: `store > environment > built-in`, backed by KV or one JSON file
+- [x] persona and defaults editing, tombstones, per-row reset, and a byte-exact live preview
+- [x] packs: browser-side fetch, a diff before applying, and export
+- [x] secrets never reach a log line; the admin page has no interpolation surface
+- [x] `docs/admin.md`: the operator guide, including the KV and Access walkthroughs
+
 ## Next
 
-### 3. Packs — personas as shareable files
+### 3. Packs — personas as shareable files — **shipped, gallery only**
 
-A pack is a JSON file (or a `pack.json` in a directory) holding a partial config plus a map of
-personas: `dummy-llm --pack ./packs/rickroll`, or `DUMMY_PACK` on a Worker. The repository would
-ship `packs/ascii-banner`, `packs/rickroll`, `packs/pirate`, `packs/haiku-only` and
-`packs/adversarial` (for testing agent guardrails). A remote `https://` pack would be the first
-outbound request this server ever makes, so it stays opt-in and documented.
+`packs/` ships three examples (`shout`, `mirror`, `shrug`) and the admin page can fetch, diff and
+install any pack URL. What is still open is the community tier: a separate `dummy-packs` repository
+taking pull requests, and a curated index that grows past three entries. A remote `https://` pack is
+fetched by the browser, so the server still makes no outbound request — except for `access-jwt`, which
+is opt-in.
 
 ### 4. Playground editor on the landing page — **shipped** (collapsed editor, `?t=` links, `DUMMY_PLAYGROUND`)
 

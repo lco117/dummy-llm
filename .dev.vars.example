@@ -3,6 +3,18 @@
 # and uncomment only what you want a deployer to be forced to fill in.
 
 # DUMMY_API_KEY=sk-dummy
-# DUMMY_TEXT=6
-# DUMMY_MODE=fixed
+# DUMMY_REPLY={input}
 # DUMMY_DELAY_MS=20
+
+# The private admin page. Uncomment to expose /admin (see docs/admin.md).
+# Use a long random value, and never the same value as DUMMY_API_KEY.
+# DUMMY_ADMIN_KEY=
+# DUMMY_ADMIN_AUTH=key
+
+# Where the admin page may write. "off" (the default) keeps the page read-only.
+# On Workers, also declare a KV namespace bound as ADMIN_KV.
+# DUMMY_STORE=kv
+
+# Cloudflare Access, for DUMMY_ADMIN_AUTH=access-jwt
+# CF_ACCESS_TEAM_DOMAIN=https://your-team.cloudflareaccess.com
+# CF_ACCESS_AUD=

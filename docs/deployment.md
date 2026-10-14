@@ -30,9 +30,36 @@ vercel deploy              # Vercel
 | **Deploy with Vercel** | an edge function plus the catch-all rewrite | a Vercel account |
 | **Run on Google Cloud** | a Cloud Run service built from the Dockerfile | a GCP account **with billing enabled** |
 
-Cloudflare Access is **not** provisioned by the button — it is account-level Zero Trust configuration,
-not a Worker resource. Add it in the dashboard (Access → Applications → Add → Self-hosted, path
-`/admin`, policy = your email); it takes about two minutes.
+### The private admin page (optional, off by default)
+
+`/admin` does not exist until you turn it on. Two ways, and they compose:
+
+```bash
+# a) the key: works on every host
+npx wrangler secret put DUMMY_ADMIN_KEY       # a long random string, never the same as DUMMY_API_KEY
+
+# b) Cloudflare Access: real SSO, no code
+#    Zero Trust -> Access -> Applications -> Add -> Self-hosted, path /admin, policy = your email
+#    then set DUMMY_ADMIN_AUTH=access-jwt plus CF_ACCESS_TEAM_DOMAIN and CF_ACCESS_AUD
+```
+
+Access is **not** provisioned by a deploy button — it is account-level Zero Trust configuration, not a
+Worker resource. The dashboard walkthrough, the two Access modes and the difference between them are in
+[admin.md](admin.md#6-cloudflare-access-step-by-step).
+
+The page is **read-only** until a store is configured. On Workers that is a KV namespace:
+
+```bash
+npx wrangler kv namespace create ADMIN_KV
+# then in wrangler.jsonc:
+#   "kv_namespaces": [{ "binding": "ADMIN_KV", "id": "<printed id>" }]
+#   "vars": { "DUMMY_STORE": "kv" }
+npx wrangler deploy
+```
+
+Declaring the namespace **without** an id works with the Deploy to Cloudflare button, which provisions it
+for you. Every step, including what to do when the page still says read-only, is in
+[admin.md](admin.md#4-the-store-making-edits-permanent).
 
 ## Which target should you pick?
 
@@ -113,6 +140,24 @@ llm.example.com {
 Caddy handles TLS automatically and, unlike Nginx, flushes SSE frames immediately without
 extra configuration.
 
+If you want the writable admin page on the VPS, mount the directory that holds the store document, or it
+dies with the container:
+
+```yaml
+services:
+  dummy:
+    environment:
+      DUMMY_STORE: "file:/data"
+      DUMMY_ADMIN_KEY: "${DUMMY_ADMIN_KEY}"
+    volumes:
+      - dummy-config:/data
+volumes:
+  dummy-config:
+```
+
+The document is one JSON file at `/data/store.json`, written to a temporary file and renamed into place.
+See [admin.md](admin.md#43-filedata-on-a-server-step-by-step).
+
 ### Nginx instead of Caddy — the one stanza that matters
 
 ```nginx
@@ -184,7 +229,8 @@ Why this is the best free host for a streaming fake:
   sitting in a `setTimeout` / `scheduler.wait()` between chunks is wall-clock, not CPU — so
   simulated typing does not blow the budget. Building the JSON frames does, and that is
   microseconds.
-- We use no storage, so KV/D1/R2 quotas never apply.
+- We use no storage, so KV/D1/R2 quotas never apply — unless you turn the admin store on, in which case
+  one small KV document is read per request.
 
 Caveats to design around:
 

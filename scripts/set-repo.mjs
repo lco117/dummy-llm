@@ -10,7 +10,16 @@ if (!slug || !/^[\w.-]+\/[\w.-]+$/.test(slug)) {
   process.exit(1);
 }
 
-const files = ["README.md", "README.zh-CN.md", "AGENTS.md", "package.json", "docker-compose.yml", "docs/deployment.md"];
+const files = [
+  "README.md",
+  "README.zh-CN.md",
+  "AGENTS.md",
+  "package.json",
+  "docker-compose.yml",
+  "docs/deployment.md",
+  "docs/admin.md",
+  "src/packs.ts", // the pack gallery points at raw.githubusercontent.com/<repo>/main/packs
+];
 let changed = 0;
 
 for (const file of files) {

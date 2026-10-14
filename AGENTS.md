@@ -55,6 +55,14 @@ You want: a `200` with `text/event-stream`, several `delta` frames, and a final 
 
 - **Personas.** The model id selects an answer profile (see `src/personas.ts`): `dummy-echo-1` repeats you, `definitely-not-a-model` refuses to be a model. An unknown model falls through to `DUMMY_REPLY`. Adding a persona means adding one entry there — `DEFAULT_MODELS` is derived from it.
 - **The playground.** `DUMMY_PLAYGROUND=1` lets a caller pass `?t=<template>`; `playgroundOverride()` in `src/config.ts` applies it to that one request, capped at 2000 characters in and 100000 out, and the landing page labels such answers as visitor-supplied. Off by default, and `?t=` is ignored entirely when off.
+
+- **The admin page.** `src/admin.ts` is the `/admin` surface, `src/admin-auth.ts` is its cookie and CSRF handling, `src/admin-access.ts` verifies Cloudflare Access JWTs, `src/admin-ui.ts` is the page, and `src/store.ts` is the writable overlay. Rules that must not be broken:
+  - `/admin*` stays **404** unless `DUMMY_ADMIN_KEY` is set or Access is configured, and it is routed **before** the CORS wrapper and the `DUMMY_API_KEY` check.
+  - No secret reaches a log line, a response or a page. Use `src/redact.ts`; never `console.log` a body or a key directly.
+  - The admin page is static HTML with **zero interpolation**: the client writes every value with `textContent`. Add one `innerHTML` and the XSS story the CSP depends on is gone.
+  - Writes go through the store layer, never the environment, and are validated before they land. Resolution order is **store > environment > built-in**.
+  - The preview must call `openaiChat.chat()` with a synthesised request. Never re-implement the engine in the browser — a test asserts the preview is byte-identical to a client request.
+  - Changing any of this means updating `docs/admin.md` and the security deltas in `docs/security.md` in the same commit.
 - **Templates and filters.** `{input|upper|box}`. Filters live in `src/filters.ts` and **must stay synchronous and side-effect free**, because `phasesFor()` renders a piece without awaiting. Every new filter needs a unit case in `test/unit.test.ts` plus, if it changes a wire-visible default, a golden.
 - **What it "thinks".** `DUMMY_THINKING` is a `\|`-separated pool (ten templates ship by default) rendered into every protocol's native reasoning channel; one is drawn per request unless the seed is pinned. `{input}` is the user's message, `{reply}` is the answer. `--no-thinking` (or `DUMMY_THINKING=off`) removes the channel entirely.
 - **How fast.** `DUMMY_TPS` (default 100) sets tokens per second. A token is `DUMMY_CHUNK` code points (default 4, i.e. one English token); `DUMMY_DELAY_MS` overrides the pacing. Pacing targets an absolute schedule, so this is the long-run rate, not a per-frame sleep.
