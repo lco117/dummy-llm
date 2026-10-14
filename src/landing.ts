@@ -163,7 +163,7 @@ export function landingPage(ctx: Ctx, request: Request): Response {
     '<span class="chip on">' + t(lang, "hero.chip.protocols") + "</span>",
     '<span class="chip">' + t(lang, "hero.chip.deps") + "</span>",
     '<span class="chip">' + t(lang, "hero.chip.sse") + "</span>",
-    '<span class="chip">' + t(lang, "hero.chip.offline") + "</span>",
+    '<span class="chip">' + t(lang, "hero.chip.mock") + "</span>",
   ].join("");
 
   // One line per model, the current one ticked on the right: a switcher, not a catalogue.
