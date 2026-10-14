@@ -8,9 +8,21 @@
   // Flip either to true (or delete the line) to get the free workers.dev URL back.
   "workers_dev": false,
   "preview_urls": false,
-  // The hostname this Worker answers on. Declaring it here keeps the binding across
-  // deploys instead of resetting the Worker to "no routes".
-  "routes": [{ "pattern": "dummy.example.com", "custom_domain": true }],
+  // No hostname is committed on purpose. This repository is a public template, and your domain is
+  // yours - not something to publish in a config file, and not something a cloner should inherit.
+  // Pick whichever you prefer when you deploy:
+  //
+  //   npx wrangler deploy --domain your.example.com     # nothing committed, nothing to forget
+  //   npm run deploy:domain -- your.example.com
+  //
+  // ...or add a route of your own below and keep that edit out of your commits:
+  //
+  //   "routes": [{ "pattern": "your.example.com", "custom_domain": true }],
+  //
+  // ...or bind the domain once in the dashboard (Worker -> Settings -> Domains & Routes).
+  //
+  // With no route and no --domain, a deploy has no public URL at all (workers_dev is also off),
+  // which is the intended default.
   "observability": {
     "enabled": true
   },

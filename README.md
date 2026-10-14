@@ -21,7 +21,7 @@ Zero runtime dependencies. Byte-exact streaming. Runs on a VPS, a Raspberry Pi, 
 [![Deploy with Vercel](https://img.shields.io/badge/Deploy_with-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/new/clone?repository-url=https://github.com/lco117/dummy-llm&project-name=dummy-llm&repository-name=dummy-llm)
 [![Run on Google Cloud](https://img.shields.io/badge/Run_on-Google_Cloud-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)](https://deploy.cloud.run/?git_repo=https://github.com/lco117/dummy-llm)
 
-*One click gets you a running instance. **Cloudflare Workers** is the free, no-cold-start one — it ships with `workers.dev` and preview URLs disabled, so bind a custom domain (or set `"workers_dev": true` in `wrangler.jsonc`) to reach it. **Vercel** deploys the edge function and its catch-all rewrite. **Google Cloud Run** builds the Dockerfile, but needs a GCP account with billing enabled.*
+*One click gets you a running instance. **Cloudflare Workers** is the free, no-cold-start one — it ships with `workers.dev` and preview URLs disabled, and with **no hostname committed**, so attach your own with `npx wrangler deploy --domain your.example.com` (or set `"workers_dev": true` in `wrangler.jsonc`) to reach it. **Vercel** deploys the edge function and its catch-all rewrite. **Google Cloud Run** builds the Dockerfile, but needs a GCP account with billing enabled.*
 
 </div>
 
@@ -340,7 +340,8 @@ Full copy-paste configs, reverse-proxy settings and the SSE gotcha checklist liv
 ### Cloudflare Workers without the button
 
 ```bash
-npx wrangler deploy        # deploys with no public route (see wrangler.jsonc)
+npx wrangler deploy                          # no public route: wrangler.jsonc declares none
+npm run deploy:domain -- your.example.com    # ...and this is how you attach your own
 ```
 
 `wrangler.jsonc` sets `workers_dev: false` and `preview_urls: false`, so a fresh deployment

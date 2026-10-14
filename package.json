@@ -58,6 +58,7 @@
     "golden": "node scripts/golden.ts",
     "typecheck": "tsc --noEmit",
     "deploy": "wrangler deploy",
+    "deploy:domain": "wrangler deploy --domain",
     "deploy:dry": "wrangler deploy --dry-run --outdir dist-worker",
     "set-repo": "node scripts/set-repo.mjs",
     "prepublishOnly": "npm run build",

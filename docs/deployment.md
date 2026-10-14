@@ -17,7 +17,7 @@ Everything below is implemented; you only have to pick a host.
 | [src/adapters/deno.ts](../src/adapters/deno.ts) | Deno Deploy |
 
 ```bash
-npx wrangler deploy        # Cloudflare
+npx wrangler deploy --domain your.example.com   # Cloudflare (this repo commits no hostname)
 docker compose up -d       # VPS (edit DUMMY_DOMAIN in .env first)
 vercel deploy              # Vercel
 ```
@@ -211,13 +211,39 @@ about fifteen lines.
 ```
 
 ```bash
-npx wrangler deploy        # no public route: wrangler.jsonc sets workers_dev/preview_urls to false
+npx wrangler deploy                          # no public route: workers_dev/preview_urls are false
+npx wrangler deploy --domain your.example.com  # attach your own Custom Domain for this deploy
 ```
 
 The template ships with both routes **disabled**, because a joke endpoint that anyone can hit
-is a joke endpoint that anyone can burn through your free quota. Bind your own domain under
-Worker → Settings → Domains & Routes, or set `"workers_dev": true` to use the free
-`*.workers.dev` URL.
+is a joke endpoint that anyone can burn through your free quota.
+
+**No hostname is committed.** `wrangler.jsonc` has no `routes` block: this repository is a public
+template, and a cloner should neither inherit your domain nor publish their own. Three ways to attach
+one, in order of convenience:
+
+```bash
+# 1. at deploy time - nothing is written to the repository
+npx wrangler deploy --domain your.example.com
+npm run deploy:domain -- your.example.com     # the same thing, via an npm script
+
+# 2. a route of your own, kept out of your commits
+#    "routes": [{ "pattern": "your.example.com", "custom_domain": true }]   in wrangler.jsonc
+
+# 3. once, in the dashboard: Worker -> Settings -> Domains & Routes -> Add -> Custom Domain
+```
+
+`--domain` creates a **Custom Domain** (`custom_domain: true`), which is what this Worker wants: it
+serves every path on that hostname. Use `--route` instead if you are putting the Worker on a path of a
+domain that already has an origin.
+
+Because a deploy sends whatever the configuration and the flags say, passing `--domain` on every deploy
+is the option that cannot surprise you. If you attached the domain in the dashboard and then deploy
+without it, check the dashboard afterwards: the safe habit is to put the flag in your deploy command or
+in CI.
+
+Alternatively set `"workers_dev": true` to use the free `*.workers.dev` URL, which needs no domain at
+all but is public the moment you deploy.
 
 Why this is the best free host for a streaming fake:
 

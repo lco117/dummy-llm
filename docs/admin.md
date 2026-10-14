@@ -99,7 +99,7 @@ not offer it. Everything below follows from that one fact.
 
 | layer | where it lives | who writes it | when it takes effect | can the admin edit it? |
 | --- | --- | --- | --- | --- |
-| deployment shape: worker name, routes, `workers_dev`, preview URLs, compatibility date, KV bindings | `wrangler.jsonc` | the operator, by running `wrangler deploy` | on the next deploy | **no** |
+| deployment shape: worker name, the hostname, `workers_dev`, preview URLs, compatibility date, KV bindings | `wrangler.jsonc`, `npx wrangler deploy --domain …`, or the dashboard | the operator | on the next deploy | **no** |
 | runtime baseline: reply, thinking, tps, log level, model list, and the rest | environment variables, from the `vars` block in `wrangler.jsonc` or from the dashboard | the operator | on the next deploy, or immediately when set in the dashboard | **no** |
 | runtime override | the store: a KV namespace, or one JSON file on disk | **the admin page** | immediately | **yes** |
 | secrets: the API key and the admin key | `wrangler secret put`, or the dashboard | the operator | when written | **no**; the admin page cannot read them either |
