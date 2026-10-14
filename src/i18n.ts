@@ -13,7 +13,6 @@ export const LANG_COOKIE = "dummy_lang";
 export const LANG_MAX_AGE = 60 * 60 * 24 * 365;
 
 const EN = {
-  "lang.other": "中文",
   "lang.label": "Language",
 
   "nav.demo": "Demo",
@@ -208,7 +207,6 @@ const EN = {
 export type MessageKey = keyof typeof EN;
 
 const ZH: Record<MessageKey, string> = {
-  "lang.other": "English",
   "lang.label": "语言",
 
   "nav.demo": "演示",
@@ -449,17 +447,30 @@ export function langCookie(value: Lang): string {
   return LANG_COOKIE + "=" + value + "; Path=/; Max-Age=" + LANG_MAX_AGE + "; SameSite=Lax";
 }
 
+/** Each name is written in its own language: you should not have to read English in order to leave it. */
+const LANG_NAMES: Record<Lang, string> = { en: "English", zh: "中文" };
+
 /**
- * The switch is two links, so it works with JavaScript disabled and leaves the language in the URL.
- * The server remembers the choice in a cookie when it sees `?lang=`.
+ * The switch is a menu of links inside a <details>, so it opens with JavaScript disabled and still
+ * leaves the language in the URL. The server remembers the choice in a cookie when it sees `?lang=`.
+ * Nothing here is translated: a language list that only appears in the language you cannot read is
+ * the one menu that has to be in every language at once.
  */
 export function langSwitch(lang: Lang, path: string): string {
-  const target: Lang = lang === "zh" ? "en" : "zh";
-  const href = path + "?lang=" + target;
+  const item = (value: Lang) =>
+    '<li role="none"><a role="menuitemradio" aria-checked="' + (value === lang ? "true" : "false") + '"' +
+    (value === lang ? ' class="on"' : "") +
+    ' hreflang="' + value + '" lang="' + value + '" rel="nofollow" href="' + path + "?lang=" + value + '">' +
+    '<span class="name">' + LANG_NAMES[value] + "</span>" +
+    '<span class="check" aria-hidden="true">\u2713</span>' +
+    "</a></li>";
   return (
-    '<div class="lang" role="group" aria-label="' + t(lang, "lang.label") + '">' +
-    '<span class="lang-now" aria-current="true">' + (lang === "zh" ? "中文" : "EN") + "</span>" +
-    '<a class="lang-other" href="' + href + '" rel="nofollow">' + t(lang, "lang.other") + "</a>" +
-    "</div>"
+    '<details class="lang">' +
+    '<summary aria-haspopup="menu" aria-label="' + t(lang, "lang.label") + '">' +
+    '<span class="name">' + LANG_NAMES[lang] + "</span>" +
+    '<span class="chev" aria-hidden="true">\u2304</span>' +
+    "</summary>" +
+    '<ul class="lang-menu" role="menu">' + item("en") + item("zh") + "</ul>" +
+    "</details>"
   );
 }

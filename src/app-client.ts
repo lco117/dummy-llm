@@ -14,6 +14,142 @@ export const APP_JS = `(function () {
     return out;
   }
 
+  /* The language menu is a <details>, so it opens and closes without a line of script. The script only
+     adds the two habits a menu is expected to have: click anywhere else, or press Escape, and it shuts. */
+  var langs = document.querySelectorAll("details.lang");
+  function closeLangs() {
+    for (var i = 0; i < langs.length; i++) langs[i].removeAttribute("open");
+  }
+  document.addEventListener("click", function (event) {
+    for (var i = 0; i < langs.length; i++) {
+      if (langs[i].hasAttribute("open") && !langs[i].contains(event.target)) langs[i].removeAttribute("open");
+    }
+  });
+  document.addEventListener("keydown", function (event) { if (event.key === "Escape") closeLangs(); });
+
+  /* The neuron field behind the page. Sparse on purpose: a handful of nodes, an edge only where two are
+     close, and everything near the cursor leans in and lights up. One canvas, redrawn at about 30fps,
+     stopped when the tab is hidden and left still when the visitor asked for less motion. */
+  var canvas = $("neurons");
+  if (canvas && canvas.getContext) {
+    (function (surface) {
+      var ctx = surface.getContext("2d");
+      var calm = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+      var dpr = Math.min(2, window.devicePixelRatio || 1);
+      var REACH = 250, LINK = 244, LEAN = 18;
+      var W = 0, H = 0, nodes = [], last = 0, queued = 0, pending = 0;
+      var at = { x: -1e4, y: -1e4 };
+
+      function gap(ax, ay, bx, by) {
+        var dx = ax - bx, dy = ay - by;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+
+      function seed() {
+        var count = Math.max(14, Math.min(62, Math.round((W * H) / 36000)));
+        nodes = [];
+        for (var i = 0; i < count; i++) {
+          nodes.push({
+            x: Math.random() * W, y: Math.random() * H,
+            vx: (Math.random() - 0.5) * 0.22, vy: (Math.random() - 0.5) * 0.22,
+            r: 1.15 + Math.random() * 1.6, ox: 0, oy: 0
+          });
+        }
+      }
+
+      function advance() {
+        for (var i = 0; i < nodes.length; i++) {
+          var n = nodes[i];
+          n.x += n.vx; n.y += n.vy;
+          if (n.x < -24) n.x = W + 24; else if (n.x > W + 24) n.x = -24;
+          if (n.y < -24) n.y = H + 24; else if (n.y > H + 24) n.y = -24;
+          var dx = at.x - n.x, dy = at.y - n.y;
+          var d = Math.sqrt(dx * dx + dy * dy) || 1;
+          var pull = d < REACH ? (1 - d / REACH) : 0;
+          n.ox += ((dx / d) * pull * LEAN - n.ox) * 0.12;
+          n.oy += ((dy / d) * pull * LEAN - n.oy) * 0.12;
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        var i, j, n, m, nx, ny, mx, my, d, hot, alpha;
+        for (i = 0; i < nodes.length; i++) {
+          n = nodes[i];
+          nx = n.x + n.ox; ny = n.y + n.oy;
+          var na = gap(at.x, at.y, nx, ny);
+          var nh = na < REACH ? 1 - na / REACH : 0;
+          for (j = i + 1; j < nodes.length; j++) {
+            m = nodes[j];
+            mx = m.x + m.ox; my = m.y + m.oy;
+            d = gap(nx, ny, mx, my);
+            if (d > LINK) continue;
+            var ma = gap(at.x, at.y, mx, my);
+            hot = Math.max(nh, ma < REACH ? 1 - ma / REACH : 0);
+            alpha = (1 - d / LINK) * (0.18 + hot * 0.5);
+            ctx.strokeStyle = hot > 0.02
+              ? "rgba(139,163,255," + alpha.toFixed(3) + ")"
+              : "rgba(110,231,200," + alpha.toFixed(3) + ")";
+            ctx.lineWidth = hot > 0.35 ? 1.25 : 1;
+            ctx.beginPath();
+            ctx.moveTo(nx, ny);
+            ctx.lineTo(mx, my);
+            ctx.stroke();
+          }
+        }
+        for (i = 0; i < nodes.length; i++) {
+          n = nodes[i];
+          nx = n.x + n.ox; ny = n.y + n.oy;
+          var pa = gap(at.x, at.y, nx, ny);
+          hot = pa < REACH ? 1 - pa / REACH : 0;
+          ctx.beginPath();
+          ctx.arc(nx, ny, n.r + hot * 1.7, 0, 6.2832);
+          ctx.fillStyle = hot > 0.02
+            ? "rgba(200,214,255," + (0.30 + hot * 0.6).toFixed(3) + ")"
+            : "rgba(154,167,186," + (0.40 + n.r * 0.05).toFixed(3) + ")";
+          ctx.fill();
+        }
+      }
+
+      /* The loop is armed once and never cancelled. A hidden tab simply does not get frames, so the
+         check here is belt and braces - it keeps a background tab from paying for a background nobody
+         can see, without the start/stop dance that can leave a loop dead when visibility flaps. */
+      function frame(now) {
+        requestAnimationFrame(frame);
+        if (now - last < 33 || document.hidden) return;
+        last = now;
+        advance();
+        draw();
+      }
+      function repaint() {
+        if (queued || !calm) return;
+        queued = requestAnimationFrame(function () { queued = 0; draw(); });
+      }
+
+      function resize() {
+        W = window.innerWidth || document.documentElement.clientWidth || 0;
+        H = window.innerHeight || document.documentElement.clientHeight || 0;
+        surface.width = Math.max(1, Math.round(W * dpr));
+        surface.height = Math.max(1, Math.round(H * dpr));
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        seed();
+        draw();
+      }
+
+      window.addEventListener("resize", function () {
+        if (pending) return;
+        pending = requestAnimationFrame(function () { pending = 0; resize(); });
+      });
+      window.addEventListener("pointermove", function (event) {
+        at.x = event.clientX; at.y = event.clientY; repaint();
+      }, { passive: true });
+      window.addEventListener("pointerleave", function () { at.x = -1e4; at.y = -1e4; repaint(); });
+      window.addEventListener("blur", function () { at.x = -1e4; at.y = -1e4; repaint(); });
+      resize();
+      if (!calm) requestAnimationFrame(frame);
+    })(canvas);
+  }
+
   var tabs = document.querySelectorAll(".cmd-tab");
   function selectTab(button) {
     var id = button.getAttribute("data-tab");

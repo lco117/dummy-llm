@@ -196,10 +196,9 @@ export function landingPage(ctx: Ctx, request: Request): Response {
 <style>${BASE_CSS}${LANDING_CSS}</style>
 </head>
 <body>
-<div class="shapes" aria-hidden="true"><i></i><i class="b"></i><i class="c"></i><i class="b"></i></div>
+<canvas class="neurons" id="neurons" aria-hidden="true"></canvas>
 <div class="doc">
   <header class="top">
-    <a class="brand" href="/"><strong>dummy-llm</strong><span class="cursor"></span></a>
     <nav class="nav">
       <a href="#run">${t(lang, "install.title")}</a>
       <a href="#demo">${t(lang, "nav.demo")}</a>

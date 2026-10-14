@@ -26,7 +26,7 @@ export const ADMIN_CSS = BASE_CSS + `  .who { font-family: var(--mono); font-siz
   .top form.inline-form { margin-left: auto; }
   .admin-grid { display: grid; gap: 1rem; grid-template-columns: minmax(13rem, 17rem) 1fr; margin-top: 1.6rem; }
   @media (max-width: 58rem) { .admin-grid { grid-template-columns: 1fr; } }
-  .panel h2 { font-family: var(--mono); font-size: .75rem; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); margin-bottom: .8rem; }
+  .panel h2 { font-family: var(--mono); font-size: 1.05rem; font-weight: 650; letter-spacing: -.01em; color: var(--text); margin-bottom: .9rem; }
   ul.personas { list-style: none; margin: 0 0 .7rem; padding: 0; display: grid; gap: .2rem; max-height: 24rem; overflow: auto; }
   ul.personas li { display: flex; align-items: baseline; gap: .5rem; padding: .34rem .5rem; border: 1px solid transparent; border-radius: var(--radius-sm); cursor: pointer; }
   ul.personas li:hover { background: rgba(255,255,255,.04); }

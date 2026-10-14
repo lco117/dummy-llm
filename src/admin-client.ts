@@ -19,6 +19,19 @@ export const ADMIN_JS = `(function () {
     for (var key in vars) out = out.replace("{" + key + "}", vars[key]);
     return out;
   }
+  /* The language menu opens without script; the script only adds click-away and Escape. It runs before
+     the login early return so the sign-in page, which also carries the menu, gets the same habits. */
+  var langs = document.querySelectorAll("details.lang");
+  function closeLangs() {
+    for (var i = 0; i < langs.length; i++) langs[i].removeAttribute("open");
+  }
+  document.addEventListener("click", function (event) {
+    for (var i = 0; i < langs.length; i++) {
+      if (langs[i].hasAttribute("open") && !langs[i].contains(event.target)) langs[i].removeAttribute("open");
+    }
+  });
+  document.addEventListener("keydown", function (event) { if (event.key === "Escape") closeLangs(); });
+
   if (document.body.className.indexOf("login") !== -1) {
     var codes = { "bad-key": S.loginBadKey, "throttled": S.loginThrottled };
     var box = $("error");

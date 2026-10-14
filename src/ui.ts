@@ -61,24 +61,9 @@ export const BASE_CSS = `  :root {
 
   html { scroll-behavior: smooth; }
   @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
-  .shapes { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-  .shapes i {
-    position: absolute; display: block; border-radius: 26%;
-    border: 1px solid rgba(110, 231, 200, .16);
-    background: linear-gradient(150deg, rgba(110,231,200,.05), rgba(77,107,254,.04));
-    animation: drift 26s ease-in-out infinite alternate;
-  }
-  .shapes i.b { border-radius: 999px; border-color: rgba(77,107,254,.18); }
-  .shapes i.c { border-radius: 22%; border-color: rgba(255,255,255,.06); background: none; }
-  .shapes i:nth-child(1) { width: 22rem; height: 22rem; top: 6%; left: -6rem; animation-duration: 30s; }
-  .shapes i:nth-child(2) { width: 15rem; height: 15rem; top: 42%; right: -5rem; animation-duration: 24s; animation-delay: -7s; }
-  .shapes i:nth-child(3) { width: 9rem; height: 9rem; top: 74%; left: 12%; animation-duration: 34s; animation-delay: -14s; }
-  .shapes i:nth-child(4) { width: 6rem; height: 6rem; top: 20%; right: 22%; border-radius: 999px; animation-duration: 21s; animation-delay: -3s; }
-  @keyframes drift {
-    from { transform: translate3d(0, 0, 0) rotate(0deg); }
-    to { transform: translate3d(2.5rem, -1.6rem, 0) rotate(24deg); }
-  }
-  @media (prefers-reduced-motion: reduce) { .shapes i { animation: none; } }
+  /* The background is a neuron field drawn on one canvas, not a pile of animated divs: no layout, no
+     paint cost when the script is absent, and every edge is decided per frame by where the cursor is. */
+  .neurons { position: fixed; inset: 0; z-index: -1; display: block; width: 100%; height: 100%; pointer-events: none; }
 
   .doc { max-width: 78rem; margin: 0 auto; padding: 0 1.1rem 5rem; }
   .doc.wide { max-width: 94rem; }
@@ -99,10 +84,30 @@ export const BASE_CSS = `  :root {
   .nav { display: flex; gap: 1.1rem; margin-left: auto; font-size: .9rem; }
   .nav a { color: var(--muted); }
   .nav a:hover { color: var(--text); text-decoration: none; }
-  .lang { display: flex; align-items: center; gap: .1rem; margin-left: .2rem; border: 1px solid var(--line); border-radius: 999px; padding: .1rem; font-family: var(--mono); font-size: .8rem; }
-  .lang-now { padding: .12rem .55rem; border-radius: 999px; background: var(--accent-soft); color: var(--accent-hi); }
-  .lang-other { padding: .12rem .55rem; color: var(--muted); border-radius: 999px; }
-  .lang-other:hover { color: var(--text); text-decoration: none; background: rgba(255,255,255,.05); }
+  /* Language is a menu of native names, the shape a settings menu uses: pick the one you can read
+     without first reading the language you are stuck in. It is a <details>, so it opens without JS. */
+  .lang { position: relative; margin-left: .2rem; font-family: var(--mono); font-size: .82rem; }
+  .lang > summary {
+    display: inline-flex; align-items: center; gap: .3rem; cursor: pointer; list-style: none;
+    color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: .22rem .62rem;
+  }
+  .lang > summary::-webkit-details-marker { display: none; }
+  .lang > summary::marker { content: ""; }
+  .lang > summary:hover { color: var(--text); border-color: var(--line-strong); }
+  .lang > summary .chev { color: var(--faint); font-size: .72rem; transition: transform .14s ease; }
+  .lang[open] > summary { color: var(--text); border-color: var(--line-strong); }
+  .lang[open] > summary .chev { transform: rotate(180deg); }
+  .lang-menu {
+    position: absolute; top: calc(100% + .45rem); right: 0; z-index: 40; min-width: 11rem;
+    list-style: none; margin: 0; padding: .35rem; border: 1px solid var(--line-strong); border-radius: 14px;
+    background: #1b1e23; box-shadow: 0 22px 48px rgba(0,0,0,.55);
+  }
+  .lang-menu a { display: flex; align-items: center; gap: .6rem; padding: .45rem .6rem; border-radius: 9px; color: var(--text); font-size: .9rem; }
+  .lang-menu a:hover { background: rgba(255,255,255,.06); text-decoration: none; }
+  .lang-menu a.on { background: rgba(255,255,255,.09); }
+  .lang-menu .name { flex: 1; }
+  .lang-menu .check { opacity: 0; }
+  .lang-menu a.on .check { opacity: 1; }
   @media (max-width: 40rem) { .nav { display: none; } }
 
   .hero { padding: 4rem 0 2.4rem; display: grid; gap: 1.1rem; }
@@ -143,12 +148,13 @@ export const BASE_CSS = `  :root {
 
   .sec { padding: 2.6rem 0 .4rem; }
   .sec > h2 {
-    display: flex; align-items: center; gap: .8rem;
-    font-family: var(--mono); font-size: .8rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
-    color: var(--muted); margin-bottom: 1.1rem;
+    display: flex; align-items: center; gap: .9rem;
+    font-family: var(--mono); font-size: 1.55rem; font-weight: 650; letter-spacing: -.015em;
+    color: var(--text); margin-bottom: 1.15rem;
   }
+  .sec > h2 .hint { font-weight: 400; }
   .sec > h2::after { content: ""; flex: 1; height: 1px; background: var(--line); }
-  .sec > .sub { margin: -.6rem 0 1.1rem; color: var(--muted); font-size: .96rem; max-width: 48rem; }
+  .sec > .sub { margin: -.55rem 0 1.2rem; color: var(--muted); font-size: 1.05rem; max-width: 48rem; }
 
   .tbl { width: 100%; border-collapse: collapse; font-size: .95rem; }
   .tbl th {
