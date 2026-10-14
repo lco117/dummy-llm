@@ -7,6 +7,8 @@
  * adding one would be the bug.
  */
 
+import { TEMPLATE_HELP_HTML } from "./help.ts";
+
 export const ADMIN_CSS = `:root {
   color-scheme: dark;
   --bg: #070b08;
@@ -75,6 +77,12 @@ td.mono { color: var(--dim); max-width: 15rem; overflow-wrap: anywhere; }
 td.ctrl { width: 15rem; }
 td.actions { width: 5rem; text-align: right; }
 .env-only { opacity: .55; }
+details.help { margin: .1rem 0 .7rem; border: 1px solid var(--line); border-radius: 10px; padding: .5rem .7rem; background: rgba(0,0,0,.14); }
+details.help > summary { cursor: pointer; color: var(--green); font-size: .72rem; letter-spacing: .04em; }
+.help-body { padding-top: .5rem; }
+.help-body p.hint { margin: .35rem 0; }
+ul.help-list { margin: .35rem 0 .55rem; padding-left: 1.15rem; }
+ul.help-list li { margin: .12rem 0; }
 .stream { margin-top: .9rem; min-height: 5rem; display: grid; gap: .7rem; align-content: start; }
 .label { font-size: .64rem; letter-spacing: .2em; text-transform: uppercase; color: var(--green); }
 .thinking-text { color: var(--dim); font-style: italic; white-space: pre-wrap; word-break: break-word; border-left: 2px solid var(--line); padding-left: .7rem; max-height: 8rem; overflow: auto; margin-top: .25rem; }
@@ -181,6 +189,10 @@ export const ADMIN_HTML = `<!doctype html>
           </select>
         </label>
         <label><span>reply</span><textarea id="p-reply" rows="5" spellcheck="false"></textarea></label>
+        <details class="help">
+          <summary>Format reference — placeholders, filters and the three reply shapes</summary>
+          ${TEMPLATE_HELP_HTML}
+        </details>
         <label><span>thinking — one per line, empty means no reasoning channel</span><textarea id="p-thinking" rows="3" spellcheck="false"></textarea></label>
         <label><span>description</span><input id="p-description" spellcheck="false"></label>
         <div class="row">
@@ -494,6 +506,7 @@ export const ADMIN_JS = `(function () {
     }
     input = el("input");
     input.spellcheck = false;
+    if (key === "reply") input.placeholder = "{input|upper} — or a JSON pool or keyword map";
     if (typeof value === "number") input.type = "number";
     if (Array.isArray(value)) input.value = value.join(", ");
     else if (key === "reply" && typeof value !== "string") input.value = JSON.stringify(value);

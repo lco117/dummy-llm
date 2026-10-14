@@ -282,6 +282,17 @@ test("the playground override is opt-in, length-limited and one-request-only", (
   assert.equal(plan(canon("abcdefghijklmnop"), { ...capped, reply: "{input}" }, mulberry32(1)).reply, "abcdefghij");
 });
 
+test("both editors document the template format", async () => {
+  const { ADMIN_HTML } = await import("../src/admin-ui.ts");
+  const on = makeApp({ playground: true });
+  const landing = await (await on(new Request("http://localhost/"))).text();
+  assert.match(landing, /What you can write here/);
+  assert.match(landing, /\{input\}/);
+  assert.match(landing, /\{input\|upper\}/);
+  assert.match(ADMIN_HTML, /Format reference/);
+  assert.match(ADMIN_HTML, /\{reply\}/);
+});
+
 test("the landing page only offers the editor when the playground is on", async () => {
   const off = await (await makeApp()(new Request("http://localhost/"))).text();
   assert.match(off, /id="editor" hidden/);
@@ -290,6 +301,19 @@ test("the landing page only offers the editor when the playground is on", async 
   assert.doesNotMatch(on, /id="editor" hidden/);
   assert.match(on, /Edit the reply template/);
   assert.match(on, /not by this site's owner/);
+});
+
+test("the format help is generated from the real filter registry", async () => {
+  const { TEMPLATE_HELP_HTML } = await import("../src/help.ts");
+  for (const name of FILTER_NAMES) {
+    assert.ok(TEMPLATE_HELP_HTML.includes(">" + name + "<") || TEMPLATE_HELP_HTML.includes(name), `the help must mention the ${name} filter`);
+  }
+  for (const token of ["{input}", "{raw}", "{reply}", "{model}", "{text}"]) {
+    assert.ok(TEMPLATE_HELP_HTML.includes(token), `the help must mention ${token}`);
+  }
+  assert.match(TEMPLATE_HELP_HTML, /\["6","7","maybe"\]/);
+  assert.match(TEMPLATE_HELP_HTML, /\{"weather":"raining","\*":"no idea"\}/);
+  assert.equal(TEMPLATE_HELP_HTML.includes("<script"), false);
 });
 
 test("token estimate is never zero for non-empty text", () => {

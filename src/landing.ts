@@ -1,4 +1,5 @@
 import { describeReply } from "./engine.ts";
+import { TEMPLATE_HELP_HTML } from "./help.ts";
 import type { Ctx } from "./types.ts";
 
 function escapeHtml(value: string): string {
@@ -60,6 +61,14 @@ const STYLE = `
   }
   textarea:focus { outline: 1px solid var(--green); border-color: transparent; }
   .hint { margin: 0; color: rgba(124,143,130,.9); font-size: .74rem; line-height: 1.6; }
+  code { color: var(--green); background: rgba(110,231,135,.07); border-radius: 4px; padding: 0 .25rem; }
+  details.format { border-top: 1px solid var(--line); margin-top: .2rem; }
+  details.format > summary { cursor: pointer; padding: .55rem 0 .3rem; color: var(--dim); font-size: .74rem; letter-spacing: .04em; }
+  details.format > summary:hover { color: var(--green); }
+  details.format > summary::marker { color: var(--green); }
+  ul.help-list { margin: .35rem 0 .55rem; padding-left: 1.15rem; }
+  ul.help-list li { margin: .12rem 0; }
+  .help-body { padding-bottom: .4rem; }
   .note { margin: 0 0 .1rem; color: #ffd479; font-size: .74rem; }
   form .prompt { color: var(--green); padding-top: .55rem; }
   input {
@@ -135,6 +144,10 @@ export function landingPage(ctx: Ctx): Response {
             The address bar keeps a copy, so you can share this exact demonstration as a link.
             Templates are limited to 2000 characters and answers to 100000.
           </p>
+          <details class="format">
+            <summary>What you can write here</summary>
+            ${TEMPLATE_HELP_HTML}
+          </details>
         </div>
       </details>
       <form id="ask" autocomplete="off">
