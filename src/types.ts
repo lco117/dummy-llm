@@ -5,6 +5,57 @@ export type LogLevel = "off" | "summary" | "full";
 export type ChunkMode = number | "word" | "line" | "whole";
 
 /**
+ * Where the writable overlay lives. The running server resolves every setting as
+ * **store > environment > built-in**, and the store is the only layer it can write.
+ */
+export type StoreMode = "off" | "kv" | "file";
+
+/** How the admin surface authenticates. `off` is the panic switch. */
+export type AdminAuthSetting = "key" | "access" | "access-jwt" | "off";
+export type AdminAuthMode = "key" | "access" | "access-jwt";
+
+export interface AdminConfig {
+  /** False means the whole /admin surface answers 404, as if it did not exist. */
+  enabled: boolean;
+  mode: AdminAuthMode | null;
+  key: string | null;
+  sessionTtlSec: number;
+  /** Cloudflare Access: the team domain and the application audience tag. */
+  accessTeamDomain: string | null;
+  accessAud: string | null;
+  /** Enabled but unusable (a key that equals DUMMY_API_KEY, an unknown mode, a missing AUD). */
+  misconfigured: string | null;
+}
+
+/** The global settings the store may override. Deliberately excludes every secret. */
+export interface StoreDefaults {
+  reply?: Reply;
+  thinking?: string[];
+  tps?: number;
+  chunk?: ChunkMode;
+  delayMs?: number;
+  ttftMs?: number;
+  log?: LogLevel;
+  models?: string[];
+  playground?: boolean;
+  maxReplyChars?: number;
+}
+
+/**
+ * One JSON document, not one key per persona: every write is atomic and the whole configuration
+ * is readable in a single round trip.
+ * `personas[id] = null` is a tombstone, which is how a built-in persona is removed.
+ */
+export interface StoreDoc {
+  version?: number;
+  personas?: Record<string, Persona | null>;
+  defaults?: StoreDefaults;
+  models?: string[] | null;
+  updatedAt?: string | null;
+  updatedBy?: string | null;
+}
+
+/**
  * What a persona answers with. The **shape carries the behaviour**, so there is no
  * separate "mode" to keep in sync with it:
  *
@@ -82,6 +133,14 @@ export interface Config {
   playground: boolean;
   /** Truncate a rendered reply at this many code points. 0 means no limit. */
   maxReplyChars: number;
+  /** True when DUMMY_MODELS was set: an explicit list beats the persona keys. */
+  modelsExplicit: boolean;
+  /** Where the writable overlay lives. See applyStore. */
+  store: StoreMode;
+  /** The resolved JSON path when store is "file". */
+  storePath: string | null;
+  /** Everything the admin surface needs. Absent unless an operator opts in. */
+  admin: AdminConfig;
   now: () => number;
 }
 

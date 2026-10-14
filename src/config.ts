@@ -1,7 +1,8 @@
+import { ADMIN_SESSION_TTL_SEC } from "./admin-auth.ts";
 import { BUILTIN_PERSONAS } from "./personas.ts";
 import type { Persona } from "./types.ts";
 import { HttpError, parseFaultSpec } from "./errors.ts";
-import type { ChunkMode, Config, LogLevel, Reply } from "./types.ts";
+import type { AdminConfig, ChunkMode, Config, LogLevel, Reply, StoreMode } from "./types.ts";
 
 /**
  * Ten hardcoded "reasonings". In echo mode one is picked at random per request,
@@ -69,7 +70,7 @@ function list(value: string | undefined, fallback: string[]): string[] {
   return items.length > 0 ? items : fallback;
 }
 
-function tpsToDelay(tps: number): number {
+export function tpsToDelay(tps: number): number {
   // 0 means "as fast as the runtime can go"
   if (!Number.isFinite(tps) || tps <= 0) return 0;
   return Math.max(0, Math.round(1000 / tps));
@@ -159,6 +160,81 @@ function thinkingPool(value: string | undefined): string[] {
   return templates.length > 0 ? templates : DEFAULTS.thinking;
 }
 
+/** The file store's default document name: `DUMMY_STORE=file:./data` names a directory. */
+export const STORE_FILE_NAME = "store.json";
+
+/** Plain string work, so this stays importable from every runtime (no node:path here). */
+export function storeFilePath(spec: string): string {
+  const raw = spec.startsWith("file:") ? spec.slice(5) : spec;
+  const value = raw.trim() === "" ? "./data" : raw.trim();
+  if (value.toLowerCase().endsWith(".json")) return value;
+  return value.replace(/[/\\]+$/, "") + "/" + STORE_FILE_NAME;
+}
+
+export function storeMode(spec: string): StoreMode {
+  const value = spec.trim().toLowerCase();
+  if (value === "kv") return "kv";
+  if (value === "file" || value.startsWith("file:")) return "file";
+  return "off";
+}
+
+function normalizeTeamDomain(value: string): string {
+  const trimmed = value.trim().replace(/\/+$/, "");
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
+/**
+ * One knob, explicit precedence:
+ *
+ *   DUMMY_ADMIN_AUTH=off        404, even with a key set (panic switch)
+ *   DUMMY_ADMIN_AUTH=access     trust the edge; Cloudflare Access must sit in front
+ *   DUMMY_ADMIN_AUTH=access-jwt verify the Access JWT against the team's JWKS
+ *   DUMMY_ADMIN_KEY set         signed-cookie login with that key
+ *   nothing set                 404, the surface does not exist
+ *
+ * A value that is neither recognised nor "off" is refused loudly rather than silently downgraded
+ * to the weaker mode.
+ */
+export function resolveAdminConfig(env: Env, apiKey: string | null): AdminConfig {
+  const key = hasValue(env.DUMMY_ADMIN_KEY) ? (env.DUMMY_ADMIN_KEY as string).trim() : null;
+  const setting = (env.DUMMY_ADMIN_AUTH ?? "").trim().toLowerCase();
+  const teamDomain = hasValue(env.CF_ACCESS_TEAM_DOMAIN) ? normalizeTeamDomain(env.CF_ACCESS_TEAM_DOMAIN as string) : null;
+  const accessAud = hasValue(env.CF_ACCESS_AUD) ? (env.CF_ACCESS_AUD as string).trim() : null;
+  const base: AdminConfig = {
+    enabled: false,
+    mode: null,
+    key,
+    sessionTtlSec: Math.max(60, wholeNumber(env.DUMMY_ADMIN_TTL, ADMIN_SESSION_TTL_SEC)),
+    accessTeamDomain: teamDomain,
+    accessAud,
+    misconfigured: null,
+  };
+
+  if (setting === "off") return base;
+
+  if (setting === "access" || setting === "access-jwt") {
+    if (setting === "access-jwt" && (!teamDomain || !accessAud)) {
+      return {
+        ...base,
+        enabled: true,
+        mode: setting,
+        misconfigured: "DUMMY_ADMIN_AUTH=access-jwt needs both CF_ACCESS_TEAM_DOMAIN and CF_ACCESS_AUD",
+      };
+    }
+    return { ...base, enabled: true, mode: setting };
+  }
+
+  if (setting !== "" && setting !== "key") {
+    return { ...base, misconfigured: `unknown DUMMY_ADMIN_AUTH value "${setting}" (use key, access, access-jwt or off)` };
+  }
+
+  if (!key) return base;
+  if (apiKey && key === apiKey) {
+    return { ...base, enabled: true, mode: "key", misconfigured: "DUMMY_ADMIN_KEY is identical to DUMMY_API_KEY" };
+  }
+  return { ...base, enabled: true, mode: "key" };
+}
+
 /**
  * Turns environment variables into a Config. Every runtime feeds this:
  * Node passes `process.env`, a Worker passes the `env` binding.
@@ -170,6 +246,10 @@ export function resolveConfig(env: Env = {}, overrides: Partial<Config> = {}): C
   const seedProvided = hasValue(env.DUMMY_SEED);
   const deterministic = seedProvided || overrides.seed !== undefined || overrides.deterministic === true;
   const explicitDelay = env.DUMMY_DELAY_MS !== undefined && env.DUMMY_DELAY_MS.trim() !== "";
+  const apiKey = env.DUMMY_API_KEY && env.DUMMY_API_KEY.trim() !== "" ? env.DUMMY_API_KEY.trim() : null;
+  const storeSpec = (env.DUMMY_STORE ?? "").trim();
+  const store = storeMode(storeSpec);
+  const admin = resolveAdminConfig(env, apiKey);
 
   return {
     deterministic,
@@ -181,7 +261,7 @@ export function resolveConfig(env: Env = {}, overrides: Partial<Config> = {}): C
     seed: wholeNumber(env.DUMMY_SEED, DEFAULTS.seed),
     fail: parseFaultSpec(env.DUMMY_FAIL),
     hangMs: wholeNumber(env.DUMMY_HANG_MS, 0),
-    apiKey: env.DUMMY_API_KEY && env.DUMMY_API_KEY.trim() !== "" ? env.DUMMY_API_KEY.trim() : null,
+    apiKey,
     cors: env.DUMMY_CORS ?? DEFAULTS.cors,
     models: list(env.DUMMY_MODELS, Object.keys(personas)),
     toolCall: env.DUMMY_TOOLCALL && env.DUMMY_TOOLCALL.trim() !== "" ? env.DUMMY_TOOLCALL : null,
@@ -193,6 +273,10 @@ export function resolveConfig(env: Env = {}, overrides: Partial<Config> = {}): C
     maxReplyChars: wholeNumber(env.DUMMY_MAX_REPLY, DEFAULTS.maxReplyChars),
     strip: env.DUMMY_STRIP ? env.DUMMY_STRIP.split("|").map((item) => item.trim()).filter(Boolean) : [],
     personas,
+    modelsExplicit: hasValue(env.DUMMY_MODELS),
+    store,
+    storePath: store === "file" ? storeFilePath(storeSpec) : null,
+    admin,
     now: () => Date.now(),
     ...overrides,
   };
