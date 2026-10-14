@@ -1,3 +1,4 @@
+import type { MessageKey } from "./i18n.ts";
 import { MAX_PERSONAS, STORE_VERSION, sanitizeDefaults, sanitizePersona } from "./store.ts";
 import type { Persona, StoreDefaults, StoreDoc } from "./types.ts";
 
@@ -14,8 +15,11 @@ export const REPO = "lco117/dummy-llm";
 export const PACK_BASE_URL = `https://raw.githubusercontent.com/${REPO}/main/packs`;
 
 export interface PackIndexEntry {
+  /** The pack's identity: its file name, and how it appears in an import diff. */
   name: string;
-  description: string;
+  /** Display name and description, so a Chinese page does not explain a pack in English. */
+  titleKey: MessageKey;
+  descKey: MessageKey;
   file: string;
   url: string;
 }
@@ -23,19 +27,22 @@ export interface PackIndexEntry {
 export const PACK_INDEX: PackIndexEntry[] = [
   {
     name: "shout",
-    description: "Screams your message back inside a box, using the upper and box filters.",
+    titleKey: "pack.shout.name",
+    descKey: "pack.shout.desc",
     file: "shout.json",
     url: `${PACK_BASE_URL}/shout.json`,
   },
   {
     name: "mirror",
-    description: "Two personas: one reverses everything, one answers a keyword map.",
+    titleKey: "pack.mirror.name",
+    descKey: "pack.mirror.desc",
     file: "mirror.json",
     url: `${PACK_BASE_URL}/mirror.json`,
   },
   {
     name: "shrug",
-    description: "A keyword -> reply map with a fallback, plus a quieter thinking pool.",
+    titleKey: "pack.shrug.name",
+    descKey: "pack.shrug.desc",
     file: "shrug.json",
     url: `${PACK_BASE_URL}/shrug.json`,
   },

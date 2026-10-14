@@ -1,5 +1,7 @@
 import { ADMIN_JS } from "./admin-client.ts";
 import { helpHtml } from "./help.ts";
+import { LOGO_SVG } from "./logo.ts";
+import * as db from "./packs.ts";
 import { langSwitch, t, type Lang } from "./i18n.ts";
 import { BASE_CSS, escapeHtml } from "./ui.ts";
 
@@ -17,6 +19,9 @@ import { BASE_CSS, escapeHtml } from "./ui.ts";
 export { ADMIN_JS };
 
 export const ADMIN_CSS = BASE_CSS + `  .who { font-family: var(--mono); font-size: .82rem; color: var(--faint); }
+  .brand { align-items: center; }
+  .brand .mark { width: 1.7rem; height: 1.7rem; display: block; }
+  .brand .mark svg { width: 100%; height: 100%; display: block; }
   .top .chips { margin-left: .3rem; }
   .top form.inline-form { margin-left: auto; }
   .admin-grid { display: grid; gap: 1rem; grid-template-columns: minmax(13rem, 17rem) 1fr; margin-top: 1.6rem; }
@@ -36,7 +41,8 @@ export const ADMIN_CSS = BASE_CSS + `  .who { font-family: var(--mono); font-siz
   details.help { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: .5rem .7rem; margin: .2rem 0 .8rem; background: rgba(0,0,0,.16); }
   details.help > summary { cursor: pointer; font-family: var(--mono); font-size: .72rem; color: var(--muted); }
   details.help > summary::marker { color: var(--accent); }
-  td.m { max-width: 13rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  td.m { max-width: 24rem; white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
+  td.ctrl input, td.ctrl select { max-width: 100%; }
   td.ctrl { width: 15rem; }
   td.actions { width: 5rem; text-align: right; }
   td.faint { opacity: .55; }
@@ -69,6 +75,12 @@ interface ClientStrings {
   sourceEnv: string;
   sourceStore: string;
   sourceDeleted: string;
+  defaultEntry: string;
+  noteDefault: string;
+  resetDefault: string;
+  defaultReset: string;
+  statsPrompt: string;
+  statsAfter: string;
   noteBuiltin: string;
   noteStore: string;
   noteDeleted: string;
@@ -117,6 +129,12 @@ function clientStrings(lang: Lang): string {
     sourceEnv: t(lang, "admin.source.env"),
     sourceStore: t(lang, "admin.source.store"),
     sourceDeleted: t(lang, "admin.source.deleted"),
+    defaultEntry: t(lang, "admin.defaultEntry"),
+    noteDefault: t(lang, "admin.note.default"),
+    resetDefault: t(lang, "admin.resetDefault"),
+    defaultReset: t(lang, "msg.defaultReset"),
+    statsPrompt: t(lang, "demo.stats.prompt"),
+    statsAfter: t(lang, "demo.stats.after"),
     noteBuiltin: t(lang, "admin.note.builtin"),
     noteStore: t(lang, "admin.note.store"),
     noteDeleted: t(lang, "admin.note.deleted"),
@@ -169,7 +187,7 @@ function head(lang: Lang, title: string, bodyClass: string): string {
 function topBar(lang: Lang, signOut: boolean): string {
   return [
     '<header class="top">',
-    '<a class="brand" href="/"><strong>dummy-llm</strong><span class="cursor"></span></a>',
+    '<a class="brand" href="/"><span class="mark">' + LOGO_SVG + '</span><strong>dummy-llm</strong><span class="cursor"></span></a>',
     '<span class="who">/ admin</span>',
     '<div class="chips" id="chips"></div>',
     signOut
@@ -235,16 +253,36 @@ export function adminPage(lang: Lang): string {
     "</div></section>",
 
     '<section class="sec"><h2>' + t(lang, "admin.preview") + '<span class="hint">' + t(lang, "admin.preview.sub") + "</span></h2>",
-    '<form class="row" id="preview-form">',
-    '<input id="preview-input" class="wide" value="hello" spellcheck="false" aria-label="' + escapeHtml(t(lang, "admin.preview.input")) + '">',
-    '<select id="preview-model" ara-label="' + escapeHtml(t(lang, "admin.preview.model")) + '"></select>',
-    '<button class="btn primary" type="submit">' + t(lang, "admin.preview.run") + "</button>",
-    "</form>",
+    '<div class="panel chat">',
     '<div class="stream" id="preview-stream"><div class="empty">' + t(lang, "admin.preview.empty") + "</div></div>",
+    '<form class="composer" id="preview-form">',
+    '<div class="row-in"><span class="p">❯</span>',
+    '<input id="preview-input" class="wide" value="hello" spellcheck="false" aria-label="' + escapeHtml(t(lang, "admin.preview.input")) + '">',
+    "</div>",
+    '<div class="foot">',
+    '<div class="pick">',
+    '<button class="pick-btn" id="preview-pick" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="' + escapeHtml(t(lang, "admin.preview.model")) + '">',
+    '<span class="name" id="preview-name">' + escapeHtml(t(lang, "admin.preview.defaults")) + '</span><span class="chev">⌄</span>',
+    "</button>",
+    '<ul class="pick-menu" id="preview-menu" role="listbox" hidden></ul>',
+    "</div>",
+    '<span class="stats" id="preview-stats"></span>',
+    '<button class="send" type="submit" aria-label="' + escapeHtml(t(lang, "admin.preview.run")) + '">',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>',
+    "</button>",
+    "</div>",
+    "</form>",
+    "</div>",
     "</section>",
 
-    '<section class="sec"><h2>' + t(lang, "admin.packs") + '<span class="hint">' + t(lang, "admin.packs.sub") + "</span></h2>",
-    '<div id="pack-index"></div>',
+    '<section class="sec"><h2>' + t(lang, "admin.packs")
+      + '<span class="tip" tabindex="0" role="note" aria-label="' + escapeHtml(t(lang, "admin.packs.about")) + '">i<span class="tip-body">' + escapeHtml(t(lang, "admin.packs.about")) + "</span></span>"
+      + '<span class="hint">' + t(lang, "admin.packs.sub") + "</span></h2>",
+    '<div id="pack-index">' + db.PACK_INDEX.map((pack) =>
+      '<div class="row"><button class="btn" type="button" data-pack-url="' + escapeHtml(pack.url) + '" title="'
+        + escapeHtml(t(lang, "admin.packs.fetchTitle").split("{file}").join(pack.file)) + '">' + escapeHtml(t(lang, pack.titleKey)) + "</button>"
+        + '<span class="hint">' + escapeHtml(t(lang, pack.descKey)) + "</span></div>",
+    ).join("") + "</div>",
     '<p class="hint">' + t(lang, "admin.packs.url") + "</p>",
     '<form class="row" id="pack-fetch-form">',
     '<input id="pack-url" class="wide" spellcheck="false" placeholder="https://gist.githubusercontent.com/.../pack.json">',

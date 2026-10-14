@@ -353,6 +353,8 @@ export function createAdmin(deps: AdminDeps): (request: Request) => Promise<Resp
     const wire = {
       model: model === "" ? "dummy-preview" : model,
       stream: true,
+      // The preview prints the same token and tok/s figures the landing page does, so ask for usage.
+      stream_options: { include_usage: true },
       messages: [{ role: "user", content: input }],
     };
     const response = openaiChat.chat(wire, { cfg, url, rand: mulberry32(deps.seed()) });

@@ -16,8 +16,6 @@ const LANDING_CSS = `
   .term-bar .term-btn[aria-selected="true"] { color: var(--text); background: rgba(255,255,255,.06); }
   .term-bar .spacer { flex: 1; }
 
-  .chat .stream { padding: 1.1rem 1rem 1.2rem; min-height: 7.5rem; display: grid; gap: .9rem; align-content: start; }
-  .chat .composer { border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
   .stream .label { font-family: var(--mono); font-size: .66rem; letter-spacing: .2em; text-transform: uppercase; color: var(--accent-hi); }
   .thinking-text { margin-top: .35rem; color: var(--muted); font-style: italic; white-space: pre-wrap; word-break: break-word; border-left: 2px solid var(--line); padding-left: .8rem; max-height: 9rem; overflow: auto; }
   .answer { font-size: 1.06rem; white-space: pre-wrap; word-break: break-word; margin-top: .3rem; }

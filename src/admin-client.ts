@@ -1,19 +1,9 @@
-export const ADMIN_JS = `/**
- * The admin page's behaviour. Served as a static asset; every string it shows comes from the i18n
- * dictionary the server embedded in the page, so the language switch needs no second implementation.
- *
- * It never builds markup: values are written with textContent, ids and classes are set through the DOM.
- * That is the XSS story the strict CSP depends on.
- */
-(function () {
+export const ADMIN_JS = `(function () {
   "use strict";
-
   var S = window.__DUMMY_I18N || {};
-  function fill(text, vars) {
-    var out = text || "";
-    for (var key in vars) out = out.replace("{" + key + "}", vars[key]);
-    return out;
-  }
+  var DEFAULT_ID = "*";
+  var deleteLabel = "";
+
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, text) {
     var node = document.createElement(tag);
@@ -24,8 +14,11 @@ export const ADMIN_JS = `/**
   function setText(node, value) {
     node.textContent = value === null || value === undefined ? "" : String(value);
   }
-
-  /* ---- login and denied pages: no state to fetch ---- */
+  function fill(text, vars) {
+    var out = text || "";
+    for (var key in vars) out = out.replace("{" + key + "}", vars[key]);
+    return out;
+  }
   if (document.body.className.indexOf("login") !== -1) {
     var codes = { "bad-key": S.loginBadKey, "throttled": S.loginThrottled };
     var box = $("error");
@@ -34,7 +27,6 @@ export const ADMIN_JS = `/**
     return;
   }
 
-  /* ---- the app page ---- */
   var state = null;
   var selected = null;
   var knownId = null;
@@ -66,7 +58,8 @@ export const ADMIN_JS = `/**
   function put(path, body) { return request(path, { method: "PUT", body: JSON.stringify(body || {}) }); }
   function del(path) { return request(path, { method: "DELETE" }); }
 
-  /* ---- boot: loading, failure and retry are visible states, never an empty page ---- */
+  deleteLabel = $("p-delete") ? $("p-delete").textContent : "Delete";
+
   function showLoading() {
     var boot = $("boot");
     boot.hidden = false;
@@ -99,7 +92,6 @@ export const ADMIN_JS = `/**
     }).catch(showBootError);
   }
 
-  /* ---- reply shapes ---- */
   function detectShape(reply) {
     if (Array.isArray(reply)) return "pool";
     if (reply && typeof reply === "object") return "keys";
@@ -140,24 +132,37 @@ export const ADMIN_JS = `/**
     }
     return text;
   }
-  function summarize(value) {
-    var text = typeof value === "string" ? value : JSON.stringify(value);
-    if (text === undefined || text === null) return "";
-    return text.length > 90 ? text.slice(0, 90) + "..." : text;
+
+  /** The full value, never truncated: an array reads as one entry per line, everything else as JSON. */
+  function format(value) {
+    if (value === null || value === undefined) return "";
+    if (typeof value === "string") return value;
+    if (Array.isArray(value)) return value.length ? value.join("\\n") : "[]";
+    return JSON.stringify(value);
   }
 
+  function defaultEntry() {
+    return {
+      id: DEFAULT_ID,
+      source: state.defaults.reply.stored === null && state.defaults.thinking.stored === null ? "builtin" : "store",
+      stored: null,
+      effective: { reply: state.defaults.reply.effective, thinking: state.defaults.thinking.effective },
+      isDefault: true,
+    };
+  }
+  function entries() {
+    return [defaultEntry()].concat(state.personas);
+  }
   function sourceLabel(entry) {
     if (entry.effective === null) return S.sourceDeleted || "deleted";
     return S["source" + entry.source.charAt(0).toUpperCase() + entry.source.slice(1)] || entry.source;
   }
 
-  /* ---- render ---- */
   function render() {
     var chips = $("chips");
     chips.textContent = "";
     chips.appendChild(el("span", "chip on", (S.chipAuth || "auth") + ": " + (state.auth.mode || "off")));
-    var storeChip = el("span", "chip" + (state.auth.writable ? "" : " off"), (S.chipStore || "store") + ": " + state.auth.store + (state.auth.writable ? "" : " — " + (S.chipReadonly || "read-only")));
-    chips.appendChild(storeChip);
+    chips.appendChild(el("span", "chip" + (state.auth.writable ? "" : " off"), (S.chipStore || "store") + ": " + state.auth.store + (state.auth.writable ? "" : " — " + (S.chipReadonly || "read-only"))));
     chips.appendChild(el("span", "chip", "v" + state.version));
 
     var banner = $("banner");
@@ -167,10 +172,9 @@ export const ADMIN_JS = `/**
     renderPersonas();
     renderDefaults();
     renderPreviewModels();
-    renderPacks();
+    previewEstimate();
     disableWrites(!state.auth.writable);
-    if (selected) select(selected);
-    else if (state.personas.length) select(state.personas[0].id);
+    select(selected || DEFAULT_ID);
   }
 
   function disableWrites(readOnly) {
@@ -181,10 +185,10 @@ export const ADMIN_JS = `/**
   function renderPersonas() {
     var list = $("persona-list");
     list.textContent = "";
-    state.personas.forEach(function (entry) {
+    entries().forEach(function (entry) {
       var item = el("li");
       if (entry.id === selected) item.className = "active";
-      item.appendChild(el("span", "id", entry.id));
+      item.appendChild(el("span", "id", entry.isDefault ? (S.defaultEntry || "default") : entry.id));
       var tag = el("span", "tag");
       setText(tag, sourceLabel(entry));
       if (entry.effective === null) tag.className = "tag gone";
@@ -196,9 +200,8 @@ export const ADMIN_JS = `/**
   }
 
   function entryFor(id) {
-    for (var index = 0; index < state.personas.length; index++) {
-      if (state.personas[index].id === id) return state.personas[index];
-    }
+    var all = entries();
+    for (var index = 0; index < all.length; index++) if (all[index].id === id) return all[index];
     return null;
   }
 
@@ -206,15 +209,18 @@ export const ADMIN_JS = `/**
     var entry = entryFor(id);
     if (!entry) return;
     selected = id;
-    knownId = entry.source === "store" ? id : null;
+    knownId = entry.source === "store" && !entry.isDefault ? id : null;
     var draft = entry.stored || entry.effective || {};
-    $("p-id").value = id;
+    $("p-id").value = entry.isDefault ? (S.defaultEntry || "default") : id;
+    $("p-id").readOnly = Boolean(entry.isDefault);
     var shape = detectShape(draft.reply);
     $("p-shape").value = shape;
     $("p-reply").value = replyToText(draft.reply, shape);
     $("p-thinking").value = Array.isArray(draft.thinking) ? draft.thinking.join("\\n") : "";
     $("p-description").value = draft.description || "";
-    if (entry.effective === null && entry.source === "store") setText($("p-note"), S.noteDeleted || "");
+    setText($("p-delete"), entry.isDefault ? (S.reset || "Reset") : deleteLabel);
+    if (entry.isDefault) setText($("p-note"), S.noteDefault || "");
+    else if (entry.effective === null && entry.source === "store") setText($("p-note"), S.noteDeleted || "");
     else if (entry.source === "store") setText($("p-note"), S.noteStore || "");
     else setText($("p-note"), fill(S.noteBuiltin || "", { source: sourceLabel(entry) }));
     renderPersonas();
@@ -233,9 +239,16 @@ export const ADMIN_JS = `/**
   });
   $("p-save").addEventListener("click", function () {
     if (!selected) { status(S.pickPersona || "", "warn"); return; }
+    var draft = personaDraft();
+    if (selected === DEFAULT_ID) {
+      put("/admin/api/defaults", { reply: draft.reply, thinking: draft.thinking }).then(function () { return load(); }).then(function () {
+        status(fill(S.saved || "", { id: S.defaultEntry || "default" }), "");
+      }).catch(fail);
+      return;
+    }
     var id = $("p-id").value.trim();
     if (!/^[A-Za-z0-9._-]{1,120}$/.test(id)) { status(S.badId || "", "bad"); return; }
-    put("/admin/api/personas/" + encodeURIComponent(id), personaDraft()).then(function () {
+    put("/admin/api/personas/" + encodeURIComponent(id), draft).then(function () {
       if (knownId && knownId !== id) return del("/admin/api/personas/" + encodeURIComponent(knownId));
     }).then(function () {
       knownId = id;
@@ -248,6 +261,13 @@ export const ADMIN_JS = `/**
   $("p-revert").addEventListener("click", function () { if (selected) select(selected); });
   $("p-delete").addEventListener("click", function () {
     if (!selected) return;
+    if (selected === DEFAULT_ID) {
+      if (!window.confirm(S.resetDefault || "")) return;
+      del("/admin/api/defaults/reply").then(function () { return del("/admin/api/defaults/thinking"); }).then(function () { return load(); }).then(function () {
+        status(S.defaultReset || "", "");
+      }).catch(fail);
+      return;
+    }
     if (!window.confirm(fill(S.confirmDelete || "", { id: selected }))) return;
     del("/admin/api/personas/" + encodeURIComponent(selected)).then(function () { return load(); }).then(function () {
       status(fill(S.deleted || "", { id: selected }), "");
@@ -260,27 +280,21 @@ export const ADMIN_JS = `/**
     $("new-id").value = "";
     selected = id;
     knownId = null;
+    $("p-id").readOnly = false;
     $("p-id").value = id;
     $("p-shape").value = "one";
     $("p-reply").value = "{input}";
     $("p-thinking").value = "";
     $("p-description").value = "";
+    setText($("p-delete"), deleteLabel);
     renderPersonas();
     status(fill(S.newPersona || "", { id: id }), "");
   });
 
-  /* ---- defaults ---- */
-  var DEFAULT_ROWS = ["reply", "thinking", "tps", "chunk", "delayMs", "ttftMs", "log", "playground", "maxReplyChars", "models"];
+  var DEFAULT_ROWS = ["tps", "chunk", "delayMs", "ttftMs", "log", "playground", "maxReplyChars", "models"];
 
   function controlFor(key, value) {
     var input;
-    if (key === "thinking") {
-      input = el("textarea");
-      input.rows = 2;
-      input.spellcheck = false;
-      input.value = Array.isArray(value) ? value.join("\\n") : "";
-      return input;
-    }
     if (key === "log") {
       input = el("select");
       ["off", "summary", "full"].forEach(function (option) {
@@ -299,31 +313,15 @@ export const ADMIN_JS = `/**
     }
     input = el("input");
     input.spellcheck = false;
-    if (key === "reply") input.placeholder = "{input|upper} — or a JSON pool or keyword map";
+    if (key === "models") input.placeholder = "model-a, model-b";
     if (typeof value === "number") input.type = "number";
     if (Array.isArray(value)) input.value = value.join(", ");
-    else if (key === "reply" && typeof value !== "string") input.value = JSON.stringify(value);
     else input.value = value === null || value === undefined ? "" : String(value);
     return input;
   }
 
   function readControl(key, input) {
     if (key === "playground") return input.checked;
-    if (key === "thinking") return input.value.split("\\n").map(function (line) { return line.trim(); }).filter(Boolean);
-    if (key === "reply") {
-      var text = input.value;
-      try {
-        var parsed = JSON.parse(text);
-        if (typeof parsed === "string") return parsed;
-        if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
-        if (parsed && typeof parsed === "object") {
-          var map = {};
-          for (var name in parsed) map[name] = String(parsed[name]);
-          return map;
-        }
-      } catch (error) { /* not JSON, so it is a template */ }
-      return text;
-    }
     if (key === "models") return input.value.split(",").map(function (item) { return item.trim(); }).filter(Boolean);
     if (key === "chunk") return /^[0-9]+$/.test(input.value.trim()) ? Number(input.value.trim()) : input.value.trim();
     var number = Number(input.value);
@@ -331,9 +329,8 @@ export const ADMIN_JS = `/**
   }
 
   function monoCell(value, faint) {
-    var text = summarize(value);
-    var cell = el("td", "m" + (faint ? " faint" : ""), faint ? "—" : text);
-    cell.title = typeof value === "string" ? value : JSON.stringify(value);
+    var cell = el("td", "m" + (faint ? " faint" : ""));
+    setText(cell, faint ? "—" : format(value));
     return cell;
   }
 
@@ -392,27 +389,65 @@ export const ADMIN_JS = `/**
     }).catch(fail);
   });
 
-  /* ---- preview ---- */
-  function renderPreviewModels() {
-    var select = $("preview-model");
-    var previous = select.value;
-    select.textContent = "";
-    var fallback = el("option", null, S.previewDefaults || "defaults");
-    fallback.value = "";
-    select.appendChild(fallback);
-    state.models.forEach(function (id) {
-      var option = el("option", null, id);
-      option.value = id;
-      select.appendChild(option);
-    });
-    if (previous && state.models.indexOf(previous) !== -1) select.value = previous;
-    else select.value = state.models.length ? state.models[0] : "";
+  var previewModel = "";
+  var previewButtons = [];
+  var previewOpen = false;
+  function closePreviewMenu() {
+    if ($("preview-menu")) $("preview-menu").hidden = true;
+    if ($("preview-pick")) $("preview-pick").setAttribute("aria-expanded", "false");
+    previewOpen = false;
   }
+  function renderPreviewModels() {
+    var menu = $("preview-menu");
+    if (!menu) return;
+    menu.textContent = "";
+    previewButtons = [];
+    var options = [{ id: "", label: S.previewDefaults || "defaults" }];
+    state.models.forEach(function (id) { options.push({ id: id, label: id }); });
+    options.forEach(function (option) {
+      var li = el("li");
+      li.setAttribute("role", "option");
+      var button = el("button");
+      button.type = "button";
+      button.setAttribute("data-model", option.id);
+      button.appendChild(el("span", "name", option.label));
+      button.addEventListener("click", function () {
+        previewModel = option.id;
+        setText($("preview-name"), option.label);
+        previewButtons.forEach(function (other) { other.className = other === button ? "on" : ""; });
+        closePreviewMenu();
+      });
+      li.appendChild(button);
+      menu.appendChild(li);
+      previewButtons.push(button);
+    });
+    previewModel = state.models.length ? state.models[0] : "";
+    setText($("preview-name"), previewModel || (S.previewDefaults || "defaults"));
+  }
+  if ($("preview-pick")) {
+    $("preview-pick").addEventListener("click", function (event) {
+      event.stopPropagation();
+      var menu = $("preview-menu");
+      if (previewOpen) closePreviewMenu();
+      else { menu.hidden = false; $("preview-pick").setAttribute("aria-expanded", "true"); previewOpen = true; }
+    });
+    document.addEventListener("click", function (event) {
+      if (previewOpen && !$("preview-menu").contains(event.target) && event.target !== $("preview-pick")) closePreviewMenu();
+    });
+    document.addEventListener("keydown", function (event) { if (event.key === "Escape") closePreviewMenu(); });
+  }
+
+  function estimateTokens(text) { return Math.max(1, Math.ceil(String(text || "").length / 4)); }
+  function previewEstimate() {
+    var stats = $("preview-stats");
+    if (!stats) return;
+    setText(stats, fill(S.statsPrompt || "", { n: estimateTokens($("preview-input").value || "hello") }));
+  }
+  if ($("preview-input")) $("preview-input").addEventListener("input", previewEstimate);
 
   $("preview-form").addEventListener("submit", function (event) {
     event.preventDefault();
     var input = $("preview-input").value || "hello";
-    var model = $("preview-model").value;
     var stream = $("preview-stream");
     stream.textContent = "";
     var thinking = el("div");
@@ -427,14 +462,17 @@ export const ADMIN_JS = `/**
     answer.appendChild(answerText);
     stream.appendChild(thinking);
     stream.appendChild(answer);
-    var button = $("preview-form").querySelector("button");
-    button.disabled = true;
+    var button = $("preview-form").querySelector("button.send");
+    if (button) button.disabled = true;
+    var startedAt = performance.now();
+    var firstAt = 0;
+    var usage = null;
 
     fetch("/admin/api/preview", {
       method: "POST",
       credentials: "same-origin",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ input: input, model: model, patch: personaDraft() }),
+      body: JSON.stringify({ input: input, model: previewModel, patch: personaDraft() }),
     }).then(function (response) {
       if (!response.ok || !response.body) {
         return response.text().then(function (text) {
@@ -459,12 +497,15 @@ export const ADMIN_JS = `/**
             if (!line || line === "[DONE]") return;
             var chunk = null;
             try { chunk = JSON.parse(line); } catch (error) { return; }
+            if (chunk.usage) usage = chunk.usage;
             var delta = (chunk.choices && chunk.choices[0] && chunk.choices[0].delta) || {};
             if (typeof delta.reasoning_content === "string") {
+              if (!firstAt) firstAt = performance.now();
               thinkingText.textContent += delta.reasoning_content;
               thinkingText.scrollTop = thinkingText.scrollHeight;
             }
             if (typeof delta.content === "string") {
+              if (!firstAt) firstAt = performance.now();
               caret.remove();
               answerText.textContent += delta.content;
               answerText.appendChild(caret);
@@ -476,29 +517,25 @@ export const ADMIN_JS = `/**
       return pump().then(function () {
         if (!thinkingText.textContent) thinking.remove();
         caret.remove();
+        var stats = $("preview-stats");
+        if (stats) {
+          var done = performance.now();
+          var completion = usage ? usage.completion_tokens : estimateTokens(answerText.textContent);
+          var spanned = Math.max(120, firstAt ? done - firstAt : done - startedAt);
+          setText(stats, fill(S.statsAfter || "", {
+            p: usage ? usage.prompt_tokens : estimateTokens(input),
+            c: completion,
+            tps: (completion / (spanned / 1000)).toFixed(1),
+          }));
+        }
       });
     }).catch(function (error) {
       thinking.remove();
       caret.remove();
       setText(answerText, String(error));
       answerText.className = "answer error";
-    }).then(function () { button.disabled = false; });
+    }).then(function () { if (button) button.disabled = false; });
   });
-
-  /* ---- packs ---- */
-  function renderPacks() {
-    var index = $("pack-index");
-    index.textContent = "";
-    (state.packs || []).forEach(function (pack) {
-      var row = el("div", "row");
-      var button = el("button", "btn", (S.packsFetch || "Fetch") + " " + pack.name);
-      button.type = "button";
-      button.addEventListener("click", function () { fetchPack(pack.url); });
-      row.appendChild(button);
-      row.appendChild(el("span", "hint", pack.description));
-      index.appendChild(row);
-    });
-  }
 
   function fetchPack(url) {
     status(fill(S.fetching || "", { url: url }), "");
@@ -510,6 +547,10 @@ export const ADMIN_JS = `/**
       $("pack-json").value = text;
       status(S.fetched || "", "");
     }).catch(fail);
+  }
+  var packButtons = document.querySelectorAll("[data-pack-url]");
+  for (var p = 0; p < packButtons.length; p++) {
+    packButtons[p].addEventListener("click", function (event) { fetchPack(event.currentTarget.getAttribute("data-pack-url")); });
   }
 
   $("pack-fetch-form").addEventListener("submit", function (event) {
@@ -529,8 +570,8 @@ export const ADMIN_JS = `/**
     (diff.personas.added || []).forEach(function (id) { lines.push("+ persona " + id); });
     (diff.personas.changed || []).forEach(function (id) { lines.push("~ persona " + id); });
     (diff.personas.removed || []).forEach(function (id) { lines.push("- persona " + id); });
-    (diff.defaults || []).forEach(function (entry) { lines.push("= " + entry.key + ": " + summarize(entry.from) + " -> " + summarize(entry.to)); });
-    if (diff.models) lines.push("= models: " + summarize(diff.models.from) + " -> " + summarize(diff.models.to));
+    (diff.defaults || []).forEach(function (entry) { lines.push("= " + entry.key + ": " + format(entry.from) + " -> " + format(entry.to)); });
+    if (diff.models) lines.push("= models: " + format(diff.models.from) + " -> " + format(diff.models.to));
     if (!lines.length) lines.push(S.nothingToChange || "nothing would change");
     var out = $("pack-out");
     setText(out, lines.join("\\n"));

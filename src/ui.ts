@@ -173,10 +173,27 @@ export const BASE_CSS = `  :root {
   }
   .callout.warn { border-left-color: var(--warn); background: rgba(251,191,36,.07); color: #f4dfae; }
   .callout.bad { border-left-color: var(--bad); background: rgba(248,113,113,.07); color: #f6c4c4; }
+  .tip {
+    position: relative; display: inline-grid; place-items: center; width: 1.05rem; height: 1.05rem; margin-left: .35rem;
+    border: 1px solid var(--line-strong); border-radius: 999px; color: var(--faint);
+    font-family: var(--mono); font-size: .62rem; line-height: 1; cursor: help; vertical-align: middle;
+  }
+  .tip:hover, .tip:focus-visible { color: var(--text); border-color: var(--accent); outline: none; }
+  .tip-body {
+    position: absolute; bottom: calc(100% + .45rem); left: 50%; transform: translateX(-50%);
+    width: 21rem; max-width: 72vw; padding: .6rem .75rem; border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+    background: #14171c; color: var(--muted); font-family: var(--sans); font-size: .8rem; font-weight: 400;
+    letter-spacing: 0; text-transform: none; line-height: 1.6; text-align: left;
+    box-shadow: 0 16px 36px rgba(0,0,0,.5); opacity: 0; visibility: hidden; transition: opacity .12s ease; z-index: 40;
+  }
+  .tip:hover .tip-body, .tip:focus-visible .tip-body { opacity: 1; visibility: visible; }
+
   .help-body { padding-top: .35rem; }
   ul.help-list { margin: .35rem 0 .6rem; padding-left: 1.15rem; }
   ul.help-list li { margin: .15rem 0; font-size: .8rem; color: var(--muted); }
   .composer { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-elev); }
+  .chat .composer { border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
+  .chat .stream { padding: 1.1rem 1rem 1.2rem; min-height: 7rem; display: grid; gap: .9rem; align-content: start; }
   .composer .row-in { display: flex; align-items: center; gap: .55rem; padding: .75rem .85rem .35rem; }
   .composer .row-in .p { color: var(--teal); font-family: var(--mono); }
   .composer .row-in input { flex: 1; border: 0; background: transparent; padding: .3rem .1rem; font-size: .98rem; }
