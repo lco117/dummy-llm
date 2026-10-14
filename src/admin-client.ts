@@ -8,8 +8,7 @@ export const ADMIN_JS = `/**
 (function () {
   "use strict";
 
-  var S = {};
-  try { S = JSON.parse(document.getElementById("admin-i18n").textContent); } catch (error) {}
+  var S = window.__DUMMY_I18N || {};
   function fill(text, vars) {
     var out = text || "";
     for (var key in vars) out = out.replace("{" + key + "}", vars[key]);

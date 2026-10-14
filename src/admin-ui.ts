@@ -16,7 +16,7 @@ import { BASE_CSS, escapeHtml } from "./ui.ts";
 
 export { ADMIN_JS };
 
-export const ADMIN_CSS = `  .who { font-family: var(--mono); font-size: .82rem; color: var(--faint); }
+export const ADMIN_CSS = BASE_CSS + `  .who { font-family: var(--mono); font-size: .82rem; color: var(--faint); }
   .top .chips { margin-left: .3rem; }
   .top form.inline-form { margin-left: auto; }
   .admin-grid { display: grid; gap: 1rem; grid-template-columns: minmax(13rem, 17rem) 1fr; margin-top: 1.6rem; }
@@ -48,6 +48,11 @@ export const ADMIN_CSS = `  .who { font-family: var(--mono); font-size: .82rem; 
   .error { color: var(--bad); }
   .empty { color: var(--faint); }
   #pack-out { margin: .8rem 0 0; padding: .7rem .85rem; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: auto; font-size: .78rem; color: #d7dee8; }
+  .wide { flex: 1; min-width: 0; }
+  .row.spaced { margin-top: .9rem; }
+  .panel.spaced { margin-top: 1rem; }
+  .row select { width: auto; }
+  .boot-title { font-size: 1.4rem; margin-bottom: .8rem; }
   .boot { margin-top: 2.2rem; }
   .boot .btn { margin-top: .4rem; }
 `;
@@ -92,6 +97,11 @@ interface ClientStrings {
   answerLabel: string;
   loginBadKey: string;
   loginThrottled: string;
+}
+
+/** The served script: the dictionary for this language, then the behaviour. */
+export function adminScript(lang: Lang): string {
+  return "window.__DUMMY_I18N = " + clientStrings(lang) + ";\n" + ADMIN_JS;
 }
 
 function clientStrings(lang: Lang): string {
@@ -150,7 +160,7 @@ function head(lang: Lang, title: string, bodyClass: string): string {
     '<meta name="robots" content="noindex, nofollow">',
     "<title>" + escapeHtml(title) + "</title>",
     '<link rel="icon" type="image/svg+xml" href="/logo.svg">',
-    "<style>" + BASE_CSS + ADMIN_CSS + "</style>",
+    '<link rel="stylesheet" href="/admin/app.css">',
     "</head>",
     '<body class="' + bodyClass + '">',
   ].join("");
@@ -185,7 +195,7 @@ export function adminPage(lang: Lang): string {
     "<h2>" + t(lang, "admin.personas") + "</h2>",
     '<ul class="personas" id="persona-list"></ul>',
     '<form class="row" id="new-persona">',
-    '<input id="new-id" spellcheck="false" placeholder="' + escapeHtml(t(lang, "admin.newPlaceholder")) + '" aria-label="' + escapeHtml(t(lang, "admin.new")) + '" style="flex:1">',
+    '<input id="new-id" class="wide" spellcheck="false" placeholder="' + escapeHtml(t(lang, "admin.newPlaceholder")) + '" aria-label="' + escapeHtml(t(lang, "admin.new")) + '">',
     '<button class="btn" type="submit">' + t(lang, "admin.new") + "</button>",
     "</form>",
     "</section>",
@@ -219,15 +229,15 @@ export function adminPage(lang: Lang): string {
     "<th>" + t(lang, "admin.col.effective") + "</th>",
     "<th>" + t(lang, "admin.col.value") + "</th>",
     "<th></th></tr></thead><tbody id=\"defaults-body\"></tbody></table>",
-    '<div class="row" style="margin-top:1rem">',
+    '<div class="row spaced">',
     '<button class="btn primary" id="d-save" type="button">' + t(lang, "admin.saveDefaults") + "</button>",
     '<button class="btn danger" id="d-reset" type="button">' + t(lang, "admin.dropStore") + "</button>",
     "</div></section>",
 
     '<section class="sec"><h2>' + t(lang, "admin.preview") + '<span class="hint">' + t(lang, "admin.preview.sub") + "</span></h2>",
     '<form class="row" id="preview-form">',
-    '<input id="preview-input" value="hello" spellcheck="false" aria-label="' + escapeHtml(t(lang, "admin.preview.input")) + '" style="flex:1">',
-    '<select id="preview-model" aria-label="' + escapeHtml(t(lang, "admin.preview.model")) + '" style="width:auto"></select>',
+    '<input id="preview-input" class="wide" value="hello" spellcheck="false" aria-label="' + escapeHtml(t(lang, "admin.preview.input")) + '">',
+    '<select id="preview-model" ara-label="' + escapeHtml(t(lang, "admin.preview.model")) + '"></select>',
     '<button class="btn primary" type="submit">' + t(lang, "admin.preview.run") + "</button>",
     "</form>",
     '<div class="stream" id="preview-stream"><div class="empty">' + t(lang, "admin.preview.empty") + "</div></div>",
@@ -237,12 +247,12 @@ export function adminPage(lang: Lang): string {
     '<div id="pack-index"></div>',
     '<p class="hint">' + t(lang, "admin.packs.url") + "</p>",
     '<form class="row" id="pack-fetch-form">',
-    '<input id="pack-url" spellcheck="false" placeholder="https://gist.githubusercontent.com/.../pack.json" style="flex:1">',
+    '<input id="pack-url" class="wide" spellcheck="false" placeholder="https://gist.githubusercontent.com/.../pack.json">',
     '<button class="btn" type="submit">' + t(lang, "admin.packs.fetch") + "</button>",
     "</form>",
     '<p class="hint">' + t(lang, "admin.packs.json") + "</p>",
     '<textarea id="pack-json" rows="4" spellcheck="false" placeholder="{&quot;personas&quot;:{&quot;dummy-hello-1&quot;:{&quot;reply&quot;:&quot;hi&quot;}}}"></textarea>',
-    '<div class="row" style="margin-top:.7rem">',
+    '<div class="row spaced">',
     '<button class="btn" id="pack-diff" type="button">' + t(lang, "admin.packs.diff") + "</button>",
     '<button class="btn primary" id="pack-apply" type="button">' + t(lang, "admin.packs.apply") + "</button>",
     '<button class="btn" id="pack-export" type="button">' + t(lang, "admin.packs.export") + "</button>",
@@ -252,8 +262,7 @@ export function adminPage(lang: Lang): string {
 
     '<footer class="foot"><a href="/">' + t(lang, "admin.publicPage") + '</a><span class="grow"></span><span>' + t(lang, "admin.foot") + "</span></footer>",
     "</div>",
-    '<script type="application/json" id="admin-i18n">' + clientStrings(lang) + "</script>",
-    '<script src="/admin/app.js"></script>',
+    '<script src="/admin/app.js?lang=' + lang + '"></script>',
     "</body></html>",
   ].join("");
 }
@@ -263,19 +272,18 @@ export function loginPage(lang: Lang): string {
     head(lang, "dummy-llm admin", "login"),
     '<div class="doc">',
     topBar(lang, false),
-    '<div class="boot"><h1 style="font-size:1.4rem;margin-bottom:.8rem">dummy-llm <span class="who">/ admin</span></h1>',
+    '<div class="boot"><h1 class="boot-title">dummy-llm <span class="who">/ admin</span></h1>',
     '<p class="hint">' + t(lang, "login.intro") + "</p>",
     '<p id="error" class="callout bad" hidden></p>',
-    '<div class="panel panel-pad" style="margin-top:1rem">',
+    '<div class="panel panel-pad spaced">',
     '<form method="post" action="/admin/login" autocomplete="off">',
     '<label class="field" for="key"><span>' + t(lang, "login.key") + '</span></label>',
     '<input id="key" name="key" type="password" required autofocus autocomplete="current-password">',
-    '<div class="row" style="margin-top:.8rem"><button class="btn primary" type="submit">' + t(lang, "login.submit") + "</button></div>",
+    '<div class="row spaced"><button class="btn primary" type="submit">' + t(lang, "login.submit") + "</button></div>",
     "</form></div>",
     '<p class="hint">' + t(lang, "login.note") + "</p>",
     "</div></div>",
-    '<script type="application/json" id="admin-i18n">' + clientStrings(lang) + "</script>",
-    '<script src="/admin/app.js"></script>',
+    '<script src="/admin/app.js?lang=' + lang + '"></script>',
     "</body></html>",
   ].join("");
 }
@@ -285,7 +293,7 @@ export function accessDeniedPage(lang: Lang): string {
     head(lang, "dummy-llm admin", "login"),
     '<div class="doc">',
     topBar(lang, false),
-    '<div class="boot"><h1 style="font-size:1.4rem;margin-bottom:.8rem">' + t(lang, "denied.title") + "</h1>",
+    '<div class="boot"><h1 class="boot-title">' + t(lang, "denied.title") + "</h1>",
     '<p class="callout bad">' + t(lang, "denied.body") + "</p>",
     '<p class="hint">' + t(lang, "denied.hint") + "</p>",
     "</div></div>",

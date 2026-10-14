@@ -255,12 +255,31 @@ test("admin responses carry no CORS grant and a strict CSP", async () => {
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
 });
 
+test("the admin pages never inline style or script, because the CSP forbids both", async () => {
+  // This is a regression guard: the rewrite briefly inlined the stylesheet, a few style attributes and
+  // the i18n dictionary, and the strict CSP silently dropped all of them - an unstyled page.
+  const { adminPage, loginPage, accessDeniedPage } = await import("../src/admin-ui.ts");
+  const pages: Array<[string, string]> = [
+    ["admin", adminPage("en")],
+    ["login", loginPage("en")],
+    ["denied", accessDeniedPage("en")],
+    ["admin zh", adminPage("zh")],
+  ];
+  for (const [name, html] of pages) {
+    assert.doesNotMatch(html, / style="/, name + ": no inline style attributes");
+    assert.doesNotMatch(html, /<style[ >]/, name + ": the stylesheet is linked, not inlined");
+    assert.doesNotMatch(html, /<script(?![^>]*\ssrc=)/, name + ": no inline script");
+    assert.match(html, /<link rel="stylesheet" href="\/admin\/app\.css">/, name + ": links its stylesheet");
+  }
+  assert.match(adminPage("zh"), /script src="\/admin\/app\.js\?lang=zh"/, "the script is asked for in the page language");
+});
+
 test("the app script is served same-origin with no inline handlers in the page", async () => {
   const app = adminApp({ DUMMY_ADMIN_KEY: KEY }, fakeStore(null));
   const cookie = await signIn(app);
   const response = await call(app, "/admin", authed(cookie));
   const html = await response.text();
-  assert.match(html, /script src="\/admin\/app.js"/);
+  assert.match(html, /script src="\/admin\/app\.js\?lang=en"/);
   assert.doesNotMatch(html, /innerHTML/);
   const script = await call(app, "/admin/app.js");
   assert.equal(script.status, 200);

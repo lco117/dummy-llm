@@ -12,7 +12,7 @@ import {
   verifySession,
   ADMIN_COOKIE,
 } from "./admin-auth.ts";
-import { ADMIN_CSS, ADMIN_JS, accessDeniedPage, adminPage, loginPage } from "./admin-ui.ts";
+import { ADMIN_CSS, accessDeniedPage, adminPage, adminScript, loginPage } from "./admin-ui.ts";
 import { HttpError } from "./errors.ts";
 import { resolveLang } from "./i18n.ts";
 import { BUILTIN_PERSONAS } from "./personas.ts";
@@ -419,7 +419,7 @@ export function createAdmin(deps: AdminDeps): (request: Request) => Promise<Resp
       if (!adminCfg.enabled) return notFound();
 
       if (method === "GET" && path === "/admin/app.css") return asset(ADMIN_CSS, "text/css; charset=utf-8");
-      if (method === "GET" && path === "/admin/app.js") return asset(ADMIN_JS, "text/javascript; charset=utf-8");
+      if (method === "GET" && path === "/admin/app.js") return asset(adminScript(lang), "text/javascript; charset=utf-8");
 
       if (method === "GET" && path === "/admin") {
         const grant = await authorize(request, url);
