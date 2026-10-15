@@ -2,6 +2,7 @@ import { createAdmin } from "./admin.ts";
 import { playgroundOverride } from "./config.ts";
 import { describeReply, stripReminders } from "./engine.ts";
 import { isLang, langCookie, resolveLang } from "./i18n.ts";
+import { isTheme, themeCookie } from "./theme.ts";
 import { redact, redactedJson } from "./redact.ts";
 import { applyStore, createStoreLayer, type Store } from "./store.ts";
 import { errorResponse, HttpError } from "./errors.ts";
@@ -254,7 +255,7 @@ export function createApp(config: Config, options: AppOptions = {}): App {
 
     // The admin surface has its own authentication and must never pick up the permissive CORS
     // headers or the DUMMY_API_KEY gate that the inference routes use.
-    if (adminPath === "/admin" || adminPath.startsWith("/admin/")) return withLangCookie(await admin(request), url);
+    if (adminPath === "/admin" || adminPath.startsWith("/admin/")) return withPreferences(await admin(request), url);
 
     const seed = nextSeed(config);
     const protocol = protocolFor(url.pathname);
@@ -270,19 +271,28 @@ export function createApp(config: Config, options: AppOptions = {}): App {
         response = errorResponse(protocol, 500, error instanceof Error ? error.message : String(error));
       }
     }
-    return withLangCookie(withCors(response, request, config), url);
+    return withPreferences(withCors(response, request, config), url);
   };
 }
 
 /**
- * The language switch is a plain link, so the choice travels in the URL and is remembered here.
- * Every page then resolves its own language from the same three places: \`?lang=\`, the cookie, then
- * Accept-Language.
+ * Both switches - language and theme - are plain links, so the choice travels in the URL and is
+ * remembered here. Every page then resolves each one from the same two places: the query, then the
+ * cookie. Language falls back to Accept-Language; the theme falls back to dark.
  */
-function withLangCookie(response: Response, url: URL): Response {
-  const requested = url.searchParams.get("lang");
-  if (!isLang(requested)) return response;
+function withPreferences(response: Response, url: URL): Response {
   const headers = new Headers(response.headers);
-  headers.append("set-cookie", langCookie(requested));
+  let touched = false;
+  const lang = url.searchParams.get("lang");
+  if (isLang(lang)) {
+    headers.append("set-cookie", langCookie(lang));
+    touched = true;
+  }
+  const theme = url.searchParams.get("theme");
+  if (isTheme(theme)) {
+    headers.append("set-cookie", themeCookie(theme));
+    touched = true;
+  }
+  if (!touched) return response;
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }

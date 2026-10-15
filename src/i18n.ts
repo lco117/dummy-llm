@@ -14,6 +14,8 @@ export const LANG_MAX_AGE = 60 * 60 * 24 * 365;
 
 const EN = {
   "lang.label": "Language",
+  "theme.toLight": "Switch to the light theme",
+  "theme.toDark": "Switch to the dark theme",
 
   "nav.demo": "Demo",
   "nav.protocols": "Protocols",
@@ -44,10 +46,8 @@ const EN = {
   "demo.empty": "Type anything. It will think about it, then say it back.",
   "demo.placeholder": "Type anything…",
   "demo.try": "Or start with one of these",
-  "demo.ex1": "hello",
-  "demo.ex2": "Repeat after me: a rubber duck",
-  "demo.ex3": "Are you a language model?",
-  "demo.ex4": "Explain relativity in four words",
+  "demo.ex1": "你好",
+  "demo.ex2": "How are you?",
   "demo.thinking": "thinking",
   "demo.answer": "answer",
   "demo.visitor": "Reply template supplied by you, the visitor — not by this site's owner.",
@@ -55,6 +55,7 @@ const EN = {
   "hero.chip.sse": "byte-exact SSE",
   "hero.chip.mock": "mock server",
   "demo.model": "Answering as",
+  "demo.default": "default — whatever the server is configured to say",
   "demo.stats.prompt": "prompt ≈ {n} tok",
   "demo.stats.after": "prompt {p} · completion {c} · {tps} tok/s",
   "demo.templateWins": "your template answers — the model picker is ignored",
@@ -77,6 +78,8 @@ const EN = {
 
   "models.title": "Models",
   "models.sub": "Every advertised id is a persona: the model a client sends picks how the answer is written. Any other id falls through to the server's own reply.",
+  "persona.dummy-echo-1": "Repeats whatever you send, after a hardcoded thought.",
+  "persona.definitely-not-a-model": "Refuses to be a language model, ten ways.",
   "models.col.model": "Model",
   "models.col.best": "Best for",
   "models.col.context": "Context",
@@ -144,6 +147,7 @@ const EN = {
   "admin.reply": "reply",
   "admin.thinking": "thinking — one per line, empty means no reasoning channel",
   "admin.description": "description",
+  "admin.tps": "tokens/s — empty follows DUMMY_TPS",
   "admin.save": "Save persona",
   "admin.revert": "Revert",
   "admin.delete": "Delete",
@@ -228,6 +232,8 @@ export type MessageKey = keyof typeof EN;
 
 const ZH: Record<MessageKey, string> = {
   "lang.label": "语言",
+  "theme.toLight": "切换到浅色主题",
+  "theme.toDark": "切换到深色主题",
 
   "nav.demo": "演示",
   "nav.protocols": "接口",
@@ -259,9 +265,7 @@ const ZH: Record<MessageKey, string> = {
   "demo.placeholder": "随便输入点什么…",
   "demo.try": "或者从这几句开始",
   "demo.ex1": "你好",
-  "demo.ex2": "跟我念：一只橡皮鸭",
-  "demo.ex3": "你是语言模型吗？",
-  "demo.ex4": "用四个字解释相对论",
+  "demo.ex2": "How are you?",
   "demo.thinking": "思考",
   "demo.answer": "回答",
   "demo.visitor": "这条回答的模板由访客（你）提供，不是本站运营者。",
@@ -269,6 +273,7 @@ const ZH: Record<MessageKey, string> = {
   "hero.chip.sse": "逐字节 SSE",
   "hero.chip.mock": "mock 服务",
   "demo.model": "由谁回答",
+  "demo.default": "默认 —— 服务端配的样子",
   "demo.stats.prompt": "输入 ≈ {n} tok",
   "demo.stats.after": "输入 {p} · 输出 {c} · {tps} tok/s",
   "demo.templateWins": "模板正在生效，模型选择被忽略",
@@ -291,6 +296,8 @@ const ZH: Record<MessageKey, string> = {
 
   "models.title": "模型",
   "models.sub": "每个列出的 id 都是一个 persona：客户端发来的 model 决定回答怎么写。其他任何 id 都会落回服务端自己的 reply。",
+  "persona.dummy-echo-1": "你说什么它复读什么，前面加一段硬编码的思考。",
+  "persona.definitely-not-a-model": "用十种方式拒绝承认自己是语言模型。",
   "models.col.model": "模型",
   "models.col.best": "适合",
   "models.col.context": "上下文",
@@ -358,6 +365,7 @@ const ZH: Record<MessageKey, string> = {
   "admin.reply": "reply",
   "admin.thinking": "thinking —— 每行一条，留空表示不要推理通道",
   "admin.description": "描述",
+  "admin.tps": "tokens/秒 —— 留空跟随 DUMMY_TPS",
   "admin.save": "保存 persona",
   "admin.revert": "还原本页",
   "admin.delete": "删除",
@@ -452,7 +460,22 @@ export function t(lang: Lang, key: MessageKey): string {
   return dict(lang)[key];
 }
 
-function cookieValue(header: string | null, name: string): string | null {
+/**
+ * The shipped personas carry their description in source (personas.ts), which is one language. On a
+ * page that speaks two, that is a sentence in the wrong voice, so the two built-ins get a key each and
+ * anything an operator added falls back to what they typed.
+ */
+const PERSONA_KEYS: Record<string, MessageKey> = {
+  "dummy-echo-1": "persona.dummy-echo-1",
+  "definitely-not-a-model": "persona.definitely-not-a-model",
+};
+
+export function personaDescription(lang: Lang, id: string, fallback: string): string {
+  const key = PERSONA_KEYS[id];
+  return key ? t(lang, key) : fallback;
+}
+
+export function cookieValue(header: string | null, name: string): string | null {
   if (!header) return null;
   for (const part of header.split(";")) {
     const at = part.indexOf("=");

@@ -260,10 +260,10 @@ test("the admin pages never inline style or script, because the CSP forbids both
   // the i18n dictionary, and the strict CSP silently dropped all of them - an unstyled page.
   const { adminPage, loginPage, accessDeniedPage } = await import("../src/admin-ui.ts");
   const pages: Array<[string, string]> = [
-    ["admin", adminPage("en")],
-    ["login", loginPage("en")],
-    ["denied", accessDeniedPage("en")],
-    ["admin zh", adminPage("zh")],
+    ["admin", adminPage("en", "dark")],
+    ["login", loginPage("en", "dark")],
+    ["denied", accessDeniedPage("en", "dark")],
+    ["admin zh", adminPage("zh", "light")],
   ];
   for (const [name, html] of pages) {
     assert.doesNotMatch(html, / style="/, name + ": no inline style attributes");
@@ -271,7 +271,7 @@ test("the admin pages never inline style or script, because the CSP forbids both
     assert.doesNotMatch(html, /<script(?![^>]*\ssrc=)/, name + ": no inline script");
     assert.match(html, /<link rel="stylesheet" href="\/admin\/app\.css">/, name + ": links its stylesheet");
   }
-  assert.match(adminPage("zh"), /script src="\/admin\/app\.js\?lang=zh"/, "the script is asked for in the page language");
+  assert.match(adminPage("zh", "dark"), /script src="\/admin\/app\.js\?lang=zh"/, "the script is asked for in the page language");
 });
 
 test("the app script is served same-origin with no inline handlers in the page", async () => {

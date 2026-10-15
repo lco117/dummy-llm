@@ -1,8 +1,10 @@
 import { describeReply } from "./engine.ts";
 import { helpHtml } from "./help.ts";
-import { langSwitch, resolveLang, t, type Lang } from "./i18n.ts";
+import { langSwitch, personaDescription, resolveLang, t, type Lang } from "./i18n.ts";
 import { LOGO_SVG } from "./logo.ts";
+import { highlightShell } from "./sh.ts";
 import { barStep, benchmark, contextWindow } from "./spec.ts";
+import { resolveTheme, themeSwitch } from "./theme.ts";
 import { BASE_CSS, escapeHtml } from "./ui.ts";
 import type { Ctx } from "./types.ts";
 
@@ -40,7 +42,7 @@ const LANDING_CSS = `
 const BENCH_KEYS = ["bench.dim.echo", "bench.dim.thinking", "bench.dim.nonsense", "bench.dim.pedantry"] as const;
 
 /** The one-click starts under the empty chat. Authored strings, sent as the user's own message. */
-const STARTERS = ["demo.ex1", "demo.ex2", "demo.ex3", "demo.ex4"] as const;
+const STARTERS = ["demo.ex1", "demo.ex2"] as const;
 
 interface Run {
   id: string;
@@ -104,7 +106,7 @@ function copyButton(lang: Lang): string {
 
 /** A command block: bash/PowerShell switch on top, the command slab with its copy button below. */
 function commandBlock(id: string, lang: Lang, bash: string[], pwsh: string[], note: string, on: boolean): string {
-  const lines = (list: string[]) => list.map((line) => '<span class="p">$</span> ' + escapeHtml(line)).join("\n");
+  const lines = (list: string[]) => list.map((line) => '<span class="p">$</span> ' + highlightShell(line)).join("\n");
   return [
     '<div class="cmd-panel" data-tab="' + id + '"' + (on ? " data-on" : "") + ">",
     '<div class="term-bar">',
@@ -140,6 +142,7 @@ export function landingStrings(lang: Lang): string {
 export function landingPage(ctx: Ctx, request: Request): Response {
   const cfg = ctx.cfg;
   const lang = resolveLang(request, ctx.url);
+  const theme = resolveTheme(request, ctx.url);
   const origin = escapeHtml(new URL(ctx.url).origin);
   const first = cfg.models[0] ?? "dummy-echo-1";
   const body = '{"model":"' + escapeHtml(first) + '","stream":true,"messages":[{"role":"user","content":"hello"}]}';
@@ -161,14 +164,14 @@ export function landingPage(ctx: Ctx, request: Request): Response {
   const specRows = cfg.models
     .map((id) => {
       const persona = cfg.personas[id];
-      const best = persona?.description ?? "reply: " + describeReply(persona?.reply ?? cfg.reply);
+      const best = personaDescription(lang, id, persona?.description ?? "reply: " + describeReply(persona?.reply ?? cfg.reply));
       return (
         "<tr>" +
         '<td class="spec"><span class="spec-name">' + escapeHtml(id) + "</span>" +
         '<span class="spec-sub">reply: ' + escapeHtml(describeReply(persona?.reply ?? cfg.reply)) + "</span></td>" +
         '<td class="note">' + escapeHtml(best) + "</td>" +
         '<td class="m">' + escapeHtml(contextWindow(id)) + "</td>" +
-        '<td class="m">' + escapeHtml(t(lang, "models.speed").replace("{tps}", String(cfg.tps))) + "</td>" +
+        '<td class="m">' + escapeHtml(t(lang, "models.speed").replace("{tps}", String(persona?.tps ?? cfg.tps))) + "</td>" +
         '<td class="m">' + escapeHtml(t(lang, "models.price")) + "</td>" +
         "</tr>"
       );
@@ -184,7 +187,8 @@ export function landingPage(ctx: Ctx, request: Request): Response {
     const bars = plotted
       .map((model) => {
         const score = model.scores[dimension] ?? 0;
-        return '<div class="bench-track"><div class="bench-bar ' + model.m + " b" + barStep(score) +
+        const reads = t(lang, key) + " · " + model.id + ": " + score;
+        return '<div class="bench-track" title="' + escapeHtml(reads) + '"><div class="bench-bar ' + model.m + " b" + barStep(score) +
           '"><span>' + score + "</span></div></div>";
       })
       .join("");
@@ -199,11 +203,13 @@ export function landingPage(ctx: Ctx, request: Request): Response {
     '<span class="chip">' + t(lang, "hero.chip.mock") + "</span>",
   ].join("");
 
-  // One line per model, the current one ticked on the right: a switcher, not a catalogue.
-  const modelMenu = cfg.models
-    .map((id, index) =>
-      '<li role="option"><button type="button"' + (index === 0 ? ' class="on"' : "") + ' data-model="' + escapeHtml(id) + '">' +
-      '<span class="name">' + escapeHtml(id) + "</span>" +
+  // One line per model, the current one ticked on the right: a switcher, not a catalogue. The first
+  // entry is not a model at all - it is "leave it to the server", which is what an empty model means.
+  const modelMenu = [{ id: "", label: t(lang, "demo.default") }]
+    .concat(cfg.models.map((id) => ({ id, label: id })))
+    .map((option, index) =>
+      '<li role="option"><button type="button"' + (index === 0 ? ' class="on"' : "") + ' data-model="' + escapeHtml(option.id) + '">' +
+      '<span class="name">' + escapeHtml(option.label) + "</span>" +
       '<span class="check" aria-hidden="true">\u2713</span>' +
       "</button></li>",
     )
@@ -219,7 +225,7 @@ export function landingPage(ctx: Ctx, request: Request): Response {
   );
 
   const html = `<!doctype html>
-<html lang="${lang === "zh" ? "zh-CN" : "en"}">
+<html lang="${lang === "zh" ? "zh-CN" : "en"}" data-theme="${theme}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -233,12 +239,13 @@ export function landingPage(ctx: Ctx, request: Request): Response {
 <div class="doc">
   <header class="top">
     <nav class="nav">
-      <a href="#run">${t(lang, "install.title")}</a>
       <a href="#demo">${t(lang, "nav.demo")}</a>
+      <a href="#run">${t(lang, "install.title")}</a>
       <a href="#protocols">${t(lang, "nav.protocols")}</a>
       <a href="#models">${t(lang, "nav.models")}</a>
       <a href="/admin">${t(lang, "nav.admin")}</a>
     </nav>
+    ${themeSwitch(theme, "/", lang)}
     ${langSwitch(lang, "/")}
   </header>
 
@@ -250,15 +257,6 @@ export function landingPage(ctx: Ctx, request: Request): Response {
     <p class="lede">${escapeHtml(t(lang, "hero.tagline"))}</p>
     <p class="lede-sub">${escapeHtml(t(lang, "hero.sub"))}</p>
     <div class="chips">${chips}</div>
-  </section>
-
-  <section class="sec" id="run">
-    <h2>${t(lang, "install.title")}</h2>
-    <p class="sub">${escapeHtml(t(lang, "install.sub"))}</p>
-    <div class="cmd">
-      <div class="cmd-tabs" role="tablist">${commandTabs}</div>
-      ${commandPanels}
-    </div>
   </section>
 
   <section class="sec" id="demo">
@@ -279,8 +277,8 @@ export function landingPage(ctx: Ctx, request: Request): Response {
         <div class="foot">
           <span class="stats" id="stats"></span>
           <div class="pick">
-            <button class="pick-btn" id="model-pick" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="${escapeHtml(t(lang, "demo.model"))}">
-              <span class="name" id="model-name">${escapeHtml(first)}</span><span class="chev">⌄</span>
+            <button class="pick-btn" id="model-pick" type="button" data-model="" aria-haspopup="listbox" aria-expanded="false" aria-label="${escapeHtml(t(lang, "demo.model"))}">
+              <span class="name" id="model-name">${escapeHtml(t(lang, "demo.default"))}</span><span class="chev">⌄</span>
             </button>
             <ul class="pick-menu" id="model-menu" role="listbox" hidden>${modelMenu}</ul>
           </div>
@@ -300,6 +298,15 @@ export function landingPage(ctx: Ctx, request: Request): Response {
           </details>
         </div>
       </details>
+    </div>
+  </section>
+
+  <section class="sec" id="run">
+    <h2>${t(lang, "install.title")}</h2>
+    <p class="sub">${escapeHtml(t(lang, "install.sub"))}</p>
+    <div class="cmd">
+      <div class="cmd-tabs" role="tablist">${commandTabs}</div>
+      ${commandPanels}
     </div>
   </section>
 

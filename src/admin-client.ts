@@ -231,6 +231,7 @@ export const ADMIN_JS = `(function () {
     $("p-reply").value = replyToText(draft.reply, shape);
     $("p-thinking").value = Array.isArray(draft.thinking) ? draft.thinking.join("\\n") : "";
     $("p-description").value = draft.description || "";
+    $("p-tps").value = typeof draft.tps === "number" ? draft.tps : "";
     setText($("p-delete"), entry.isDefault ? (S.reset || "Reset") : deleteLabel);
     if (entry.isDefault) setText($("p-note"), S.noteDefault || "");
     else if (entry.effective === null && entry.source === "store") setText($("p-note"), S.noteDeleted || "");
@@ -244,6 +245,8 @@ export const ADMIN_JS = `(function () {
     var description = $("p-description").value.trim();
     var persona = { reply: textToReply($("p-reply").value, $("p-shape").value), thinking: thinking };
     if (description) persona.description = description;
+    var tps = Number($("p-tps").value);
+    if ($("p-tps").value.trim() !== "" && Number.isFinite(tps) && tps > 0) persona.tps = Math.round(tps);
     return persona;
   }
 

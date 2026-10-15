@@ -86,6 +86,8 @@ export function sanitizePersona(value: unknown): Persona | null | undefined {
     persona.thinking = thinking;
   }
   if (typeof raw.description === "string") persona.description = raw.description.slice(0, 500);
+  const tps = asNumber(raw.tps, 1, 100_000);
+  if (tps !== undefined) persona.tps = tps;
   return Object.keys(persona).length > 0 ? persona : undefined;
 }
 

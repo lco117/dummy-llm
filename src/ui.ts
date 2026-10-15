@@ -33,10 +33,60 @@ export const BASE_CSS = `  :root {
     --ok: #4ade80;
     --warn: #fbbf24;
     --bad: #f87171;
+    --hover: rgba(255, 255, 255, .06);
+    --hover-strong: rgba(255, 255, 255, .09);
+    --slab: rgba(255, 255, 255, .025);
+    --menu: #1b1e23;
+    --field: rgba(0, 0, 0, .32);
+    --soft: #ccd4de;
+    --top: rgba(10, 11, 13, .82);
+    --code: #dbe3ee;
+    --shadow: rgba(0, 0, 0, .55);
+    --sh-cmd: #6ee7c8;
+    --sh-flag: #7b90ff;
+    --sh-str: #e0b978;
+    --sh-op: #8b93a1;
+    --sh-url: #7cc4f8;
+    --sh-var: #e08fd0;
     --radius: 12px;
     --radius-sm: 8px;
     --mono: ui-monospace, "SFMono-Regular", "SF Mono", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
     --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  }
+  /* Daylight. Only the tokens change: every rule below is written against them, so a theme is a
+     palette and never a second stylesheet to keep in step. */
+  html[data-theme="light"] {
+    color-scheme: light;
+    --bg: #f4f3ef;
+    --bg-elev: #ffffff;
+    --panel: #ffffff;
+    --line: rgba(20, 22, 28, .12);
+    --line-strong: rgba(20, 22, 28, .22);
+    --text: #14161b;
+    --muted: #565f6d;
+    --faint: #838b97;
+    --accent: #3b55e6;
+    --accent-hi: #2b41c4;
+    --accent-soft: rgba(59, 85, 230, .10);
+    --teal: #0d7a63;
+    --ok: #17854a;
+    --warn: #9a6200;
+    --bad: #c23636;
+    --hover: rgba(20, 22, 28, .05);
+    --hover-strong: rgba(20, 22, 28, .08);
+    --slab: rgba(20, 22, 28, .035);
+    --menu: #ffffff;
+    --field: rgba(255, 255, 255, .85);
+    --soft: #3a4250;
+    --top: rgba(244, 243, 239, .85);
+    --code: #23282f;
+    --shadow: rgba(20, 22, 28, .18);
+    --sh-cmd: #0b6b58;
+    --sh-flag: #2f46c9;
+    --sh-str: #8a5a12;
+    --sh-op: #6b7280;
+    --sh-url: #0b62a8;
+    --sh-var: #9b3d8f;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
@@ -74,7 +124,7 @@ export const BASE_CSS = `  :root {
     display: flex; align-items: center; gap: 1.1rem;
     padding: .85rem 0;
     border-bottom: 1px solid var(--line);
-    background: rgba(10, 11, 13, .82);
+    background: var(--top);
     backdrop-filter: blur(10px);
   }
   .brand { display: flex; align-items: baseline; gap: .5rem; font-family: var(--mono); font-size: 1.12rem; letter-spacing: -.02em; color: var(--text); }
@@ -86,6 +136,12 @@ export const BASE_CSS = `  :root {
   .nav a:hover { color: var(--text); text-decoration: none; }
   /* Language is a menu of native names, the shape a settings menu uses: pick the one you can read
      without first reading the language you are stuck in. It is a <details>, so it opens without JS. */
+  /* The theme switch is a link, exactly like the language switch: the choice travels in the URL and the
+     server renders the attribute, so nothing flashes before the first paint. */
+  .theme { display: inline-grid; place-items: center; width: 2rem; height: 2rem; margin-left: .2rem; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); }
+  .theme:hover { color: var(--text); border-color: var(--line-strong); text-decoration: none; }
+  .theme svg { display: block; width: 1.05rem; height: 1.05rem; }
+
   .lang { position: relative; margin-left: .2rem; font-family: var(--mono); font-size: .82rem; }
   .lang > summary {
     display: inline-flex; align-items: center; gap: .3rem; cursor: pointer; list-style: none;
@@ -100,11 +156,11 @@ export const BASE_CSS = `  :root {
   .lang-menu {
     position: absolute; top: calc(100% + .45rem); right: 0; z-index: 40; min-width: 11rem;
     list-style: none; margin: 0; padding: .35rem; border: 1px solid var(--line-strong); border-radius: 14px;
-    background: #1b1e23; box-shadow: 0 22px 48px rgba(0,0,0,.55);
+    background: var(--menu); box-shadow: 0 22px 48px var(--shadow);
   }
   .lang-menu a { display: flex; align-items: center; gap: .6rem; padding: .45rem .6rem; border-radius: 9px; color: var(--text); font-size: .9rem; }
-  .lang-menu a:hover { background: rgba(255,255,255,.06); text-decoration: none; }
-  .lang-menu a.on { background: rgba(255,255,255,.09); }
+  .lang-menu a:hover { background: var(--hover); text-decoration: none; }
+  .lang-menu a.on { background: var(--hover-strong); }
   .lang-menu .name { flex: 1; }
   .lang-menu .check { opacity: 0; }
   .lang-menu a.on .check { opacity: 1; }
@@ -113,7 +169,7 @@ export const BASE_CSS = `  :root {
   .hero { padding: 4rem 0 2.4rem; display: grid; gap: 1.1rem; }
   .hero h1 { font-family: var(--mono); font-size: clamp(2.7rem, 7.5vw, 4.1rem); line-height: 1.02; }
   .hero h1 .cursor { display: inline-block; width: .5ch; height: .82em; background: var(--accent); margin-left: .1ch; vertical-align: -.02em; animation: blink 1.1s steps(1) infinite; }
-  .lede { margin: 0; max-width: 46rem; font-size: 1.16rem; color: #ccd4de; }
+  .lede { margin: 0; max-width: 46rem; font-size: 1.16rem; color: var(--soft); }
   .lede-sub { margin: 0; max-width: 46rem; color: var(--faint); font-size: .99rem; }
   .chips { display: flex; flex-wrap: wrap; gap: .45rem; }
   .chip { font-family: var(--mono); font-size: .8rem; padding: .22rem .68rem; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); }
@@ -122,7 +178,7 @@ export const BASE_CSS = `  :root {
   .cmd { border: 1px solid var(--line); border-radius: 14px; background: var(--bg-elev); overflow: hidden; }
   .cmd-tabs { display: flex; gap: .15rem; padding: .5rem .6rem; border-bottom: 1px solid var(--line); }
   .cmd-tab { font: inherit; font-family: var(--mono); font-size: .82rem; color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: .28rem .75rem; cursor: pointer; }
-  .cmd-tab[aria-selected="true"] { color: var(--text); background: rgba(255,255,255,.07); }
+  .cmd-tab[aria-selected="true"] { color: var(--text); background: var(--hover); }
   .cmd-panel { display: none; padding: .55rem .6rem .7rem; }
   .cmd-panel[data-on] { display: block; }
   /* The command sits in its own slab, the way skills.sh draws "npx skills add": one rounded box,
@@ -130,16 +186,23 @@ export const BASE_CSS = `  :root {
   .cmd-body {
     display: flex; align-items: flex-start; gap: .5rem;
     padding: .7rem .75rem .7rem .85rem;
-    border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.025);
+    border: 1px solid var(--line); border-radius: 10px; background: var(--slab);
   }
-  .cmd-body pre { flex: 1; min-width: 0; margin: 0; overflow-x: auto; font-size: .92rem; line-height: 1.75; color: #dbe3ee; }
+  .cmd-body pre { flex: 1; min-width: 0; margin: 0; overflow-x: auto; font-size: .92rem; line-height: 1.75; color: var(--code); }
   .cmd-body pre .p { color: var(--muted); user-select: none; }
+  /* One class per thing an editor would colour. See src/sh.ts - nothing here is decided in CSS. */
+  .c-cmd { color: var(--sh-cmd); }
+  .c-flag { color: var(--sh-flag); }
+  .c-str { color: var(--sh-str); }
+  .c-op { color: var(--sh-op); }
+  .c-url { color: var(--sh-url); }
+  .c-var { color: var(--sh-var); }
   .cmd .hint { margin: .5rem .2rem 0; }
   .copy {
     flex: 0 0 auto; display: inline-grid; place-items: center; width: 1.9rem; height: 1.9rem; margin-top: -.15rem;
     padding: 0; cursor: pointer; color: var(--muted); background: none; border: 1px solid transparent; border-radius: 8px;
   }
-  .copy:hover { color: var(--text); background: rgba(255,255,255,.07); }
+  .copy:hover { color: var(--text); background: var(--hover); }
   .copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .copy svg { display: block; width: 1rem; height: 1rem; }
   .copy .i-done { display: none; color: var(--ok); }
@@ -154,7 +217,7 @@ export const BASE_CSS = `  :root {
   }
   .sec > h2 .hint { font-weight: 400; }
   .sec > h2::after { content: ""; flex: 1; height: 1px; background: var(--line); }
-  .sec > .sub { margin: -.55rem 0 1.2rem; color: var(--muted); font-size: 1.05rem; max-width: 48rem; }
+  .sec > .sub { margin: -.55rem 0 1.2rem; color: var(--muted); font-size: 1.05rem; max-width: 72rem; }
 
   .tbl { width: 100%; border-collapse: collapse; font-size: .95rem; }
   .tbl th {
@@ -172,17 +235,17 @@ export const BASE_CSS = `  :root {
   .grid { display: grid; gap: 1rem; }
   .btn {
     font: inherit; font-size: .92rem; cursor: pointer; color: var(--text);
-    background: rgba(255,255,255,.03); border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+    background: var(--slab); border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
     padding: .42rem .9rem;
   }
-  .btn:hover { background: rgba(255,255,255,.06); }
+  .btn:hover { background: var(--hover); }
   .btn.primary { background: var(--accent); border-color: transparent; color: #fff; font-weight: 600; }
   .btn.primary:hover { background: var(--accent-hi); }
   .btn.danger { color: var(--bad); border-color: rgba(248,113,113,.34); }
   .btn:disabled { opacity: .42; cursor: not-allowed; }
   input:not([type=checkbox]), select, textarea {
     font: inherit; font-size: .92rem; width: 100%; color: var(--text);
-    background: rgba(0,0,0,.32); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: .48rem .62rem;
+    background: var(--field); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: .48rem .62rem;
   }
   textarea { font-family: var(--mono); font-size: .88rem; resize: vertical; line-height: 1.65; }
   input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
@@ -192,7 +255,7 @@ export const BASE_CSS = `  :root {
   .muted { color: var(--muted); }
   .callout {
     border: 1px solid var(--line); border-left: 2px solid var(--accent); border-radius: var(--radius-sm);
-    background: rgba(77,107,254,.06); padding: .65rem .85rem; font-size: .88rem; color: #c8d0da;
+    background: rgba(77,107,254,.06); padding: .65rem .85rem; font-size: .88rem; color: var(--soft);
   }
   .callout.warn { border-left-color: var(--warn); background: rgba(251,191,36,.07); color: #f4dfae; }
   .callout.bad { border-left-color: var(--bad); background: rgba(248,113,113,.07); color: #f6c4c4; }
@@ -205,9 +268,9 @@ export const BASE_CSS = `  :root {
   .tip-body {
     position: absolute; bottom: calc(100% + .45rem); left: 50%; transform: translateX(-50%);
     width: 21rem; max-width: 72vw; padding: .6rem .75rem; border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
-    background: #14171c; color: var(--muted); font-family: var(--sans); font-size: .88rem; font-weight: 400;
+    background: var(--menu); color: var(--muted); font-family: var(--sans); font-size: .88rem; font-weight: 400;
     letter-spacing: 0; text-transform: none; line-height: 1.6; text-align: left;
-    box-shadow: 0 16px 36px rgba(0,0,0,.5); opacity: 0; visibility: hidden; transition: opacity .12s ease; z-index: 40;
+    box-shadow: 0 16px 36px var(--shadow); opacity: 0; visibility: hidden; transition: opacity .12s ease; z-index: 40;
   }
   .tip:hover .tip-body, .tip:focus-visible .tip-body { opacity: 1; visibility: visible; }
 
@@ -216,7 +279,17 @@ export const BASE_CSS = `  :root {
   ul.help-list li { margin: .18rem 0; font-size: .88rem; color: var(--muted); }
   .composer { border: 1px solid var(--line); border-radius: 16px; background: var(--bg-elev); }
   .chat .composer { border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
-  .chat .stream { padding: 1.1rem 1rem 1.2rem; min-height: 7rem; display: grid; gap: .9rem; align-content: start; }
+  /* The trial is one box of a fixed height: the transcript scrolls inside it and the composer stays
+     where it is, which is the only shape in which a conversation stays readable. */
+  .chat { display: flex; flex-direction: column; height: min(74vh, 40rem); }
+  .chat .stream { flex: 1; min-height: 7rem; overflow-y: auto; overscroll-behavior: contain; padding: 1.1rem 1rem 1.2rem; display: grid; gap: .9rem; align-content: start; }
+  .turn { display: flex; }
+  .turn.me { justify-content: flex-start; }
+  .turn.bot { justify-content: flex-end; }
+  .bubble { max-width: min(44rem, 86%); border: 1px solid var(--line); border-radius: 14px; padding: .7rem .9rem; background: var(--slab); overflow-wrap: anywhere; }
+  .turn.me .bubble { background: var(--accent-soft); border-color: rgba(77,107,254,.30); }
+  .turn.bot .bubble { background: var(--bg-elev); }
+  .bubble .label { margin-bottom: .3rem; }
   .composer .row-in { display: flex; align-items: center; gap: .55rem; padding: 1rem 1.05rem .4rem; }
   .composer .row-in .p { color: var(--teal); font-family: var(--mono); }
   .composer .row-in input { flex: 1; border: 0; background: transparent; padding: .35rem 0; font-size: 1.08rem; }
@@ -233,7 +306,7 @@ export const BASE_CSS = `  :root {
     color: var(--muted); background: none; border: 0; border-radius: var(--radius-sm);
     padding: .26rem .4rem; cursor: pointer; max-width: 17rem;
   }
-  .pick-btn:hover { color: var(--text); background: rgba(255,255,255,.05); }
+  .pick-btn:hover { color: var(--text); background: var(--hover); }
   .pick-btn .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .pick-btn .chev { color: var(--faint); font-size: .72rem; transition: transform .14s ease; }
   .pick-btn[aria-expanded="true"] .chev { transform: rotate(180deg); }
@@ -241,15 +314,15 @@ export const BASE_CSS = `  :root {
     position: absolute; bottom: calc(100% + .45rem); right: 0; left: auto; z-index: 30;
     min-width: 16rem; max-height: 17rem; overflow: auto;
     list-style: none; margin: 0; padding: .35rem; border: 1px solid var(--line-strong); border-radius: 14px;
-    background: #1b1e23; box-shadow: 0 22px 48px rgba(0,0,0,.55);
+    background: var(--menu); box-shadow: 0 22px 48px var(--shadow);
   }
   .pick-menu button {
     display: flex; align-items: center; gap: .6rem; width: 100%; text-align: left;
     font: inherit; font-size: .92rem; color: var(--text);
     background: none; border: 0; border-radius: 9px; padding: .5rem .6rem; cursor: pointer;
   }
-  .pick-menu button:hover { background: rgba(255,255,255,.06); }
-  .pick-menu button.on { background: rgba(255,255,255,.09); }
+  .pick-menu button:hover { background: var(--hover); }
+  .pick-menu button.on { background: var(--hover-strong); }
   .pick-menu .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .pick-menu .check { color: var(--text); font-size: .95rem; opacity: 0; }
   .pick-menu button.on .check { opacity: 1; }
@@ -268,7 +341,7 @@ export const BASE_CSS = `  :root {
   .tbl.spec th { padding: .8rem 1rem; text-transform: none; letter-spacing: .04em; font-size: .78rem; }
   .tbl.spec td { padding: .95rem 1rem; border-top: 1px solid var(--line); border-bottom: 0; }
   .tbl.spec tbody tr:first-child td { border-top: 0; }
-  .tbl.spec tbody tr:hover td { background: rgba(255,255,255,.018); }
+  .tbl.spec tbody tr:hover td { background: var(--slab); }
   .spec-name { display: block; font-weight: 650; color: var(--text); }
   .spec-sub { display: block; margin-top: .2rem; font-family: var(--mono); font-size: .8rem; color: var(--faint); }
   .tbl.spec td.note { color: var(--muted); max-width: 26rem; }
@@ -285,7 +358,10 @@ export const BASE_CSS = `  :root {
   .bench-row { display: grid; gap: .45rem; }
   .bench-name { font-family: var(--mono); font-size: .82rem; color: var(--muted); }
   .bench-bars { display: grid; gap: .3rem; }
-  .bench-track { height: 1.35rem; border-radius: 4px; background: rgba(255,255,255,.035); }
+  .bench-track { height: 1.35rem; border-radius: 4px; background: var(--slab); transition: background .12s ease; }
+  /* Hover is the readout: the bar lifts, and the title attribute spells out dimension, model and score. */
+  .bench-track:hover { background: var(--hover); }
+  .bench-track:hover .bench-bar { filter: brightness(1.08); }
   .bench-bar { display: flex; align-items: center; justify-content: flex-end; height: 100%; border-radius: 4px; background: var(--mk); }
   .bench-bar span { padding-right: .5rem; font-family: var(--mono); font-size: .74rem; color: #14171c; }
   .mk0 { --mk: #e9e2d0; }
@@ -322,9 +398,9 @@ export const BASE_CSS = `  :root {
   .start-row { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); margin-top: .35rem; }
   .start-card {
     font: inherit; text-align: left; cursor: pointer; color: var(--text); font-size: .95rem; line-height: 1.45;
-    background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 12px; padding: .7rem .85rem;
+    background: var(--slab); border: 1px solid var(--line); border-radius: 12px; padding: .7rem .85rem;
   }
-  .start-card:hover { background: rgba(255,255,255,.06); border-color: var(--line-strong); }
+  .start-card:hover { background: var(--hover); border-color: var(--line-strong); }
 
   footer.foot {
     margin-top: 3.5rem; padding-top: 1.2rem; border-top: 1px solid var(--line);

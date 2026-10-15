@@ -1,3 +1,4 @@
+import { tpsToDelay } from "./config.ts";
 import { applyFilters } from "./filters.ts";
 import { pick } from "./random.ts";
 import { FaultError } from "./errors.ts";
@@ -146,16 +147,25 @@ export function describeReply(reply: Reply): string {
 export interface Answer {
   reply: string;
   thinking: string | null;
+  /**
+   * The per-piece interval this answer wants. It rides on the answer because the answer is the only
+   * thing every protocol already passes to phasesFor(): a persona can pick its own DUMMY_TPS without
+   * five wire formats learning what a persona is.
+   */
+  delayMs?: number;
 }
 
 /** The model id selects a persona; anything unrecognised falls through to the server defaults. */
 export function withPersona(cfg: Config, model: string): Config {
   const persona = cfg.personas[model];
   if (!persona) return cfg;
+  const tps = persona.tps;
   return {
     ...cfg,
     reply: persona.reply ?? cfg.reply,
     thinking: persona.thinking ?? cfg.thinking,
+    tps: tps ?? cfg.tps,
+    delayMs: tps === undefined ? cfg.delayMs : tpsToDelay(tps),
   };
 }
 
@@ -171,7 +181,7 @@ export function plan(canon: CanonRequest, cfg: Config, rand: () => number): Answ
   const template = selectReply(effective.reply, canon, rand);
   const vars = templateVars(canon, effective, undefined, template);
   const reply = truncateCodePoints(renderTemplate(template, vars), effective.maxReplyChars);
-  return { reply, thinking: renderThinking(effective.thinking, { ...vars, reply }, rand) };
+  return { reply, thinking: renderThinking(effective.thinking, { ...vars, reply }, rand), delayMs: effective.delayMs };
 }
 
 /** Splits by code point, never by UTF-16 unit, so emoji and CJK survive intact. */
@@ -235,7 +245,7 @@ export async function* phasesFor(
   // Node overshoot a little every time, and the error compounds until a 100 tps
   // stream is really running at 50. Targeting "piece i is due at start + i * interval"
   // makes the long-run rate equal DUMMY_TPS even when individual timers are late.
-  const interval = cfg.delayMs;
+  const interval = answer.delayMs ?? cfg.delayMs;
   const started = Date.now();
   let emitted = 0;
   for (const [channel, parts] of channels) {

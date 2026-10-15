@@ -72,6 +72,8 @@ export interface Persona {
   thinking?: string[];
   /** Shown on the landing page and in the docs. */
   description?: string;
+  /** This persona's own streaming rate. Unset means it follows DUMMY_TPS. */
+  tps?: number;
 }
 
 export interface CanonMessage {

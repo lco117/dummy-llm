@@ -3,6 +3,7 @@ import { helpHtml } from "./help.ts";
 import { LOGO_SVG } from "./logo.ts";
 import * as db from "./packs.ts";
 import { langSwitch, t, type Lang } from "./i18n.ts";
+import { themeSwitch, type Theme } from "./theme.ts";
 import { BASE_CSS, escapeHtml } from "./ui.ts";
 
 /**
@@ -167,10 +168,10 @@ function clientStrings(lang: Lang): string {
   return JSON.stringify(strings).replace(/</g, "\\u003c");
 }
 
-function head(lang: Lang, title: string, bodyClass: string): string {
+function head(lang: Lang, theme: Theme, title: string, bodyClass: string): string {
   return [
     "<!doctype html>",
-    '<html lang="' + (lang === "zh" ? "zh-CN" : "en") + '">',
+    '<html lang="' + (lang === "zh" ? "zh-CN" : "en") + '" data-theme="' + theme + '">',
     "<head>",
     '<meta charset="utf-8">',
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
@@ -184,7 +185,7 @@ function head(lang: Lang, title: string, bodyClass: string): string {
   ].join("");
 }
 
-function topBar(lang: Lang, signOut: boolean): string {
+function topBar(lang: Lang, theme: Theme, signOut: boolean): string {
   return [
     '<header class="top">',
     '<a class="brand" href="/"><span class="mark">' + LOGO_SVG + '</span><strong>dummy-llm</strong><span class="cursor"></span></a>',
@@ -193,16 +194,17 @@ function topBar(lang: Lang, signOut: boolean): string {
     signOut
       ? '<form class="inline-form" method="post" action="/admin/logout"><button class="btn" type="submit">' + t(lang, "admin.signout") + "</button></form>"
       : "",
+    themeSwitch(theme, "/admin", lang),
     langSwitch(lang, "/admin"),
     "</header>",
   ].join("");
 }
 
-export function adminPage(lang: Lang): string {
+export function adminPage(lang: Lang, theme: Theme): string {
   return [
-    head(lang, "dummy-llm admin", "admin"),
+    head(lang, theme, "dummy-llm admin", "admin"),
     '<div class="doc wide">',
-    topBar(lang, true),
+    topBar(lang, theme, true),
     '<div id="boot" class="boot"><p class="hint">' + t(lang, "admin.loading") + "</p></div>",
     '<div id="main" hidden>',
     '<p id="banner" class="callout warn" hidden></p>',
@@ -230,6 +232,7 @@ export function adminPage(lang: Lang): string {
     "<details class=\"help\"><summary>" + t(lang, "admin.format") + "</summary>" + helpHtml(lang) + "</details>",
     '<label class="field"><span>' + t(lang, "admin.thinking") + '</span><textarea id="p-thinking" rows="6" spellcheck="false"></textarea></label>',
     '<label class="field"><span>' + t(lang, "admin.description") + '</span><input id="p-description" spellcheck="false"></label>',
+    '<label class="field"><span>' + t(lang, "admin.tps") + '</span><input id="p-tps" type="number" min="1" step="1" spellcheck="false"></label>',
     '<div class="row">',
     '<button class="btn primary" id="p-save" type="button">' + t(lang, "admin.save") + "</button>",
     '<button class="btn" id="p-revert" type="button">' + t(lang, "admin.revert") + "</button>",
@@ -305,11 +308,11 @@ export function adminPage(lang: Lang): string {
   ].join("");
 }
 
-export function loginPage(lang: Lang): string {
+export function loginPage(lang: Lang, theme: Theme): string {
   return [
-    head(lang, "dummy-llm admin", "login"),
+    head(lang, theme, "dummy-llm admin", "login"),
     '<div class="doc">',
-    topBar(lang, false),
+    topBar(lang, theme, false),
     '<div class="boot"><h1 class="boot-title">dummy-llm <span class="who">/ admin</span></h1>',
     '<p class="hint">' + t(lang, "login.intro") + "</p>",
     '<p id="error" class="callout bad" hidden></p>',
@@ -326,11 +329,11 @@ export function loginPage(lang: Lang): string {
   ].join("");
 }
 
-export function accessDeniedPage(lang: Lang): string {
+export function accessDeniedPage(lang: Lang, theme: Theme): string {
   return [
-    head(lang, "dummy-llm admin", "login"),
+    head(lang, theme, "dummy-llm admin", "login"),
     '<div class="doc">',
-    topBar(lang, false),
+    topBar(lang, theme, false),
     '<div class="boot"><h1 class="boot-title">' + t(lang, "denied.title") + "</h1>",
     '<p class="callout bad">' + t(lang, "denied.body") + "</p>",
     '<p class="hint">' + t(lang, "denied.hint") + "</p>",

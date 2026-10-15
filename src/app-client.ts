@@ -44,6 +44,10 @@ export const APP_JS = `(function () {
          node hides in before it crosses to the other edge, and the fade over that margin is what keeps
          the crossing invisible. */
       var M = 150, FADE = 70, SKY = 4, ARC = 16, sky = 0, drift = 0;
+      /* Two inks, because a star field on paper is drawn in ink and not in light. */
+      var INK = document.documentElement.getAttribute("data-theme") === "light"
+        ? { line: "16,120,98", hot: "66,86,214", node: "92,102,118", nodeHot: "46,62,168" }
+        : { line: "110,231,200", hot: "139,163,255", node: "154,167,186", nodeHot: "200,214,255" };
 
       function gap(ax, ay, bx, by) {
         var dx = ax - bx, dy = ay - by;
@@ -108,8 +112,8 @@ export const APP_JS = `(function () {
             hot = Math.max(nh, ma < REACH ? 1 - ma / REACH : 0);
             alpha = (1 - d / LINK) * (0.18 + hot * 0.5) * (nf < mf ? nf : mf);
             ctx.strokeStyle = hot > 0.02
-              ? "rgba(139,163,255," + alpha.toFixed(3) + ")"
-              : "rgba(110,231,200," + alpha.toFixed(3) + ")";
+              ? "rgba(" + INK.hot + "," + alpha.toFixed(3) + ")"
+              : "rgba(" + INK.line + "," + alpha.toFixed(3) + ")";
             ctx.lineWidth = hot > 0.35 ? 1.25 : 1;
             ctx.beginPath();
             ctx.moveTo(nx, ny);
@@ -128,8 +132,8 @@ export const APP_JS = `(function () {
           ctx.beginPath();
           ctx.arc(nx, ny, n.r + hot * 1.7, 0, 6.2832);
           ctx.fillStyle = hot > 0.02
-            ? "rgba(200,214,255," + (ink * edge).toFixed(3) + ")"
-            : "rgba(154,167,186," + (ink * edge).toFixed(3) + ")";
+            ? "rgba(" + INK.nodeHot + "," + (ink * edge).toFixed(3) + ")"
+            : "rgba(" + INK.node + "," + (ink * edge).toFixed(3) + ")";
           ctx.fill();
         }
       }
@@ -238,7 +242,7 @@ export const APP_JS = `(function () {
   var nameEl = $("model-name");
   var items = menu ? menu.querySelectorAll("button[data-model]") : [];
   var playground = form && form.getAttribute("data-playground") === "1";
-  var chosen = nameEl ? nameEl.textContent : "";
+  var chosen = pick ? (pick.getAttribute("data-model") || "") : "";
 
   function closeMenu() { if (menu) menu.hidden = true; if (pick) pick.setAttribute("aria-expanded", "false"); }
   if (pick && menu) {
@@ -250,8 +254,10 @@ export const APP_JS = `(function () {
     for (var m = 0; m < items.length; m++) {
       items[m].addEventListener("click", function (event) {
         var item = event.currentTarget;
-        chosen = item.getAttribute("data-model") || chosen;
-        if (nameEl) nameEl.textContent = chosen;
+        chosen = item.getAttribute("data-model") || "";
+        var label = item.querySelector(".name");
+        if (nameEl && label) nameEl.textContent = label.textContent;
+        if (pick) pick.setAttribute("data-model", chosen);
         for (var i = 0; i < items.length; i++) items[i].className = items[i] === item ? "on" : "";
         closeMenu();
       });
@@ -300,21 +306,33 @@ export const APP_JS = `(function () {
     refreshComposer();
   }
 
-  function renderStream() {
+  function toBottom() { if (stream) stream.scrollTop = stream.scrollHeight; }
+
+  /* A turn each: what you said on the left, what it said on the right, in the two shapes a chat has. */
+  function renderStream(prompt) {
     stream.textContent = "";
     if (currentTemplate()) stream.appendChild(el("p", "visitor", S.visitor || ""));
-    var thinking = el("div");
+    var mine = el("div", "turn me");
+    mine.appendChild(el("div", "bubble", prompt));
+    stream.appendChild(mine);
+
+    var turn = el("div", "turn bot");
+    var box = el("div", "bubble");
+    var thinking = el("div", "think");
     thinking.appendChild(el("div", "label", S.thinking || "thinking"));
     var thinkingText = el("div", "thinking-text");
     thinking.appendChild(thinkingText);
-    var answer = el("div");
+    var answer = el("div", "say");
     answer.appendChild(el("div", "label", S.answer || "answer"));
     var answerText = el("div", "answer");
     var caret = el("span", "caret");
     answerText.appendChild(caret);
     answer.appendChild(answerText);
-    stream.appendChild(thinking);
-    stream.appendChild(answer);
+    box.appendChild(thinking);
+    box.appendChild(answer);
+    turn.appendChild(box);
+    stream.appendChild(turn);
+    toBottom();
     return { thinking: thinking, thinkingText: thinkingText, answerText: answerText, caret: caret };
   }
 
@@ -324,7 +342,7 @@ export const APP_JS = `(function () {
       var prompt = ((input && input.value) || "").trim() || "hello";
       var template = currentTemplate();
       var model = template ? "dummy-playground" : chosen;
-      var ui = renderStream();
+      var ui = renderStream(prompt);
       if (button) button.disabled = true;
       var startedAt = performance.now();
       var firstAt = 0;
@@ -370,12 +388,14 @@ export const APP_JS = `(function () {
               if (!firstAt) firstAt = performance.now();
               ui.thinkingText.textContent += delta.reasoning_content;
               ui.thinkingText.scrollTop = ui.thinkingText.scrollHeight;
+              toBottom();
             }
             if (typeof delta.content === "string") {
               if (!firstAt) firstAt = performance.now();
               ui.caret.remove();
               ui.answerText.textContent += delta.content;
               ui.answerText.appendChild(ui.caret);
+              toBottom();
             }
           }
         }

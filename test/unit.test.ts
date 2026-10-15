@@ -1,8 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildText, chunkText, describeReply, estimateTokens, phases, plan, renderTemplate, renderThinking, stripReminders, userInput } from "../src/engine.ts";
+import { buildText, chunkText, describeReply, estimateTokens, phases, plan, renderTemplate, renderThinking, stripReminders, userInput, withPersona } from "../src/engine.ts";
 import { FILTER_NAMES } from "../src/filters.ts";
 import { NOT_A_MODEL_REPLIES } from "../src/personas.ts";
+import { highlightShell } from "../src/sh.ts";
 import { barStep, benchmark, contextWindow } from "../src/spec.ts";
 import { mulberry32, randomId } from "../src/random.ts";
 import { parseFaultSpec } from "../src/errors.ts";
@@ -168,13 +169,13 @@ test("the landing page is a live demo, not a giant 6", async () => {
 
 test("the pages speak both languages, and the choice is remembered", async () => {
   const en = await (await makeApp()(new Request("http://localhost/"))).text();
-  assert.match(en, /<html lang="en">/);
+  assert.match(en, /<html lang="en" data-theme="dark">/);
   assert.match(en, /A fake LLM server/);
   assert.match(en, /href="\/\?lang=zh"/, "the switch points at the other language");
 
   const zh = await makeApp()(new Request("http://localhost/?lang=zh"));
   const zhHtml = await zh.text();
-  assert.match(zhHtml, /<html lang="zh-CN">/);
+  assert.match(zhHtml, /<html lang="zh-CN" data-theme="dark">/);
   assert.match(zhHtml, /一个假的大模型服务/);
   assert.match(zh.headers.get("set-cookie") ?? "", /dummy_lang=zh/, "the choice is stored in a cookie");
 
@@ -308,7 +309,7 @@ test("the playground override is opt-in, length-limited and one-request-only", (
 
 test("both editors document the template format", async () => {
   const { adminPage } = await import("../src/admin-ui.ts");
-  const ADMIN_HTML = adminPage("en");
+  const ADMIN_HTML = adminPage("en", "dark");
   const on = makeApp({ playground: true });
   const landing = await (await on(new Request("http://localhost/"))).text();
   assert.match(landing, /What you can write here/);
@@ -351,6 +352,42 @@ test("the format help is generated from the real filter registry", async () => {
 test("token estimate is never zero for non-empty text", () => {
   assert.equal(estimateTokens(""), 0);
   assert.equal(estimateTokens("a"), 1);
+});
+
+test("the theme travels in the URL and is remembered, like the language", async () => {
+  const dark = await (await makeApp()(new Request("http://localhost/"))).text();
+  assert.match(dark, /data-theme="dark"/, "dark is what a stranger gets");
+
+  const light = await makeApp()(new Request("http://localhost/?theme=light"));
+  const lightHtml = await light.text();
+  assert.match(lightHtml, /data-theme="light"/);
+  assert.match(light.headers.get("set-cookie") ?? "", /dummy_theme=light/, "the choice is stored in a cookie");
+  assert.match(lightHtml, /href="\/\?lang=en&amp;theme=dark"/, "the switch offers the other theme");
+
+  const fromCookie = await (await makeApp()(new Request("http://localhost/", { headers: { cookie: "dummy_theme=light" } }))).text();
+  assert.match(fromCookie, /data-theme="light"/, "and the cookie is enough on its own");
+});
+
+test("the shell highlighter escapes first and colours second", () => {
+  const line = "git clone https://x.dev/y && npm i";
+  assert.match(highlightShell(line), /<span class="c-cmd">git<\/span>/);
+  assert.match(highlightShell(line), /<span class="c-url">https:\/\/x\.dev\/y<\/span>/);
+  assert.match(highlightShell(line), /<span class="c-op">&amp;&amp;<\/span>/, "operators are escaped and coloured");
+  assert.match(highlightShell("docker run --rm -p 8080 img"), /<span class="c-flag">--rm<\/span>/);
+  assert.match(highlightShell("curl -d '{\"a\":1}'"), /<span class="c-str">'\{&quot;a&quot;:1\}'<\/span>/);
+
+  const hostile = highlightShell("echo <script>alert(1)</script>");
+  assert.equal(hostile.includes("<script"), false, "the highlighter cannot be talked into markup");
+  assert.match(hostile, /&lt;script&gt;/);
+});
+
+test("a persona can pick its own streaming rate", () => {
+  const cfg = resolveConfig({ DUMMY_PERSONAS: '{"slowpoke":{"reply":"{input}","tps":5}}' });
+  assert.equal(withPersona(cfg, "slowpoke").tps, 5);
+  assert.equal(withPersona(cfg, "slowpoke").delayMs, 200, "5 tps is one piece every 200ms");
+  assert.equal(withPersona(cfg, "nobody-here").delayMs, cfg.delayMs, "an unknown id keeps the server's pace");
+  assert.equal(plan({ ...canon("hi"), model: "slowpoke" }, cfg, mulberry32(1)).delayMs, 200, "the pace rides with the answer");
+  assert.equal(plan(canon("hi"), cfg, mulberry32(1)).delayMs, cfg.delayMs);
 });
 
 test("the invented spec sheet is stable, bounded and expressible in CSS", () => {
