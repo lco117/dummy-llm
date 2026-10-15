@@ -217,9 +217,9 @@ export const BASE_CSS = `  :root {
   .composer { border: 1px solid var(--line); border-radius: 16px; background: var(--bg-elev); }
   .chat .composer { border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
   .chat .stream { padding: 1.1rem 1rem 1.2rem; min-height: 7rem; display: grid; gap: .9rem; align-content: start; }
-  .composer .row-in { display: flex; align-items: center; gap: .55rem; padding: .85rem .95rem .35rem; }
+  .composer .row-in { display: flex; align-items: center; gap: .55rem; padding: 1rem 1.05rem .4rem; }
   .composer .row-in .p { color: var(--teal); font-family: var(--mono); }
-  .composer .row-in input { flex: 1; border: 0; background: transparent; padding: .3rem .1rem; font-size: 1.06rem; }
+  .composer .row-in input { flex: 1; border: 0; background: transparent; padding: .35rem 0; font-size: 1.08rem; }
   .composer .row-in input:focus { outline: none; }
   .composer .foot { display: flex; align-items: center; gap: .55rem; padding: .35rem .6rem .6rem .95rem; }
   .composer .stats { margin-right: auto; font-family: var(--mono); font-size: .8rem; color: var(--faint); white-space: nowrap; }
@@ -262,6 +262,69 @@ export const BASE_CSS = `  :root {
   .send:disabled { opacity: .5; cursor: progress; }
   .send svg { width: 1.1rem; height: 1.1rem; }
   .composer.locked .pick-btn { opacity: .5; }
+
+  /* The spec sheet: one panel, the model in the first column, everything else read across. */
+  .spec-table { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); overflow: hidden; }
+  .tbl.spec th { padding: .8rem 1rem; text-transform: none; letter-spacing: .04em; font-size: .78rem; }
+  .tbl.spec td { padding: .95rem 1rem; border-top: 1px solid var(--line); border-bottom: 0; }
+  .tbl.spec tbody tr:first-child td { border-top: 0; }
+  .tbl.spec tbody tr:hover td { background: rgba(255,255,255,.018); }
+  .spec-name { display: block; font-weight: 650; color: var(--text); }
+  .spec-sub { display: block; margin-top: .2rem; font-family: var(--mono); font-size: .8rem; color: var(--faint); }
+  .tbl.spec td.note { color: var(--muted); max-width: 26rem; }
+  .tbl.spec td.m { color: var(--muted); white-space: nowrap; }
+  .sec > h2.spaced { margin-top: 2.8rem; }
+
+  /* The chart. Bar widths are classes, not style attributes: every score is quantised to 5, so the page
+     needs at most twenty of them and never builds CSS out of data. */
+  .bench { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); padding: 1.1rem 1.15rem 1.25rem; }
+  .bench-legend { display: flex; flex-wrap: wrap; gap: .5rem 1.15rem; margin-bottom: 1.15rem; }
+  .bench-key { display: inline-flex; align-items: center; gap: .45rem; font-family: var(--mono); font-size: .8rem; color: var(--muted); }
+  .bench-key i { width: .62rem; height: .62rem; border-radius: 2px; background: var(--mk); }
+  .bench-rows { display: grid; gap: 1.05rem; }
+  .bench-row { display: grid; gap: .45rem; }
+  .bench-name { font-family: var(--mono); font-size: .82rem; color: var(--muted); }
+  .bench-bars { display: grid; gap: .3rem; }
+  .bench-track { height: 1.35rem; border-radius: 4px; background: rgba(255,255,255,.035); }
+  .bench-bar { display: flex; align-items: center; justify-content: flex-end; height: 100%; border-radius: 4px; background: var(--mk); }
+  .bench-bar span { padding-right: .5rem; font-family: var(--mono); font-size: .74rem; color: #14171c; }
+  .mk0 { --mk: #e9e2d0; }
+  .mk1 { --mk: #a9d9c9; }
+  .mk2 { --mk: #efb56b; }
+  .mk3 { --mk: #93b8f2; }
+  .mk4 { --mk: #d99595; }
+  .b5 { width: 5% }
+  .b10 { width: 10% }
+  .b15 { width: 15% }
+  .b20 { width: 20% }
+  .b25 { width: 25% }
+  .b30 { width: 30% }
+  .b35 { width: 35% }
+  .b40 { width: 40% }
+  .b45 { width: 45% }
+  .b50 { width: 50% }
+  .b55 { width: 55% }
+  .b60 { width: 60% }
+  .b65 { width: 65% }
+  .b70 { width: 70% }
+  .b75 { width: 75% }
+  .b80 { width: 80% }
+  .b85 { width: 85% }
+  .b90 { width: 90% }
+  .b95 { width: 95% }
+  .b100 { width: 100% }
+
+  /* The playground opens empty and offers four ways in. Each one is a button, not a suggestion:
+     clicking it sends, which is the shortest path from a cold page to a streamed answer. */
+  .start { display: grid; gap: .35rem; }
+  .start-line { margin: 0; color: var(--muted); font-size: 1rem; }
+  .start-label { margin: .55rem 0 0; font-family: var(--mono); font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); }
+  .start-row { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); margin-top: .35rem; }
+  .start-card {
+    font: inherit; text-align: left; cursor: pointer; color: var(--text); font-size: .95rem; line-height: 1.45;
+    background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 12px; padding: .7rem .85rem;
+  }
+  .start-card:hover { background: rgba(255,255,255,.06); border-color: var(--line-strong); }
 
   footer.foot {
     margin-top: 3.5rem; padding-top: 1.2rem; border-top: 1px solid var(--line);

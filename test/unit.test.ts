@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { buildText, chunkText, describeReply, estimateTokens, phases, plan, renderTemplate, renderThinking, stripReminders, userInput } from "../src/engine.ts";
 import { FILTER_NAMES } from "../src/filters.ts";
 import { NOT_A_MODEL_REPLIES } from "../src/personas.ts";
+import { barStep, benchmark, contextWindow } from "../src/spec.ts";
 import { mulberry32, randomId } from "../src/random.ts";
 import { parseFaultSpec } from "../src/errors.ts";
 import { DEFAULT_THINKING_POOL, PLAYGROUND_MAX_REPLY, parseReply, playgroundOverride, resolveConfig } from "../src/config.ts";
@@ -350,4 +351,18 @@ test("the format help is generated from the real filter registry", async () => {
 test("token estimate is never zero for non-empty text", () => {
   assert.equal(estimateTokens(""), 0);
   assert.equal(estimateTokens("a"), 1);
+});
+
+test("the invented spec sheet is stable, bounded and expressible in CSS", () => {
+  for (const id of ["dummy-echo-1", "definitely-not-a-model", "a-persona-nobody-shipped", ""]) {
+    assert.deepEqual(benchmark(id), benchmark(id), id + " scores the same twice");
+    assert.match(contextWindow(id), /^[0-9]+(K|M)$/, id + " gets a context window off the shelf");
+    for (const score of benchmark(id)) {
+      assert.ok(score >= 50 && score <= 100, id + " settles on the flattering half of the scale");
+      assert.equal(score % 5, 0, "scores land on the steps the stylesheet has");
+      assert.equal(barStep(score), score, "a score always survives the trip to a bar width");
+    }
+  }
+  assert.equal(barStep(103), 100);
+  assert.equal(barStep(-4), 0);
 });

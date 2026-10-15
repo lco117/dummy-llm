@@ -39,10 +39,26 @@ export const APP_JS = `(function () {
       var REACH = 250, LINK = 244, LEAN = 18;
       var W = 0, H = 0, nodes = [], last = 0, queued = 0, pending = 0;
       var at = { x: -1e4, y: -1e4 };
+      /* The field is a sky, not a soup. Every node shares one slow drift, so a constellation keeps its
+         shape while it wheels past, the way the same stars hold together all night. M is the margin a
+         node hides in before it crosses to the other edge, and the fade over that margin is what keeps
+         the crossing invisible. */
+      var M = 150, FADE = 70, SKY = 4, ARC = 16, sky = 0, drift = 0;
 
       function gap(ax, ay, bx, by) {
         var dx = ax - bx, dy = ay - by;
         return Math.sqrt(dx * dx + dy * dy);
+      }
+
+      function wrapX(v) {
+        var span = W + M * 2;
+        return ((v + M) % span + span) % span - M;
+      }
+
+      /** 1 in the viewport, 0 at the seam: a node only jumps when nothing can see it. */
+      function fade(x) {
+        var edge = Math.min(x + M, W + M - x);
+        return edge <= 0 ? 0 : edge >= FADE ? 1 : edge / FADE;
       }
 
       function seed() {
@@ -50,7 +66,7 @@ export const APP_JS = `(function () {
         nodes = [];
         for (var i = 0; i < count; i++) {
           nodes.push({
-            x: Math.random() * W, y: Math.random() * H,
+            x: Math.random() * (W + M * 2) - M, y: Math.random() * (H + M * 2) - M,
             vx: (Math.random() - 0.5) * 0.22, vy: (Math.random() - 0.5) * 0.22,
             r: 1.15 + Math.random() * 1.6, ox: 0, oy: 0
           });
@@ -61,9 +77,10 @@ export const APP_JS = `(function () {
         for (var i = 0; i < nodes.length; i++) {
           var n = nodes[i];
           n.x += n.vx; n.y += n.vy;
-          if (n.x < -24) n.x = W + 24; else if (n.x > W + 24) n.x = -24;
-          if (n.y < -24) n.y = H + 24; else if (n.y > H + 24) n.y = -24;
-          var dx = at.x - n.x, dy = at.y - n.y;
+          var spanX = W + M * 2, spanY = H + M * 2;
+          if (n.x < -M) n.x += spanX; else if (n.x > W + M) n.x -= spanX;
+          if (n.y < -M) n.y += spanY; else if (n.y > H + M) n.y -= spanY;
+          var dx = at.x - wrapX(n.x + sky), dy = at.y - (n.y + drift);
           var d = Math.sqrt(dx * dx + dy * dy) || 1;
           var pull = d < REACH ? (1 - d / REACH) : 0;
           n.ox += ((dx / d) * pull * LEAN - n.ox) * 0.12;
@@ -76,17 +93,20 @@ export const APP_JS = `(function () {
         var i, j, n, m, nx, ny, mx, my, d, hot, alpha;
         for (i = 0; i < nodes.length; i++) {
           n = nodes[i];
-          nx = n.x + n.ox; ny = n.y + n.oy;
+          nx = wrapX(n.x + sky) + n.ox; ny = n.y + drift + n.oy;
+          var nf = fade(nx);
           var na = gap(at.x, at.y, nx, ny);
           var nh = na < REACH ? 1 - na / REACH : 0;
           for (j = i + 1; j < nodes.length; j++) {
             m = nodes[j];
-            mx = m.x + m.ox; my = m.y + m.oy;
+            mx = wrapX(m.x + sky) + m.ox; my = m.y + drift + m.oy;
             d = gap(nx, ny, mx, my);
             if (d > LINK) continue;
+            var mf = fade(mx);
+            if (nf <= 0 || mf <= 0) continue;
             var ma = gap(at.x, at.y, mx, my);
             hot = Math.max(nh, ma < REACH ? 1 - ma / REACH : 0);
-            alpha = (1 - d / LINK) * (0.18 + hot * 0.5);
+            alpha = (1 - d / LINK) * (0.18 + hot * 0.5) * (nf < mf ? nf : mf);
             ctx.strokeStyle = hot > 0.02
               ? "rgba(139,163,255," + alpha.toFixed(3) + ")"
               : "rgba(110,231,200," + alpha.toFixed(3) + ")";
@@ -99,14 +119,17 @@ export const APP_JS = `(function () {
         }
         for (i = 0; i < nodes.length; i++) {
           n = nodes[i];
-          nx = n.x + n.ox; ny = n.y + n.oy;
+          nx = wrapX(n.x + sky) + n.ox; ny = n.y + drift + n.oy;
+          var edge = fade(nx);
+          if (edge <= 0) continue;
           var pa = gap(at.x, at.y, nx, ny);
           hot = pa < REACH ? 1 - pa / REACH : 0;
+          var ink = hot > 0.02 ? 0.30 + hot * 0.6 : 0.40 + n.r * 0.05;
           ctx.beginPath();
           ctx.arc(nx, ny, n.r + hot * 1.7, 0, 6.2832);
           ctx.fillStyle = hot > 0.02
-            ? "rgba(200,214,255," + (0.30 + hot * 0.6).toFixed(3) + ")"
-            : "rgba(154,167,186," + (0.40 + n.r * 0.05).toFixed(3) + ")";
+            ? "rgba(200,214,255," + (ink * edge).toFixed(3) + ")"
+            : "rgba(154,167,186," + (ink * edge).toFixed(3) + ")";
           ctx.fill();
         }
       }
@@ -117,7 +140,14 @@ export const APP_JS = `(function () {
       function frame(now) {
         requestAnimationFrame(frame);
         if (now - last < 33 || document.hidden) return;
+        var dt = Math.min(120, now - last);
         last = now;
+        var span = W + M * 2;
+        if (span > 0) {
+          sky -= SKY * dt / 1000;
+          if (sky <= -span) sky += span;
+          drift = ARC * Math.sin((sky / span) * 6.2832);
+        }
         advance();
         draw();
       }
@@ -241,10 +271,21 @@ export const APP_JS = `(function () {
     if (!stats) return;
     stats.textContent = usingTemplate
       ? (S.templateWins || "")
-      : fill(S.statsPrompt || "", { n: estimateTokens((input && input.value) || "hello") });
+      : (input && input.value.trim() ? fill(S.statsPrompt || "", { n: estimateTokens(input.value) }) : "");
   }
   if (input) input.addEventListener("input", refreshComposer);
   refreshComposer();
+
+  /* The cards under an empty chat are shortcuts, not suggestions: one click sends. */
+  var starters = document.querySelectorAll("[data-start]");
+  for (var st = 0; st < starters.length; st++) {
+    starters[st].addEventListener("click", function (event) {
+      if (!input || !form) return;
+      input.value = event.currentTarget.textContent || "";
+      if (form.requestSubmit) form.requestSubmit();
+      else form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+    });
+  }
 
   if (playground && editor) {
     var initial = new URLSearchParams(location.search).get("t");

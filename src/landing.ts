@@ -2,6 +2,7 @@ import { describeReply } from "./engine.ts";
 import { helpHtml } from "./help.ts";
 import { langSwitch, resolveLang, t, type Lang } from "./i18n.ts";
 import { LOGO_SVG } from "./logo.ts";
+import { barStep, benchmark, contextWindow } from "./spec.ts";
 import { BASE_CSS, escapeHtml } from "./ui.ts";
 import type { Ctx } from "./types.ts";
 
@@ -34,6 +35,12 @@ const LANDING_CSS = `
   details.format > summary::marker { color: var(--accent); }
   .endpoint-note { margin-top: 1.1rem; }
 `;
+
+/** One label per `BENCH_DIMENSIONS` entry, in the same order, typed as dictionary keys. */
+const BENCH_KEYS = ["bench.dim.echo", "bench.dim.thinking", "bench.dim.nonsense", "bench.dim.pedantry"] as const;
+
+/** The one-click starts under the empty chat. Authored strings, sent as the user's own message. */
+const STARTERS = ["demo.ex1", "demo.ex2", "demo.ex3", "demo.ex4"] as const;
 
 interface Run {
   id: string;
@@ -151,13 +158,39 @@ export function landingPage(ctx: Ctx, request: Request): Response {
     )
     .join("");
 
-  const models = cfg.models
+  const specRows = cfg.models
     .map((id) => {
       const persona = cfg.personas[id];
-      const behaviour = persona?.description ?? "reply: " + describeReply(persona?.reply ?? cfg.reply);
-      return '<tr><td class="k">' + escapeHtml(id) + '</td><td class="note">' + escapeHtml(behaviour) + "</td></tr>";
+      const best = persona?.description ?? "reply: " + describeReply(persona?.reply ?? cfg.reply);
+      return (
+        "<tr>" +
+        '<td class="spec"><span class="spec-name">' + escapeHtml(id) + "</span>" +
+        '<span class="spec-sub">reply: ' + escapeHtml(describeReply(persona?.reply ?? cfg.reply)) + "</span></td>" +
+        '<td class="note">' + escapeHtml(best) + "</td>" +
+        '<td class="m">' + escapeHtml(contextWindow(id)) + "</td>" +
+        '<td class="m">' + escapeHtml(t(lang, "models.speed").replace("{tps}", String(cfg.tps))) + "</td>" +
+        '<td class="m">' + escapeHtml(t(lang, "models.price")) + "</td>" +
+        "</tr>"
+      );
     })
     .join("");
+
+  // The chart colours cycle over five classes; a sixth model would have to bring its own palette.
+  const plotted = cfg.models.slice(0, 5).map((id, index) => ({ id, m: "mk" + (index % 5), scores: benchmark(id) }));
+  const benchLegend = plotted
+    .map((model) => '<span class="bench-key ' + model.m + '"><i></i>' + escapeHtml(model.id) + "</span>")
+    .join("");
+  const benchRows = BENCH_KEYS.map((key, dimension) => {
+    const bars = plotted
+      .map((model) => {
+        const score = model.scores[dimension] ?? 0;
+        return '<div class="bench-track"><div class="bench-bar ' + model.m + " b" + barStep(score) +
+          '"><span>' + score + "</span></div></div>";
+      })
+      .join("");
+    return '<div class="bench-row"><div class="bench-name">' + escapeHtml(t(lang, key)) +
+      '</div><div class="bench-bars">' + bars + "</div></div>";
+  }).join("");
 
   const chips = [
     '<span class="chip on">' + t(lang, "hero.chip.protocols") + "</span>",
@@ -232,11 +265,16 @@ export function landingPage(ctx: Ctx, request: Request): Response {
     <h2>${t(lang, "demo.title")}</h2>
     <p class="sub">${escapeHtml(t(lang, "demo.sub"))}</p>
     <div class="panel chat">
-      <div class="stream" id="stream"><div class="empty" id="empty">${escapeHtml(t(lang, "demo.empty"))}</div></div>
+      <div class="stream" id="stream">
+        <div class="start" id="empty">
+          <p class="start-line">${escapeHtml(t(lang, "demo.empty"))}</p>
+          <p class="start-label">${escapeHtml(t(lang, "demo.try"))}</p>
+          <div class="start-row">${STARTERS.map((key) => '<button class="start-card" type="button" data-start>' + escapeHtml(t(lang, key)) + "</button>").join("")}</div>
+        </div>
+      </div>
       <form class="composer" id="ask" data-playground="${cfg.playground ? "1" : "0"}" autocomplete="off">
         <div class="row-in">
-          <span class="p">❯</span>
-          <input id="prompt" value="hello" spellcheck="false" aria-label="${escapeHtml(t(lang, "demo.input"))}">
+          <input id="prompt" value="" placeholder="${escapeHtml(t(lang, "demo.placeholder"))}" spellcheck="false" aria-label="${escapeHtml(t(lang, "demo.input"))}">
         </div>
         <div class="foot">
           <span class="stats" id="stats"></span>
@@ -278,10 +316,27 @@ export function landingPage(ctx: Ctx, request: Request): Response {
   <section class="sec" id="models">
     <h2>${t(lang, "models.title")}</h2>
     <p class="sub">${escapeHtml(t(lang, "models.sub"))}</p>
-    <table class="tbl">
-      <thead><tr><th>${t(lang, "models.col.id")}</th><th>${t(lang, "models.col.behaviour")}</th></tr></thead>
-      <tbody>${models}</tbody>
-    </table>
+    <div class="spec-table">
+      <table class="tbl spec">
+        <thead><tr>
+          <th>${t(lang, "models.col.model")}</th>
+          <th>${t(lang, "models.col.best")}</th>
+          <th>${t(lang, "models.col.context")}</th>
+          <th>${t(lang, "models.col.speed")}</th>
+          <th>${t(lang, "models.col.price")}</th>
+        </tr></thead>
+        <tbody>${specRows}</tbody>
+      </table>
+    </div>
+    <p class="hint">${escapeHtml(t(lang, "models.note"))}</p>
+
+    <h2 class="spaced">${t(lang, "bench.title")}</h2>
+    <p class="sub">${escapeHtml(t(lang, "bench.sub"))}</p>
+    <div class="bench">
+      <div class="bench-legend">${benchLegend}</div>
+      <div class="bench-rows">${benchRows}</div>
+    </div>
+    <p class="hint">${escapeHtml(t(lang, "bench.note"))}</p>
   </section>
 
   <footer class="foot">
