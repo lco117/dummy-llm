@@ -106,8 +106,7 @@ interface ClientStrings {
   confirmApply: string;
   nothingToChange: string;
   packsFetch: string;
-  thinkingLabel: string;
-  answerLabel: string;
+  chat: { thinking: string; thought: string; copy: string; copied: string };
   loginBadKey: string;
   loginThrottled: string;
 }
@@ -160,8 +159,12 @@ function clientStrings(lang: Lang): string {
     confirmApply: t(lang, "msg.confirmApply"),
     nothingToChange: t(lang, "msg.nothingToChange"),
     packsFetch: t(lang, "admin.packs.fetch"),
-    thinkingLabel: t(lang, "demo.thinking"),
-    answerLabel: t(lang, "demo.answer"),
+    chat: {
+      thinking: t(lang, "chat.thinking"),
+      thought: t(lang, "chat.thought"),
+      copy: t(lang, "demo.copy"),
+      copied: t(lang, "demo.copied"),
+    },
     loginBadKey: t(lang, "login.badKey"),
     loginThrottled: t(lang, "login.throttled"),
   };

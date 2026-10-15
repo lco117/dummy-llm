@@ -1,5 +1,8 @@
+import { CHAT_JS } from "./chat-client.ts";
+
 export const APP_JS = `(function () {
   "use strict";
+${CHAT_JS}
   var S = window.__DUMMY_I18N || {};
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, text) {
@@ -243,6 +246,7 @@ export const APP_JS = `(function () {
   var items = menu ? menu.querySelectorAll("button[data-model]") : [];
   var playground = form && form.getAttribute("data-playground") === "1";
   var chosen = pick ? (pick.getAttribute("data-model") || "") : "";
+  var chat = chatWidget(stream, S.chat);
 
   function closeMenu() { if (menu) menu.hidden = true; if (pick) pick.setAttribute("aria-expanded", "false"); }
   if (pick && menu) {
@@ -308,32 +312,19 @@ export const APP_JS = `(function () {
 
   function toBottom() { if (stream) stream.scrollTop = stream.scrollHeight; }
 
-  /* A turn each: what you said on the left, what it said on the right, in the two shapes a chat has. */
-  function renderStream(prompt) {
-    stream.textContent = "";
-    if (currentTemplate()) stream.appendChild(el("p", "visitor", S.visitor || ""));
-    var mine = el("div", "turn me");
-    mine.appendChild(el("div", "bubble", prompt));
-    stream.appendChild(mine);
-
-    var turn = el("div", "turn bot");
-    var box = el("div", "bubble");
-    var thinking = el("div", "think");
-    thinking.appendChild(el("div", "label", S.thinking || "thinking"));
-    var thinkingText = el("div", "thinking-text");
-    thinking.appendChild(thinkingText);
-    var answer = el("div", "say");
-    answer.appendChild(el("div", "label", S.answer || "answer"));
-    var answerText = el("div", "answer");
-    var caret = el("span", "caret");
-    answerText.appendChild(caret);
-    answer.appendChild(answerText);
-    box.appendChild(thinking);
-    box.appendChild(answer);
-    turn.appendChild(box);
-    stream.appendChild(turn);
+  /**
+   * The transcript accumulates: every earlier message stays where it is and the new answer is appended
+   * below it. The empty state is removed by the first message, because an invitation to start is noise
+   * once the conversation has started.
+   */
+  function beginTurn(prompt, template) {
+    var empty = $("empty");
+    if (empty) empty.remove();
+    chat.addUser(prompt);
+    if (template) stream.appendChild(el("p", "visitor", S.visitor || ""));
+    var ui = chat.addBot();
     toBottom();
-    return { thinking: thinking, thinkingText: thinkingText, answerText: answerText, caret: caret };
+    return ui;
   }
 
   if (form) {
@@ -342,7 +333,9 @@ export const APP_JS = `(function () {
       var prompt = ((input && input.value) || "").trim() || "hello";
       var template = currentTemplate();
       var model = template ? "dummy-playground" : chosen;
-      var ui = renderStream(prompt);
+      var ui = beginTurn(prompt, template);
+      var settle = chat.thoughtStarted(ui);
+      var settled = false;
       if (button) button.disabled = true;
       var startedAt = performance.now();
       var firstAt = 0;
@@ -360,7 +353,9 @@ export const APP_JS = `(function () {
           }),
         });
         if (!response.ok || !response.body) {
-          ui.thinking.remove();
+          settled = true;
+          settle();
+          ui.box.remove();
           ui.answerText.textContent = fill(S.httpError, { status: response.status });
           ui.answerText.className = "answer error";
           ui.caret.remove();
@@ -392,6 +387,7 @@ export const APP_JS = `(function () {
             }
             if (typeof delta.content === "string") {
               if (!firstAt) firstAt = performance.now();
+              if (!settled) { settled = true; settle(); }
               ui.caret.remove();
               ui.answerText.textContent += delta.content;
               ui.answerText.appendChild(ui.caret);
@@ -399,7 +395,8 @@ export const APP_JS = `(function () {
             }
           }
         }
-        if (ui.thinkingText.textContent === "") ui.thinking.remove();
+        if (!settled) { settled = true; settle(); }
+        if (ui.thinkingText.textContent === "") ui.box.remove();
         ui.caret.remove();
         if (stats) {
           var done = performance.now();
@@ -412,6 +409,8 @@ export const APP_JS = `(function () {
           });
         }
       } catch (error) {
+        if (!settled) { settled = true; settle(); }
+        ui.box.remove();
         ui.answerText.textContent = S.networkError || String(error);
         ui.answerText.className = "answer error";
         ui.caret.remove();

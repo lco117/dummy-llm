@@ -282,14 +282,32 @@ export const BASE_CSS = `  :root {
   /* The trial is one box of a fixed height: the transcript scrolls inside it and the composer stays
      where it is, which is the only shape in which a conversation stays readable. */
   .chat { display: flex; flex-direction: column; height: min(74vh, 40rem); }
-  .chat .stream { flex: 1; min-height: 7rem; overflow-y: auto; overscroll-behavior: contain; padding: 1.1rem 1rem 1.2rem; display: grid; gap: .9rem; align-content: start; }
+  .chat .stream { flex: 1; min-height: 7rem; overflow-y: auto; overscroll-behavior: contain; padding: 1.2rem 1.1rem; display: flex; flex-direction: column; gap: 1.5rem; }
+
+  /* An answer is a column on the left; a message from the visitor is a bubble on the right. */
   .turn { display: flex; }
-  .turn.me { justify-content: flex-start; }
-  .turn.bot { justify-content: flex-end; }
-  .bubble { max-width: min(44rem, 86%); border: 1px solid var(--line); border-radius: 14px; padding: .7rem .9rem; background: var(--slab); overflow-wrap: anywhere; }
-  .turn.me .bubble { background: var(--accent-soft); border-color: rgba(77,107,254,.30); }
-  .turn.bot .bubble { background: var(--bg-elev); }
-  .bubble .label { margin-bottom: .3rem; }
+  .turn.bot { justify-content: flex-start; }
+  .turn.me { justify-content: flex-end; }
+  .turn > .wrap { min-width: 0; max-width: min(50rem, 100%); }
+  .turn.me > .wrap { display: flex; flex-direction: column; align-items: flex-end; max-width: min(34rem, 84%); }
+  .turn.me .said { background: var(--accent-soft); border: 1px solid rgba(77,107,254,.30); border-radius: 16px; padding: .7rem .95rem; overflow-wrap: anywhere; }
+  .turn .meta { display: flex; align-items: center; gap: .45rem; margin-top: .45rem; font-family: var(--mono); font-size: .76rem; color: var(--faint); }
+  .msg-copy { display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; padding: 0; cursor: pointer; color: var(--faint); background: none; border: 1px solid transparent; border-radius: 7px; }
+  .msg-copy:hover { color: var(--text); background: var(--hover); }
+  .msg-copy svg { display: block; width: .95rem; height: .95rem; }
+  .msg-copy .i-done { display: none; color: var(--ok); }
+  .msg-copy.done .i-copy { display: none; }
+  .msg-copy.done .i-done { display: block; }
+
+  /* The reasoning block: one growing line while it is being written, one folded line afterwards. */
+  .thought { margin: 0 0 .6rem; }
+  .thought > summary { display: inline-flex; align-items: center; gap: .45rem; cursor: pointer; list-style: none; color: var(--muted); font-size: .95rem; }
+  .thought > summary::-webkit-details-marker { display: none; }
+  .thought > summary::marker { content: ""; }
+  .thought > summary::before { content: "✦"; color: var(--accent-hi); }
+  .thought > summary:hover { color: var(--text); }
+  .thought > summary .chev { color: var(--faint); font-size: .72rem; transition: transform .14s ease; }
+  .thought[open] > summary .chev { transform: rotate(180deg); }
   .composer .row-in { display: flex; align-items: center; gap: .55rem; padding: 1rem 1.05rem .4rem; }
   .composer .row-in .p { color: var(--teal); font-family: var(--mono); }
   .composer .row-in input { flex: 1; border: 0; background: transparent; padding: .35rem 0; font-size: 1.08rem; }

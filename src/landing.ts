@@ -20,6 +20,7 @@ const LANDING_CSS = `
   .term-bar .spacer { flex: 1; }
 
   .stream .label { font-family: var(--mono); font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--accent-hi); }
+  .visitor { margin: 0 0 .9rem; }
   .thinking-text { margin-top: .35rem; color: var(--muted); font-style: italic; white-space: pre-wrap; word-break: break-word; border-left: 2px solid var(--line); padding-left: .8rem; max-height: 9rem; overflow: auto; }
   .answer { font-size: 1.15rem; white-space: pre-wrap; word-break: break-word; margin-top: .3rem; }
   .caret { display: inline-block; width: .55ch; height: 1em; background: var(--accent); vertical-align: -.14em; animation: blink 1.05s steps(1) infinite; }
@@ -126,8 +127,6 @@ function commandBlock(id: string, lang: Lang, bash: string[], pwsh: string[], no
 /** Every string the client script prints. Served as the prelude of /app.js, so there is one copy. */
 export function landingStrings(lang: Lang): string {
   return JSON.stringify({
-    thinking: t(lang, "demo.thinking"),
-    answer: t(lang, "demo.answer"),
     visitor: t(lang, "demo.visitor"),
     httpError: t(lang, "demo.httpError"),
     networkError: t(lang, "demo.networkError"),
@@ -136,6 +135,12 @@ export function landingStrings(lang: Lang): string {
     statsPrompt: t(lang, "demo.stats.prompt"),
     statsAfter: t(lang, "demo.stats.after"),
     templateWins: t(lang, "demo.templateWins"),
+    chat: {
+      thinking: t(lang, "chat.thinking"),
+      thought: t(lang, "chat.thought"),
+      copy: t(lang, "demo.copy"),
+      copied: t(lang, "demo.copied"),
+    },
   }).replace(/</g, "\\u003c");
 }
 

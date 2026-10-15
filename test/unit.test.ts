@@ -160,7 +160,7 @@ test("the landing page is a live demo, not a giant 6", async () => {
   const html = await response.text();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /text\/html/);
-  assert.match(html, /repeats whatever you send/);
+  assert.match(html, /returns the message it has received/);
   assert.match(html, /id="ask"/, "the demo form is there and really posts to the API");
   assert.match(html, /v1\/chat\/completions/);
   assert.match(html, /dummy-echo-1/);
@@ -170,22 +170,22 @@ test("the landing page is a live demo, not a giant 6", async () => {
 test("the pages speak both languages, and the choice is remembered", async () => {
   const en = await (await makeApp()(new Request("http://localhost/"))).text();
   assert.match(en, /<html lang="en" data-theme="dark">/);
-  assert.match(en, /A fake LLM server/);
+  assert.match(en, /A test server that returns the message/);
   assert.match(en, /href="\/\?lang=zh"/, "the switch points at the other language");
 
   const zh = await makeApp()(new Request("http://localhost/?lang=zh"));
   const zhHtml = await zh.text();
   assert.match(zhHtml, /<html lang="zh-CN" data-theme="dark">/);
-  assert.match(zhHtml, /一个假的大模型服务/);
+  assert.match(zhHtml, /一个测试用的服务器/);
   assert.match(zh.headers.get("set-cookie") ?? "", /dummy_lang=zh/, "the choice is stored in a cookie");
 
   // the cookie wins over Accept-Language, and Accept-Language is only used as a hint
   const hinted = await (await makeApp()(new Request("http://localhost/?lang=en", { headers: { "accept-language": "zh-CN,zh;q=0.9" } }))).text();
-  assert.match(hinted, /A fake LLM server/, "?lang= beats the browser hint");
+  assert.match(hinted, /A test server that returns the message/, "?lang= beats the browser hint");
   const fromHeader = await (await makeApp()(new Request("http://localhost/", { headers: { "accept-language": "zh-CN,en;q=0.8" } }))).text();
-  assert.match(fromHeader, /一个假的大模型服务/, "a Chinese browser gets Chinese by default");
+  assert.match(fromHeader, /一个测试用的服务器/, "a Chinese browser gets Chinese by default");
   const fromCookie = await (await makeApp()(new Request("http://localhost/", { headers: { cookie: "dummy_lang=zh", "accept-language": "en-US,en" } }))).text();
-  assert.match(fromCookie, /一个假的大模型服务/, "the cookie beats the browser hint");
+  assert.match(fromCookie, /一个测试用的服务器/, "the cookie beats the browser hint");
 });
 
 test("harness reminder blocks are stripped before deciding what the user said", () => {
@@ -312,7 +312,7 @@ test("both editors document the template format", async () => {
   const ADMIN_HTML = adminPage("en", "dark");
   const on = makeApp({ playground: true });
   const landing = await (await on(new Request("http://localhost/"))).text();
-  assert.match(landing, /What you can write here/);
+  assert.match(landing, /Template reference/);
   assert.match(landing, /\{input\}/);
   assert.match(landing, /\{input\|upper\}/);
   assert.match(ADMIN_HTML, /Format reference/);
@@ -331,9 +331,9 @@ test("the landing page only offers the editor when the playground is on", async 
   // the visitor notice and the other client-side strings travel with the script, not in the page
   const script = await (await makeApp({ playground: true })(new Request("http://localhost/app.js?lang=en"))).text();
   assert.match(script, /window\.__DUMMY_I18N/, "the dictionary is the script's prelude");
-  assert.match(script, /not by this site's owner/);
+  assert.match(script, /not by the operator of this server/);
   const zhScript = await (await makeApp({ playground: true })(new Request("http://localhost/app.js?lang=zh"))).text();
-  assert.match(zhScript, /模板由访客/, "and it follows the requested language");
+  assert.match(zhScript, /这条回复使用的模板由访客提供/, "and it follows the requested language");
 });
 
 test("the format help is generated from the real filter registry", async () => {

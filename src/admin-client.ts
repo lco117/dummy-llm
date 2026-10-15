@@ -1,5 +1,8 @@
+import { CHAT_JS } from "./chat-client.ts";
+
 export const ADMIN_JS = `(function () {
   "use strict";
+${CHAT_JS}
   var S = window.__DUMMY_I18N || {};
   var DEFAULT_ID = "*";
   var deleteLabel = "";
@@ -469,19 +472,19 @@ export const ADMIN_JS = `(function () {
     event.preventDefault();
     var input = $("preview-input").value || "hello";
     var stream = $("preview-stream");
-    stream.textContent = "";
-    var thinking = el("div");
-    thinking.appendChild(el("div", "label", S.thinkingLabel || "thinking"));
-    var thinkingText = el("div", "thinking-text");
-    thinking.appendChild(thinkingText);
-    var answer = el("div");
-    answer.appendChild(el("div", "label", S.answerLabel || "answer"));
-    var answerText = el("div", "answer");
-    var caret = el("span", "caret");
-    answerText.appendChild(caret);
-    answer.appendChild(answerText);
-    stream.appendChild(thinking);
-    stream.appendChild(answer);
+    /* The preview draws the same view as the public page, and it accumulates the same way. */
+    var empty = stream.querySelector(".empty");
+    if (empty) empty.remove();
+    var chat = chatWidget(stream, S.chat);
+    chat.addUser(input);
+    var bot = chat.addBot();
+    var settle = chat.thoughtStarted(bot);
+    var settled = false;
+    var finished = function () {
+      if (!settled) { settled = true; settle(); }
+      if (!bot.thinkingText.textContent) bot.box.remove();
+    };
+    stream.scrollTop = stream.scrollHeight;
     var button = $("preview-form").querySelector("button.send");
     if (button) button.disabled = true;
     var startedAt = performance.now();
@@ -496,10 +499,10 @@ export const ADMIN_JS = `(function () {
     }).then(function (response) {
       if (!response.ok || !response.body) {
         return response.text().then(function (text) {
-          thinking.remove();
-          caret.remove();
-          setText(answerText, "HTTP " + response.status + " " + text);
-          answerText.className = "answer error";
+          finished();
+          bot.caret.remove();
+          setText(bot.answerText, "HTTP " + response.status + " " + text);
+          bot.answerText.className = "answer error";
         });
       }
       var reader = response.body.getReader();
@@ -521,26 +524,29 @@ export const ADMIN_JS = `(function () {
             var delta = (chunk.choices && chunk.choices[0] && chunk.choices[0].delta) || {};
             if (typeof delta.reasoning_content === "string") {
               if (!firstAt) firstAt = performance.now();
-              thinkingText.textContent += delta.reasoning_content;
-              thinkingText.scrollTop = thinkingText.scrollHeight;
+              bot.thinkingText.textContent += delta.reasoning_content;
+              bot.thinkingText.scrollTop = bot.thinkingText.scrollHeight;
+              stream.scrollTop = stream.scrollHeight;
             }
             if (typeof delta.content === "string") {
               if (!firstAt) firstAt = performance.now();
-              caret.remove();
-              answerText.textContent += delta.content;
-              answerText.appendChild(caret);
+              if (!settled) { settled = true; settle(); }
+              bot.caret.remove();
+              bot.answerText.textContent += delta.content;
+              bot.answerText.appendChild(bot.caret);
+              stream.scrollTop = stream.scrollHeight;
             }
           });
           return pump();
         });
       }
       return pump().then(function () {
-        if (!thinkingText.textContent) thinking.remove();
-        caret.remove();
+        finished();
+        bot.caret.remove();
         var stats = $("preview-stats");
         if (stats) {
           var done = performance.now();
-          var completion = usage ? usage.completion_tokens : estimateTokens(answerText.textContent);
+          var completion = usage ? usage.completion_tokens : estimateTokens(bot.answerText.textContent);
           var spanned = Math.max(120, firstAt ? done - firstAt : done - startedAt);
           setText(stats, fill(S.statsAfter || "", {
             p: usage ? usage.prompt_tokens : estimateTokens(input),
@@ -550,10 +556,11 @@ export const ADMIN_JS = `(function () {
         }
       });
     }).catch(function (error) {
-      thinking.remove();
-      caret.remove();
-      setText(answerText, String(error));
-      answerText.className = "answer error";
+      finished();
+      bot.box.remove();
+      bot.caret.remove();
+      setText(bot.answerText, String(error));
+      bot.answerText.className = "answer error";
     }).then(function () { if (button) button.disabled = false; });
   });
 
