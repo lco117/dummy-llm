@@ -174,14 +174,18 @@ test("the pages speak both languages, and the choice is remembered", async () =>
   assert.match(en, /href="\/\?lang=zh"/, "the switch points at the other language");
 
   const zh = await makeApp()(new Request("http://localhost/?lang=zh"));
-  const zhHtml = await zh.text();
+  assert.equal(zh.status, 303, "the choice is stored and the query is dropped");
+  assert.equal(zh.headers.get("location"), "/", "the redirect keeps the address of the page");
+  assert.match(zh.headers.get("set-cookie") ?? "", /dummy_lang=zh/, "the choice is stored in a cookie");
+  const zhHtml = await (await makeApp()(new Request("http://localhost/", { headers: { cookie: "dummy_lang=zh" } }))).text();
   assert.match(zhHtml, /<html lang="zh-CN" data-theme="dark">/);
   assert.match(zhHtml, /一个测试用的服务器/);
-  assert.match(zh.headers.get("set-cookie") ?? "", /dummy_lang=zh/, "the choice is stored in a cookie");
 
   // the cookie wins over Accept-Language, and Accept-Language is only used as a hint
-  const hinted = await (await makeApp()(new Request("http://localhost/?lang=en", { headers: { "accept-language": "zh-CN,zh;q=0.9" } }))).text();
-  assert.match(hinted, /A test server that returns the message/, "?lang= beats the browser hint");
+  const hinted = await makeApp()(new Request("http://localhost/?lang=en", { headers: { "accept-language": "zh-CN,zh;q=0.9" } }));
+  assert.equal(hinted.status, 303);
+  const hintedHtml = await (await makeApp()(new Request("http://localhost/", { headers: { cookie: "dummy_lang=en", "accept-language": "zh-CN,zh;q=0.9" } }))).text();
+  assert.match(hintedHtml, /A test server that returns the message/, "?lang= beats the browser hint");
   const fromHeader = await (await makeApp()(new Request("http://localhost/", { headers: { "accept-language": "zh-CN,en;q=0.8" } }))).text();
   assert.match(fromHeader, /一个测试用的服务器/, "a Chinese browser gets Chinese by default");
   const fromCookie = await (await makeApp()(new Request("http://localhost/", { headers: { cookie: "dummy_lang=zh", "accept-language": "en-US,en" } }))).text();
@@ -359,9 +363,10 @@ test("the theme travels in the URL and is remembered, like the language", async 
   assert.match(dark, /data-theme="dark"/, "dark is what a stranger gets");
 
   const light = await makeApp()(new Request("http://localhost/?theme=light"));
-  const lightHtml = await light.text();
-  assert.match(lightHtml, /data-theme="light"/);
+  assert.equal(light.status, 303, "the theme is stored and the query is dropped");
   assert.match(light.headers.get("set-cookie") ?? "", /dummy_theme=light/, "the choice is stored in a cookie");
+  const lightHtml = await (await makeApp()(new Request("http://localhost/", { headers: { cookie: "dummy_theme=light" } }))).text();
+  assert.match(lightHtml, /data-theme="light"/);
   assert.match(lightHtml, /href="\/\?lang=en&amp;theme=dark"/, "the switch offers the other theme");
 
   const fromCookie = await (await makeApp()(new Request("http://localhost/", { headers: { cookie: "dummy_theme=light" } }))).text();
@@ -391,14 +396,14 @@ test("a persona can pick its own streaming rate", () => {
 });
 
 test("the invented spec sheet is stable, bounded and expressible in CSS", () => {
+  assert.deepEqual(benchmark(true), [0, 100, 0], "a profile that repeats the message scores on the invented benchmark");
+  assert.deepEqual(benchmark(false), [0, 12, 0], "every other profile scores twelve");
   for (const id of ["dummy-echo-1", "definitely-not-a-model", "a-persona-nobody-shipped", ""]) {
-    assert.deepEqual(benchmark(id), benchmark(id), id + " scores the same twice");
     assert.match(contextWindow(id), /^[0-9]+(K|M)$/, id + " gets a context window off the shelf");
-    for (const score of benchmark(id)) {
-      assert.ok(score >= 50 && score <= 100, id + " settles on the flattering half of the scale");
-      assert.equal(score % 5, 0, "scores land on the steps the stylesheet has");
-      assert.equal(barStep(score), score, "a score always survives the trip to a bar width");
-    }
+    assert.equal(contextWindow(id), contextWindow(id), id + " gets the same context window twice");
+  }
+  for (const score of benchmark(true).concat(benchmark(false))) {
+    assert.equal(barStep(score), score, "a score always survives the trip to a bar width");
   }
   assert.equal(barStep(103), 100);
   assert.equal(barStep(-4), 0);

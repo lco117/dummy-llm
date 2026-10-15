@@ -50,6 +50,19 @@ export const CHAT_JS = `  var CHAT_SVG = "http://www.w3.org/2000/svg";
       return svg;
     }
 
+    /** The project mark in one colour: a speech bubble with the cursor cut out of it. */
+    function solidMark() {
+      var svg = document.createElementNS(CHAT_SVG, "svg");
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.setAttribute("fill", "currentColor");
+      svg.setAttribute("fill-rule", "evenodd");
+      svg.setAttribute("aria-hidden", "true");
+      var path = document.createElementNS(CHAT_SVG, "path");
+      path.setAttribute("d", "M6 4h12a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-4.5l-4 4.2V17H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Zm8.4 4.6a1 1 0 0 0-1 1v3.4a1 1 0 0 0 1 1h1.6a1 1 0 0 0 1-1V9.6a1 1 0 0 0-1-1h-1.6Z");
+      svg.appendChild(path);
+      return svg;
+    }
+
     function two(value) { return (value < 10 ? "0" : "") + value; }
 
     function stamp() {
@@ -106,6 +119,9 @@ export const CHAT_JS = `  var CHAT_SVG = "http://www.w3.org/2000/svg";
       box.className = "thought";
       box.open = true;
       var summary = document.createElement("summary");
+      var mark = node("span", "mark");
+      mark.appendChild(solidMark());
+      summary.appendChild(mark);
       var state = node("span", "state", L.thinking.replace("{n}", "0"));
       summary.appendChild(state);
       summary.appendChild(node("span", "chev", "⌄"));

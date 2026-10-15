@@ -255,7 +255,7 @@ export function createApp(config: Config, options: AppOptions = {}): App {
 
     // The admin surface has its own authentication and must never pick up the permissive CORS
     // headers or the DUMMY_API_KEY gate that the inference routes use.
-    if (adminPath === "/admin" || adminPath.startsWith("/admin/")) return withPreferences(await admin(request), url);
+    if (adminPath === "/admin" || adminPath.startsWith("/admin/")) return withPreferences(await admin(request), url, request);
 
     const seed = nextSeed(config);
     const protocol = protocolFor(url.pathname);
@@ -271,16 +271,18 @@ export function createApp(config: Config, options: AppOptions = {}): App {
         response = errorResponse(protocol, 500, error instanceof Error ? error.message : String(error));
       }
     }
-    return withPreferences(withCors(response, request, config), url);
+    return withPreferences(withCors(response, request, config), url, request);
   };
 }
 
 /**
  * Both switches - language and theme - are plain links, so the choice travels in the URL and is
- * remembered here. Every page then resolves each one from the same two places: the query, then the
- * cookie. Language falls back to Accept-Language; the theme falls back to dark.
+ * remembered here. A page then answers with a redirect to the same address, with those two parameters
+ * removed: the address bar keeps the address of the page rather than the state of its menus, and any
+ * other parameter the visitor arrived with survives the trip. Scripts and API responses are passed
+ * through untouched, because they carry the same parameters on purpose.
  */
-function withPreferences(response: Response, url: URL): Response {
+function withPreferences(response: Response, url: URL, request: Request): Response {
   const headers = new Headers(response.headers);
   let touched = false;
   const lang = url.searchParams.get("lang");
@@ -294,5 +296,14 @@ function withPreferences(response: Response, url: URL): Response {
     touched = true;
   }
   if (!touched) return response;
+
+  const isPage = (response.headers.get("content-type") ?? "").indexOf("text/html") === 0;
+  if (isPage && request.method.toUpperCase() === "GET") {
+    const clean = new URL(url.toString());
+    clean.searchParams.delete("lang");
+    clean.searchParams.delete("theme");
+    headers.set("location", clean.pathname + clean.search + clean.hash);
+    return new Response(null, { status: 303, headers });
+  }
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }

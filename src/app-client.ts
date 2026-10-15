@@ -46,7 +46,7 @@ ${CHAT_JS}
          shape while it wheels past, the way the same stars hold together all night. M is the margin a
          node hides in before it crosses to the other edge, and the fade over that margin is what keeps
          the crossing invisible. */
-      var M = 150, FADE = 70, SKY = 4, ARC = 16, sky = 0, drift = 0;
+      var M = 150, FADE = 70, SKY = 8, ARC = 16, sky = 0, drift = 0;
       /* Two inks, because a star field on paper is drawn in ink and not in light. */
       var INK = document.documentElement.getAttribute("data-theme") === "light"
         ? { line: "16,120,98", hot: "66,86,214", node: "92,102,118", nodeHot: "46,62,168" }
@@ -185,6 +185,20 @@ ${CHAT_JS}
       resize();
       if (!calm) requestAnimationFrame(frame);
     })(canvas);
+  }
+
+  /* The section links scroll the page instead of writing a fragment into the address bar. Without
+     script they still work: the href is a real anchor, so the browser's own behaviour is the fallback. */
+  var jumps = document.querySelectorAll('a[href^="#"]');
+  for (var jp = 0; jp < jumps.length; jp++) {
+    jumps[jp].addEventListener("click", function (event) {
+      var id = event.currentTarget.getAttribute("href").slice(1);
+      var target = id ? document.getElementById(id) : null;
+      if (!target) return;
+      event.preventDefault();
+      var quiet = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      target.scrollIntoView({ behavior: quiet ? "auto" : "smooth", block: "start" });
+    });
   }
 
   var tabs = document.querySelectorAll(".cmd-tab");

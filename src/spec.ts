@@ -7,8 +7,8 @@
  * full row without anyone maintaining a table, and reloading the page never reshuffles the chart.
  */
 
-export const BENCH_DIMENSIONS = ["echo", "thinking", "nonsense", "pedantry"] as const;
-export type BenchDimension = (typeof BENCH_DIMENSIONS)[number];
+export const BENCHMARKS = ["terminal", "repeat", "agi"] as const;
+export type Benchmark = (typeof BENCHMARKS)[number];
 export type BenchScores = number[];
 
 /** FNV-1a over the id. Unsigned, and stable across processes - unlike Math.random. */
@@ -21,18 +21,6 @@ function seed(value: string): number {
   return hash >>> 0;
 }
 
-/** mulberry32: four lines of PRNG. Arbitrary-looking output, and no dependency to add. */
-function stream(hash: number): () => number {
-  let state = hash;
-  return () => {
-    state = (state + 0x6d2b79f5) >>> 0;
-    let t = state;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 const CONTEXT_WINDOWS = ["8K", "32K", "128K", "256K", "1M"];
 
 /** A context window the server never reads, because it never reads anything. */
@@ -41,16 +29,21 @@ export function contextWindow(model: string): string {
 }
 
 /**
- * Four scores out of 100, on the half of the scale that reads as competence. Quantised to steps of
- * five, which is what lets the page size a bar with a class instead of a style attribute - and what
- * makes the numbers read as a rounded opinion rather than a measurement, which is the joke.
+ * The scores on the three benchmarks.
+ *
+ * They are fixed values that this project defines, not measurements. The server implements none of
+ * the benchmarks, so two of them return zero for every model, which is the accurate result. The
+ * middle one is invented here, and it separates the answer profiles: a profile that returns the
+ * message it received without changing it scores full marks, and every other profile scores twelve.
  */
-export function benchmark(model: string): BenchScores {
-  const next = stream(seed(model));
-  return BENCH_DIMENSIONS.map(() => 50 + Math.round(next() * 10) * 5);
+export function benchmark(echoes: boolean): BenchScores {
+  return BENCHMARKS.map((name) => (name === "repeat" ? (echoes ? 100 : 12) : 0));
 }
 
-/** The bar width the page can express in CSS: one of eleven steps, never a raw percentage. */
+/**
+ * The bar width the page can express in CSS. Scores are whole percentages snapped to even numbers, so
+ * the stylesheet needs fifty-one classes and never a style attribute.
+ */
 export function barStep(score: number): number {
-  return Math.max(0, Math.min(100, Math.round(score / 5) * 5));
+  return Math.max(0, Math.min(100, Math.round(score / 2) * 2));
 }

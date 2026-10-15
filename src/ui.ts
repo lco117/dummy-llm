@@ -304,7 +304,8 @@ export const BASE_CSS = `  :root {
   .thought > summary { display: inline-flex; align-items: center; gap: .45rem; cursor: pointer; list-style: none; color: var(--muted); font-size: .95rem; }
   .thought > summary::-webkit-details-marker { display: none; }
   .thought > summary::marker { content: ""; }
-  .thought > summary::before { content: "✦"; color: var(--accent-hi); }
+  .thought > summary .mark { display: inline-grid; place-items: center; width: 1.05rem; height: 1.05rem; color: var(--accent-hi); }
+  .thought > summary .mark svg { display: block; width: 100%; height: 100%; }
   .thought > summary:hover { color: var(--text); }
   .thought > summary .chev { color: var(--faint); font-size: .72rem; transition: transform .14s ease; }
   .thought[open] > summary .chev { transform: rotate(180deg); }
@@ -376,47 +377,83 @@ export const BASE_CSS = `  :root {
   .bench-row { display: grid; gap: .45rem; }
   .bench-name { font-family: var(--mono); font-size: .82rem; color: var(--muted); }
   .bench-bars { display: grid; gap: .3rem; }
-  .bench-track { height: 1.35rem; border-radius: 4px; background: var(--slab); transition: background .12s ease; }
-  /* Hover is the readout: the bar lifts, and the title attribute spells out dimension, model and score. */
-  .bench-track:hover { background: var(--hover); }
-  .bench-track:hover .bench-bar { filter: brightness(1.08); }
-  .bench-bar { display: flex; align-items: center; justify-content: flex-end; height: 100%; border-radius: 4px; background: var(--mk); }
-  .bench-bar span { padding-right: .5rem; font-family: var(--mono); font-size: .74rem; color: #14171c; }
+  .bench-track { position: relative; display: flex; align-items: center; gap: .6rem; }
+  /* The fill owns the width, so a bar at one hundred per cent cannot push its own reading off the row. */
+  .bench-fill { flex: 1; min-width: 0; height: 1.2rem; border-radius: 4px; background: var(--slab); }
+  .bench-bar { height: 100%; border-radius: 4px; background: var(--mk); }
+  .bench-val { flex: 0 0 auto; min-width: 2rem; font-family: var(--mono); font-size: .76rem; color: var(--muted); }
+  /* The reading is our own element rather than a title attribute: it appears the instant the cursor
+     arrives, it can be styled, and it sits next to the bar it describes. */
+  .bench-track:hover .bench-bar { filter: brightness(1.15); }
+  .bench-read {
+    position: absolute; bottom: calc(100% + .35rem); left: 0; z-index: 6; white-space: nowrap;
+    padding: .3rem .55rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--menu);
+    color: var(--text); font-family: var(--mono); font-size: .76rem; box-shadow: 0 10px 24px var(--shadow);
+    opacity: 0; visibility: hidden;
+  }
+  .bench-track:hover .bench-read { opacity: 1; visibility: visible; }
   .mk0 { --mk: #e9e2d0; }
   .mk1 { --mk: #a9d9c9; }
   .mk2 { --mk: #efb56b; }
-  .mk3 { --mk: #93b8f2; }
-  .mk4 { --mk: #d99595; }
-  .b5 { width: 5% }
+  .b0 { width: 0% }
+  .b2 { width: 2% }
+  .b4 { width: 4% }
+  .b6 { width: 6% }
+  .b8 { width: 8% }
   .b10 { width: 10% }
-  .b15 { width: 15% }
+  .b12 { width: 12% }
+  .b14 { width: 14% }
+  .b16 { width: 16% }
+  .b18 { width: 18% }
   .b20 { width: 20% }
-  .b25 { width: 25% }
+  .b22 { width: 22% }
+  .b24 { width: 24% }
+  .b26 { width: 26% }
+  .b28 { width: 28% }
   .b30 { width: 30% }
-  .b35 { width: 35% }
+  .b32 { width: 32% }
+  .b34 { width: 34% }
+  .b36 { width: 36% }
+  .b38 { width: 38% }
   .b40 { width: 40% }
-  .b45 { width: 45% }
+  .b42 { width: 42% }
+  .b44 { width: 44% }
+  .b46 { width: 46% }
+  .b48 { width: 48% }
   .b50 { width: 50% }
-  .b55 { width: 55% }
+  .b52 { width: 52% }
+  .b54 { width: 54% }
+  .b56 { width: 56% }
+  .b58 { width: 58% }
   .b60 { width: 60% }
-  .b65 { width: 65% }
+  .b62 { width: 62% }
+  .b64 { width: 64% }
+  .b66 { width: 66% }
+  .b68 { width: 68% }
   .b70 { width: 70% }
-  .b75 { width: 75% }
+  .b72 { width: 72% }
+  .b74 { width: 74% }
+  .b76 { width: 76% }
+  .b78 { width: 78% }
   .b80 { width: 80% }
-  .b85 { width: 85% }
+  .b82 { width: 82% }
+  .b84 { width: 84% }
+  .b86 { width: 86% }
+  .b88 { width: 88% }
   .b90 { width: 90% }
-  .b95 { width: 95% }
+  .b92 { width: 92% }
+  .b94 { width: 94% }
+  .b96 { width: 96% }
+  .b98 { width: 98% }
   .b100 { width: 100% }
-
-  /* The playground opens empty and offers four ways in. Each one is a button, not a suggestion:
-     clicking it sends, which is the shortest path from a cold page to a streamed answer. */
-  .start { display: grid; gap: .35rem; }
-  .start-line { margin: 0; color: var(--muted); font-size: 1rem; }
-  .start-label { margin: .55rem 0 0; font-family: var(--mono); font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); }
-  .start-row { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); margin-top: .35rem; }
+  /* The playground opens empty and offers two ways in, centred in the box. Each one is a button, not a
+     suggestion: clicking it sends, which is the shortest path from a cold page to a streamed answer. */
+  .start { flex: 1; display: grid; gap: .3rem; place-content: center; justify-items: center; text-align: center; }
+  .start-label { margin: 0; font-family: var(--mono); font-size: .74rem; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+  .start-row { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .35rem; justify-content: center; }
   .start-card {
-    font: inherit; text-align: left; cursor: pointer; color: var(--text); font-size: .95rem; line-height: 1.45;
-    background: var(--slab); border: 1px solid var(--line); border-radius: 12px; padding: .7rem .85rem;
+    font: inherit; cursor: pointer; color: var(--text); font-size: .88rem; line-height: 1.4;
+    background: var(--slab); border: 1px solid var(--line); border-radius: 10px; padding: .48rem .85rem;
   }
   .start-card:hover { background: var(--hover); border-color: var(--line-strong); }
 

@@ -40,7 +40,7 @@ const LANDING_CSS = `
 `;
 
 /** One label per `BENCH_DIMENSIONS` entry, in the same order, typed as dictionary keys. */
-const BENCH_KEYS = ["bench.dim.echo", "bench.dim.thinking", "bench.dim.nonsense", "bench.dim.pedantry"] as const;
+const BENCH_KEYS = ["bench.dim.terminal", "bench.dim.repeat", "bench.dim.agi"] as const;
 
 /** The one-click starts under the empty chat. Authored strings, sent as the user's own message. */
 const STARTERS = ["demo.ex1", "demo.ex2"] as const;
@@ -184,17 +184,25 @@ export function landingPage(ctx: Ctx, request: Request): Response {
     .join("");
 
   // The chart colours cycle over five classes; a sixth model would have to bring its own palette.
-  const plotted = cfg.models.slice(0, 5).map((id, index) => ({ id, m: "mk" + (index % 5), scores: benchmark(id) }));
+  // The only profile that scores anything is the one that returns the message unchanged.
+  const plotted = cfg.models.slice(0, 5).map((id, index) => ({
+    id,
+    m: "mk" + (index % 5),
+    scores: benchmark(cfg.personas[id]?.reply === "{input}"),
+  }));
   const benchLegend = plotted
     .map((model) => '<span class="bench-key ' + model.m + '"><i></i>' + escapeHtml(model.id) + "</span>")
     .join("");
+  // The reading travels with the bar as its own element, so it appears the moment the cursor arrives
+  // and owes nothing to the browser's tooltip, which waits and cannot be styled.
   const benchRows = BENCH_KEYS.map((key, dimension) => {
     const bars = plotted
       .map((model) => {
         const score = model.scores[dimension] ?? 0;
         const reads = t(lang, key) + " · " + model.id + ": " + score;
-        return '<div class="bench-track" title="' + escapeHtml(reads) + '"><div class="bench-bar ' + model.m + " b" + barStep(score) +
-          '"><span>' + score + "</span></div></div>";
+        return '<div class="bench-track"><div class="bench-fill"><div class="bench-bar ' + model.m + " b" + barStep(score) + '"></div></div>' +
+          '<span class="bench-val">' + score + "</span>" +
+          '<span class="bench-read">' + escapeHtml(reads) + "</span></div>";
       })
       .join("");
     return '<div class="bench-row"><div class="bench-name">' + escapeHtml(t(lang, key)) +
@@ -210,11 +218,14 @@ export function landingPage(ctx: Ctx, request: Request): Response {
 
   // One line per model, the current one ticked on the right: a switcher, not a catalogue. The first
   // entry is not a model at all - it is "leave it to the server", which is what an empty model means.
-  const modelMenu = [{ id: "", label: t(lang, "demo.default") }]
-    .concat(cfg.models.map((id) => ({ id, label: id })))
+  // The first entry is not a model at all, so the entry says what it is and the trigger says only
+  // "default": the parenthetical belongs in the list, where there is room to read it.
+  const modelMenu = [{ id: "", label: t(lang, "demo.default"), note: t(lang, "demo.defaultNote") }]
+    .concat(cfg.models.map((id) => ({ id, label: id, note: "" })))
     .map((option, index) =>
       '<li role="option"><button type="button"' + (index === 0 ? ' class="on"' : "") + ' data-model="' + escapeHtml(option.id) + '">' +
       '<span class="name">' + escapeHtml(option.label) + "</span>" +
+      (option.note ? '<span class="note">' + escapeHtml(option.note) + "</span>" : "") +
       '<span class="check" aria-hidden="true">\u2713</span>' +
       "</button></li>",
     )
@@ -270,7 +281,6 @@ export function landingPage(ctx: Ctx, request: Request): Response {
     <div class="panel chat">
       <div class="stream" id="stream">
         <div class="start" id="empty">
-          <p class="start-line">${escapeHtml(t(lang, "demo.empty"))}</p>
           <p class="start-label">${escapeHtml(t(lang, "demo.try"))}</p>
           <div class="start-row">${STARTERS.map((key) => '<button class="start-card" type="button" data-start>' + escapeHtml(t(lang, key)) + "</button>").join("")}</div>
         </div>
