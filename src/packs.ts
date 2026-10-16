@@ -46,6 +46,13 @@ export const PACK_INDEX: PackIndexEntry[] = [
     file: "shrug.json",
     url: `${PACK_BASE_URL}/shrug.json`,
   },
+  {
+    name: "snack-dragon",
+    titleKey: "pack.snackDragon.name",
+    descKey: "pack.snackDragon.desc",
+    file: "snack-dragon.json",
+    url: `${PACK_BASE_URL}/snack-dragon.json`,
+  },
 ];
 
 export interface Pack {

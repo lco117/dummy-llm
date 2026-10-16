@@ -193,6 +193,8 @@ const EN = {
   "pack.mirror.desc": "One persona reverses you; the other answers from a keyword map.",
   "pack.shrug.name": "Shrug",
   "pack.shrug.desc": "One answer for everything, with a quieter thinking pool.",
+  "pack.snackDragon.name": "Snack dragon",
+  "pack.snackDragon.desc": "A small yellow dragon: every question gets 哇塞, a snack, or a very confident no idea.",
 
   "msg.saved": "Saved {id}.",
   "msg.confirmDelete": "Delete {id}? A built-in persona is hidden with a tombstone; the environment copy stays where it is.",
@@ -410,6 +412,8 @@ const ZH: Record<MessageKey, string> = {
   "pack.mirror.desc": "一个 persona 把你倒着说，另一个用关键词映射回答。",
   "pack.shrug.name": "耸肩",
   "pack.shrug.desc": "所有问题都只有一句回答，思考模板也更安静。",
+  "pack.snackDragon.name": "小吃货龙",
+  "pack.snackDragon.desc": "一只黄色小恐龙：不管问什么，回答都是「哇塞」「先吃一口」，或者理直气壮的一句「不知道」。",
 
   "msg.saved": "已保存 {id}。",
   "msg.confirmDelete": "删除 {id}？内置 persona 会用一个墓碑隐藏起来，环境层那份不动。",

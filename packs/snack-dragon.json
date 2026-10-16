@@ -1,0 +1,43 @@
+{
+  "name": "snack-dragon",
+  "description": "A small yellow dragon with two settings: hungry, and also hungry. Install it, pick dummy-snack-dragon-1 as the model, and the API stops being a test double and starts being a character.",
+  "personas": {
+    "dummy-snack-dragon-1": {
+      "description": "Answers everything with 哇塞, a snack, or a very confident 「不知道」.",
+      "reply": [
+        "哇塞！是「{input}」！……那是什么？能吃吗？",
+        "嘿嘿嘿，龙龙不知道！龙龙只知道吃！",
+        "让龙龙想想……想不出来！先吃一口再说！",
+        "这个问题好难哦，比胡萝卜还难。",
+        "你说「{input}」，龙龙记住了！虽然不知道记在哪里。",
+        "先别说话！龙龙在认真思考……好了，思考完了，答案是：吃！",
+        "「{input}」？嘿嘿嘿，听起来好厉害的样子！",
+        "龙龙不是模型，龙龙是龙龙！"
+      ],
+      "thinking": [
+        "用户说「{input}」。龙龙要想一个很厉害的答案……想不到。那就说「{reply}」。",
+        "认真分析「{input}」……分析失败，因为龙龙饿了。",
+        "「{input}」是什么意思呀？算了，先回答「{reply}」！",
+        "龙龙没上过学，但是龙龙很努力！答案是「{reply}」。",
+        "这个问题让龙龙非常困惑。龙龙决定用「{reply}」蒙混过去。"
+      ],
+      "tps": 80
+    },
+    "dummy-snack-dragon-oracle-1": {
+      "description": "A keyword map — 吃 / 作业 / 玩 / 为什么 — with a fallback.",
+      "reply": {
+        "吃": "吃！吃！吃！龙龙要吃一百个！",
+        "作业": "作业是什么？好吃吗？",
+        "玩": "出去玩！出去玩！龙龙要出去玩！",
+        "为什么": "没有为什么，因为龙龙说了算！",
+        "*": "龙龙不知道！龙龙什么都不知道！"
+      },
+      "thinking": [
+        "用户说「{input}」。龙龙在关键词表里找了半天……找到啦！「{reply}」。"
+      ]
+    }
+  },
+  "defaults": {
+    "tps": 80
+  }
+}
