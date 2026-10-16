@@ -18,3 +18,6 @@ wrangler.local.jsonc
 *.tsbuildinfo
 .DS_Store
 Thumbs.db
+
+# Local-only working notes and campaign material, kept off the repository on purpose.
+docs/bilibili/

@@ -440,7 +440,7 @@ A pack is a small JSON document:
 keeps "no outbound requests" true for the server, which is worth more than the convenience of fetching
 it server-side.
 
-Three built-in examples live in [packs/](../packs): `shout`, `mirror` and `shrug`. The loop that makes
+Four built-in examples live in [packs/](../packs): `shout`, `mirror`, `shrug` and `snack-dragon`. The loop that makes
 contributed packs possible: install one, tweak it in the page, **Export**, open a pull request.
 
 ## 10. Logging and redaction

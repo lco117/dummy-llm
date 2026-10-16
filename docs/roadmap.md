@@ -1,6 +1,6 @@
 # Roadmap
 
-**Current release: v0.3.0.** Everything under "Shipped" is in the repository and covered by the test
+**Current release: v0.4.0.** Everything under "Shipped" is in the repository and covered by the test
 suite. Nothing here is aspirational any more — when it lands, it moves up.
 
 ## Shipped
@@ -33,15 +33,15 @@ suite. Nothing here is aspirational any more — when it lands, it moves up.
 - [x] `:generateContent` and `:streamGenerateContent?alt=sse`
 - [x] `thought: true` parts
 - [x] deterministic pseudo-embeddings
-- [x] `DUMMY_FAIL`, `DUMMY_FAIL=…:after=N`, `DUMMY_HANG_MS`, `?fail=`
+- [x] fault injection through `--fail` / `DUMMY_FAIL`, including `=…:after=N` mid-stream breaks, plus `DUMMY_HANG_MS`
 - [x] the `echo` / `fixed` / `random` / `canned` modes
 
 ### M5 — Edge adapters, deployment and the public demo
 - [x] worker / vercel / deno adapters over one Web-standard handler
-- [x] CI: typecheck, 53 tests, Worker bundle check, live smoke test
+- [x] CI: typecheck, 109 tests, Worker bundle check, live smoke test
 - [x] tag-driven release: npm publish, GHCR image, generated GitHub Release
 - [x] one-click **Deploy to Cloudflare** and **Deploy with Vercel** buttons
-- [x] custom domain declared in `wrangler.jsonc`; `workers.dev` and preview URLs off by default
+- [x] custom domain support in `wrangler.jsonc`; free `*.workers.dev` URL on, preview URLs off by default
 
 ### M6 — Open-source polish
 - [x] published to npm as `dummy-llm`
@@ -75,7 +75,7 @@ suite. Nothing here is aspirational any more — when it lands, it moves up.
 
 ### 3. Packs — personas as shareable files — **shipped, gallery only**
 
-`packs/` ships three examples (`shout`, `mirror`, `shrug`) and the admin page can fetch, diff and
+`packs/` ships four examples (`shout`, `mirror`, `shrug`, `snack-dragon`) and the admin page can fetch, diff and
 install any pack URL. What is still open is the community tier: a separate `dummy-packs` repository
 taking pull requests, and a curated index that grows past three entries. A remote `https://` pack is
 fetched by the browser, so the server still makes no outbound request — except for `access-jwt`, which
