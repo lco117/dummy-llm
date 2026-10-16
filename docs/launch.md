@@ -26,7 +26,7 @@ funny *because* it is rigorous.
 7. Deterministic LLM responses for CI: offline, instant, free.
 8. No weights. No billed tokens. No flakiness.
 9. "I used to be an adventurer like you, then I took an arrow in the knee" — now available over four APIs.
-10. 12 KB of dummy. OpenAI, Anthropic, Gemini and Ollama on board.
+10. 11 KB of `engine.ts`. OpenAI, Anthropic, Gemini and Ollama on board.
 
 ### 中文
 
@@ -39,7 +39,7 @@ funny *because* it is rigorous.
 7. 没有权重，不烧 token，永不 flaky。
 8. 别人卷参数，它卷协议兼容性。
 9. 游戏里的 dummy 只会重复一句话，它也是——只不过它是流式输出的。
-10. 12KB 的 dummy，会说 OpenAI / Anthropic / Gemini / Ollama。
+10. 11KB 的 engine.ts，会说 OpenAI / Anthropic / Gemini / Ollama。
 
 ## 3. Ready-to-paste posts
 
@@ -203,7 +203,7 @@ Ordered by effort-to-reward:
 | --- | --- |
 | "That's just an echo server." | "The echo is four lines. The other 600 are wire-format fidelity, ten thinking templates, seeded determinism and mid-stream fault injection. The goldens are the API contract." |
 | "What is it actually for?" | "The same reason you mock HTTP: your LLM app's retry, streaming and error paths are untested, and testing them against the real API costs money and flakes." |
-| "Won't people abuse the public demo?" | "The template ships with `workers.dev` and preview URLs disabled, an optional `DUMMY_API_KEY`, a body-size cap and the free plan's 100k/day ceiling." |
+| "Won't people abuse the public demo?" | "It ships on a free `*.workers.dev` URL, so before sharing one set `workers_dev: false` or a domain, turn on `DUMMY_API_KEY`, keep the body-size cap and rely on the free plan's 100k/day ceiling." |
 | "Isn't this dishonest?" | "The README's first line says it is a fake LLM. It is a mock, and it says so." |
 | "Why not just use a small local model?" | "Because you want determinism, not quality. A 3B model still flaked your CI at 02:00." |
 | "Why does it repeat my harness metadata?" | "It does not any more — system-reminders and the timestamp preamble are stripped first." |

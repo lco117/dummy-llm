@@ -215,12 +215,14 @@ about fifteen lines.
 ```
 
 ```bash
-npx wrangler deploy                          # no public route: workers_dev/preview_urls are false
+npx wrangler deploy                          # answers on the free *.workers.dev URL
 npx wrangler deploy --domain your.example.com  # attach your own Custom Domain for this deploy
 ```
 
-The template ships with both routes **disabled**, because a joke endpoint that anyone can hit
-is a joke endpoint that anyone can burn through your free quota.
+The template ships with a free `*.workers.dev` URL **enabled** and preview URLs off, so a clone is
+reachable the moment it deploys. A joke endpoint that anyone can hit is a joke endpoint that anyone
+can burn through your free quota — so before you publicise the URL, set `"workers_dev": false`, set
+`DUMMY_API_KEY` and lower `DUMMY_MAX_BODY`.
 
 **No hostname is committed.** `wrangler.jsonc` has no `routes` block: this repository is a public
 template, and a cloner should neither inherit your domain nor publish their own. Three ways to attach
@@ -246,8 +248,8 @@ is the option that cannot surprise you. If you attached the domain in the dashbo
 without it, check the dashboard afterwards: the safe habit is to put the flag in your deploy command or
 in CI.
 
-Alternatively set `"workers_dev": true` to use the free `*.workers.dev` URL, which needs no domain at
-all but is public the moment you deploy.
+The free `*.workers.dev` URL is already on by default (`"workers_dev": true`). It needs no domain at
+all, but it is public the moment you deploy.
 
 Why this is the best free host for a streaming fake:
 

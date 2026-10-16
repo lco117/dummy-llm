@@ -24,7 +24,7 @@ not a proxy to a real model, and not multi-tenant. The realistic risks are:
 | **No secrets in the repo** | Verified by scanning the tracked tree for common token shapes. `.env` is gitignored and `.dev.vars.example` ships fully commented out. |
 | **No XSS** | The landing page escapes every operator-controlled value (`escapeHtml`) and the live demo writes model output with `textContent`, never `innerHTML`. |
 | **Request size guard** | `DUMMY_MAX_BODY` (default 1 MB) rejects oversized bodies — it checks `content-length` before buffering and re-checks the decoded length afterwards. |
-| **Not publicly routable by default** | `wrangler.jsonc` sets `workers_dev: false` and `preview_urls: false`, so a fresh deployment has no URL until the operator binds a domain. |
+| **Public the moment you deploy** | `wrangler.jsonc` sets `workers_dev: true` and `preview_urls: false`, so a fresh deployment answers on a free `*.workers.dev` URL. Nothing is secret — set `workers_dev: false`, bind your own domain, or set `DUMMY_API_KEY` before you share the address. |
 | **Streaming does not add smuggling surface** | We never set `Content-Length` on a stream and never mix framing; responses are plain Web `Response` objects. |
 | **The admin surface is absent by default** | `/admin*` answers 404 unless `DUMMY_ADMIN_KEY` is set or Cloudflare Access is configured. `DUMMY_ADMIN_AUTH=off` is the panic switch. |
 | **The admin session never carries the key** | The cookie holds `<expiry>.<HMAC-SHA256>` only, with HttpOnly, Secure, SameSite=Strict and Path=`/admin`. The key is compared in constant time and is never stored, echoed or logged. |

@@ -21,7 +21,7 @@ Zero runtime dependencies. Byte-exact streaming. Runs on a VPS, a Raspberry Pi, 
 [![Deploy with Vercel](https://img.shields.io/badge/Deploy_with-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/new/clone?repository-url=https://github.com/lco117/dummy-llm&project-name=dummy-llm&repository-name=dummy-llm)
 [![Run on Google Cloud](https://img.shields.io/badge/Run_on-Google_Cloud-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)](https://deploy.cloud.run/?git_repo=https://github.com/lco117/dummy-llm)
 
-*One click gets you a running instance. **Cloudflare Workers** is the free, no-cold-start one — it ships with `workers.dev` and preview URLs disabled, and with **no hostname committed**, so attach your own with `npx wrangler deploy --domain your.example.com` (or set `"workers_dev": true` in `wrangler.jsonc`) to reach it. **Vercel** deploys the edge function and its catch-all rewrite. **Google Cloud Run** builds the Dockerfile, but needs a GCP account with billing enabled.*
+*One click gets you a running instance. **Cloudflare Workers** is the free, no-cold-start one — it ships with a free `*.workers.dev` URL enabled and preview URLs off, and with **no hostname committed**, so it answers the moment it deploys; attach your own domain with `npx wrangler deploy --domain your.example.com` and set `"workers_dev": false` to drop the `*.workers.dev` URL. **Vercel** deploys the edge function and its catch-all rewrite. **Google Cloud Run** builds the Dockerfile, but needs a GCP account with billing enabled.*
 
 </div>
 
@@ -344,13 +344,14 @@ Full copy-paste configs, reverse-proxy settings and the SSE gotcha checklist liv
 ### Cloudflare Workers without the button
 
 ```bash
-npx wrangler deploy                          # no public route: wrangler.jsonc declares none
+npx wrangler deploy                          # answers on the free *.workers.dev URL
 npm run deploy:domain -- your.example.com    # ...and this is how you attach your own
 ```
 
-`wrangler.jsonc` sets `workers_dev: false` and `preview_urls: false`, so a fresh deployment
-is unreachable until you bind a domain (Worker → Settings → Domains & Routes). Flip either flag
-back to `true` if you would rather have the free `*.workers.dev` URL.
+`wrangler.jsonc` sets `workers_dev: true` and `preview_urls: false`, so a fresh deployment answers
+on its free `*.workers.dev` URL straight away. Set `workers_dev` to `false` — and bind a domain in
+the dashboard (Worker → Settings → Domains & Routes) — if you would rather it had no public URL
+until you say so.
 
 Why Workers fits so well: the whole server is a Web `Request` → `Response` handler (`src/adapters/worker.ts` is 15 lines), so wrangler bundles the TypeScript directly. And the free plan's 10 ms CPU budget is not a problem — waiting between streamed chunks is wall-clock time, not CPU.
 

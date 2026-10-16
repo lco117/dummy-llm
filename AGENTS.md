@@ -12,7 +12,7 @@ npx wrangler deploy           # publishes the Worker
 ```
 
 - If `wrangler whoami` fails, **do not** try to log in on the user's behalf. Ask the human to run `npx wrangler login` (interactive) or to export `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`. Then retry `npx wrangler deploy`.
-- `wrangler.jsonc` ships with `workers_dev: false`, `preview_urls: false` and **no `routes` block**, so a fresh deploy has **no public URL**. Never commit a hostname: pass the operator's own with `npx wrangler deploy --domain your.example.com` (or `npm run deploy:domain -- your.example.com`), add a route of your own, or bind it in the dashboard (Worker → Settings → Domains & Routes). Then verify with `curl <url>/healthz` and one streaming request (see "Smoke test" below).
+- `wrangler.jsonc` ships with `workers_dev: true`, `preview_urls: false` and **no `routes` block**, so a fresh deploy is reachable at once on its free `*.workers.dev` URL. Never commit a hostname: to serve it on a domain of your own instead, pass `npx wrangler deploy --domain your.example.com` (or `npm run deploy:domain -- your.example.com`), add a route, or bind it in the dashboard (Worker → Settings → Domains & Routes) — and set `workers_dev: false` if you want the `*.workers.dev` URL gone. Then verify with `curl <url>/healthz` and one streaming request (see "Smoke test" below).
 - The repo must be **public** for the README deploy buttons to work. There are three: Cloudflare (the primary), Vercel and Google Cloud Run.
 
 ## What this project is

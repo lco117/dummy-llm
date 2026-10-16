@@ -15,7 +15,7 @@
 [![Deploy with Vercel](https://img.shields.io/badge/Deploy_with-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/new/clone?repository-url=https://github.com/lco117/dummy-llm&project-name=dummy-llm&repository-name=dummy-llm)
 [![Run on Google Cloud](https://img.shields.io/badge/Run_on-Google_Cloud-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)](https://deploy.cloud.run/?git_repo=https://github.com/lco117/dummy-llm)
 
-*三种一键部署。**Cloudflare Workers** 是免费且无冷启动的那个——本模板默认关闭 `workers.dev` 和 Preview URL，请自行绑域名（或把 `"workers_dev"` 改成 `true`）。**Vercel** 会部署 edge function 加一条 catch-all rewrite。**Google Cloud Run** 用仓库里的 Dockerfile 构建，但需要已开通计费的 GCP 账号。*
+*三种一键部署。**Cloudflare Workers** 是免费且无冷启动的那个——本模板默认打开免费的 `*.workers.dev` 地址（Preview URL 仍关闭），部署完就能直接访问；想只用自己的域名，就绑好域名后把 `workers_dev` 改成 `false`。**Vercel** 会部署 edge function 加一条 catch-all rewrite。**Google Cloud Run** 用仓库里的 Dockerfile 构建，但需要已开通计费的 GCP 账号。*
 
 </div>
 
@@ -290,12 +290,12 @@ npx wrangler tail dummy-llm     # 线上 Worker 的实时日志
 ### 不用按钮，直接命令行部署到 Workers
 
 ```bash
-npx wrangler deploy        # 部署后没有公开路由，见 wrangler.jsonc
+npx wrangler deploy        # 部署完直接用免费的 *.workers.dev 地址
 ```
 
-`wrangler.jsonc` 里设了 `workers_dev: false` 和 `preview_urls: false`，所以刚部署完还访问不了，
-需要去 Cloudflare 后台（Worker → Settings → Domains & Routes）绑定域名。想要免费的
-`*.workers.dev` 地址就把这两个开关改回 `true`。
+`wrangler.jsonc` 里设了 `workers_dev: true` 和 `preview_urls: false`，所以刚部署完就能用在
+免费的 `*.workers.dev` 地址上。想让它在你绑域名之前完全没有公开地址，就把 `workers_dev` 改成 `false`，
+再去 Cloudflare 后台（Worker → Settings → Domains & Routes）绑定自己的域名。
 
 为什么 Workers 特别合适：整个服务就是一个 Web `Request` → `Response` 处理器（`src/adapters/worker.ts` 只有 15 行），wrangler 直接打包 TypeScript。免费版 10ms CPU 限制也不是问题——在帧之间等待属于墙上时间，不消耗 CPU。
 
