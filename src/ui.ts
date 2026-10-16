@@ -48,6 +48,15 @@ export const BASE_CSS = `  :root {
     --sh-op: #8b93a1;
     --sh-url: #7cc4f8;
     --sh-var: #e08fd0;
+    /* One chart palette for both themes, and it is deliberately deep: every one of these clears
+       roughly 4:1 against the near-black panel and against white, so a bar is legible either way
+       instead of being a pastel that only works on one of them. Only the hover has to flip. */
+    --mk-0: #4f6bd8;
+    --mk-1: #1f8a70;
+    --mk-2: #b4700f;
+    --mk-3: #8b5cf6;
+    --mk-4: #b83b6f;
+    --mk-hover: brightness(1.15);
     --radius: 12px;
     --radius-sm: 8px;
     --mono: ui-monospace, "SFMono-Regular", "SF Mono", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
@@ -87,6 +96,9 @@ export const BASE_CSS = `  :root {
     --sh-op: #6b7280;
     --sh-url: #0b62a8;
     --sh-var: #9b3d8f;
+    /* The chart keeps its colours: they are the same deep tones that work on the dark panel. Brightening
+       a bar on white would push it into the background, so only the hover direction changes. */
+    --mk-hover: brightness(.88);
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
@@ -367,8 +379,8 @@ export const BASE_CSS = `  :root {
   .tbl.spec td.m { color: var(--muted); white-space: nowrap; }
   .sec > h2.spaced { margin-top: 2.8rem; }
 
-  /* The chart. Bar widths are classes, not style attributes: every score is quantised to 5, so the page
-     needs at most twenty of them and never builds CSS out of data. */
+  /* The chart. Bar widths are classes, not style attributes: every score is quantised to two, so the
+     page needs fifty-one of them and never builds CSS out of data. */
   .bench { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); padding: 1.1rem 1.15rem 1.25rem; }
   .bench-legend { display: flex; flex-wrap: wrap; gap: .5rem 1.15rem; margin-bottom: 1.15rem; }
   .bench-key { display: inline-flex; align-items: center; gap: .45rem; font-family: var(--mono); font-size: .8rem; color: var(--muted); }
@@ -384,7 +396,7 @@ export const BASE_CSS = `  :root {
   .bench-val { flex: 0 0 auto; min-width: 2rem; font-family: var(--mono); font-size: .76rem; color: var(--muted); }
   /* The reading is our own element rather than a title attribute: it appears the instant the cursor
      arrives, it can be styled, and it sits next to the bar it describes. */
-  .bench-track:hover .bench-bar { filter: brightness(1.15); }
+  .bench-track:hover .bench-bar { filter: var(--mk-hover); }
   .bench-read {
     position: absolute; bottom: calc(100% + .35rem); left: 0; z-index: 6; white-space: nowrap;
     padding: .3rem .55rem; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--menu);
@@ -392,9 +404,13 @@ export const BASE_CSS = `  :root {
     opacity: 0; visibility: hidden;
   }
   .bench-track:hover .bench-read { opacity: 1; visibility: visible; }
-  .mk0 { --mk: #e9e2d0; }
-  .mk1 { --mk: #a9d9c9; }
-  .mk2 { --mk: #efb56b; }
+  /* One colour per series, and the values are tokens: the chart follows the theme like every other
+     rule in this file. Five of them, because the page plots five models and then stops. */
+  .mk0 { --mk: var(--mk-0); }
+  .mk1 { --mk: var(--mk-1); }
+  .mk2 { --mk: var(--mk-2); }
+  .mk3 { --mk: var(--mk-3); }
+  .mk4 { --mk: var(--mk-4); }
   .b0 { width: 0% }
   .b2 { width: 2% }
   .b4 { width: 4% }
