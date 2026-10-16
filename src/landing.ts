@@ -39,8 +39,8 @@ const LANDING_CSS = `
   .endpoint-note { margin-top: 1.1rem; }
 `;
 
-/** One label per `BENCH_DIMENSIONS` entry, in the same order, typed as dictionary keys. */
-const BENCH_KEYS = ["bench.dim.terminal", "bench.dim.repeat", "bench.dim.agi"] as const;
+/** One label per `BENCHMARKS` entry, in the same order, typed as dictionary keys. */
+const BENCH_KEYS = ["bench.dim.humor", "bench.dim.verbatim", "bench.dim.capacity"] as const;
 
 /** The one-click starts under the empty chat. Authored strings, sent as the user's own message. */
 const STARTERS = ["demo.ex1", "demo.ex2"] as const;
@@ -184,11 +184,12 @@ export function landingPage(ctx: Ctx, request: Request): Response {
     .join("");
 
   // The chart colours cycle over five classes; a sixth model would have to bring its own palette.
-  // The only profile that scores anything is the one that returns the message unchanged.
+  // Every row scores something now, so the bars separate the profiles rather than the scored from
+  // the unscored.
   const plotted = cfg.models.slice(0, 5).map((id, index) => ({
     id,
     m: "mk" + (index % 5),
-    scores: benchmark(cfg.personas[id]?.reply === "{input}"),
+    scores: benchmark(id, cfg.personas[id]?.reply === "{input}"),
   }));
   const benchLegend = plotted
     .map((model) => '<span class="bench-key ' + model.m + '"><i></i>' + escapeHtml(model.id) + "</span>")

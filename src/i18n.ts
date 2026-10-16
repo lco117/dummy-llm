@@ -90,10 +90,10 @@ const EN = {
   "models.note": "The context window and the price are illustrative values that the server does not use. The output speed is the configured streaming rate, taken from DUMMY_TPS or from the answer profile.",
 
   "bench.title": "Benchmark scores",
-  "bench.sub": "The scores are fixed values defined by this project, not measurements. Two of the three benchmarks return zero for every model.",
-  "bench.dim.terminal": "terminal-bench-4",
-  "bench.dim.repeat": "repeat (invented here)",
-  "bench.dim.agi": "agibench",
+  "bench.sub": "The scores are fixed values defined by this project, not measurements. The middle row is invented outright; the other two are read off the model id, which is invented too.",
+  "bench.dim.humor": "humor-bench-4 (comedic response quality)",
+  "bench.dim.verbatim": "verbatim-fidelity-1 (invented here)",
+  "bench.dim.capacity": "long-context-capacity (window size)",
   "bench.note": "The benchmark names are used for the demonstration only, and the scores are not measurements. A perfect score is 100.",
 
   "foot.license": "MIT licensed",
@@ -309,10 +309,10 @@ const ZH: Record<MessageKey, string> = {
   "models.note": "上下文窗口和价格只是示意值，服务器并不使用。输出速度是配置的流式返回速率，取自 DUMMY_TPS 或该回答配置。",
 
   "bench.title": "评测分数",
-  "bench.sub": "这些分数是本项目定义的固定值，不是测量结果。三项评测中有两项对所有模型都返回零分。",
-  "bench.dim.terminal": "terminal-bench-4",
-  "bench.dim.repeat": "repeat（自创）",
-  "bench.dim.agi": "agibench",
+  "bench.sub": "这些分数是本项目定义的固定值，不是测量结果。中间那一行是纯编的，另外两项由模型 id 算出来——而那个 id 本身也是编的。",
+  "bench.dim.humor": "humor-bench-4（幽默回应质量）",
+  "bench.dim.verbatim": "verbatim-fidelity-1（逐字保真度·自创）",
+  "bench.dim.capacity": "long-context-capacity（上下文容量）",
   "bench.note": "评测名称仅用于演示，分数不是测量结果。满分是 100 分。",
 
   "foot.license": "MIT 许可",

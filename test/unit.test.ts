@@ -4,7 +4,7 @@ import { buildText, chunkText, describeReply, estimateTokens, phases, plan, rend
 import { FILTER_NAMES } from "../src/filters.ts";
 import { NOT_A_MODEL_REPLIES } from "../src/personas.ts";
 import { highlightShell } from "../src/sh.ts";
-import { barStep, benchmark, contextWindow } from "../src/spec.ts";
+import { BENCHMARKS, barStep, benchmark, contextWindow } from "../src/spec.ts";
 import { mulberry32, randomId } from "../src/random.ts";
 import { parseFaultSpec } from "../src/errors.ts";
 import { DEFAULT_THINKING_POOL, PLAYGROUND_MAX_REPLY, parseReply, playgroundOverride, resolveConfig } from "../src/config.ts";
@@ -396,13 +396,18 @@ test("a persona can pick its own streaming rate", () => {
 });
 
 test("the invented spec sheet is stable, bounded and expressible in CSS", () => {
-  assert.deepEqual(benchmark(true), [0, 100, 0], "a profile that repeats the message scores on the invented benchmark");
-  assert.deepEqual(benchmark(false), [0, 12, 0], "every other profile scores twelve");
+  assert.equal(benchmark("dummy-echo-1", true)[1], 100, "a profile that repeats the message takes the invented row");
+  assert.equal(benchmark("dummy-echo-1", false)[1], 12, "every other profile scores twelve");
   for (const id of ["dummy-echo-1", "definitely-not-a-model", "a-persona-nobody-shipped", ""]) {
     assert.match(contextWindow(id), /^[0-9]+(K|M)$/, id + " gets a context window off the shelf");
     assert.equal(contextWindow(id), contextWindow(id), id + " gets the same context window twice");
+    const scores = benchmark(id, true);
+    assert.equal(scores.length, BENCHMARKS.length, id + " gets one score per row");
+    assert.deepEqual(scores, benchmark(id, true), id + " scores the same on every render");
+    assert.ok(scores[0] >= 80 && scores[0] <= 100, id + " is at least eighty per cent funny");
+    assert.ok(scores[2] > 0, id + " scores its context window rather than zero");
   }
-  for (const score of benchmark(true).concat(benchmark(false))) {
+  for (const score of benchmark("dummy-echo-1", true).concat(benchmark("definitely-not-a-model", false))) {
     assert.equal(barStep(score), score, "a score always survives the trip to a bar width");
   }
   assert.equal(barStep(103), 100);

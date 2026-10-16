@@ -7,7 +7,7 @@
  * full row without anyone maintaining a table, and reloading the page never reshuffles the chart.
  */
 
-export const BENCHMARKS = ["terminal", "repeat", "agi"] as const;
+export const BENCHMARKS = ["humor", "verbatim", "capacity"] as const;
 export type Benchmark = (typeof BENCHMARKS)[number];
 export type BenchScores = number[];
 
@@ -29,15 +29,37 @@ export function contextWindow(model: string): string {
 }
 
 /**
+ * What a context window the server does not have is worth on the long-context row. Reading the score
+ * off `contextWindow` is the whole point: the chart and the spec sheet above it then agree, which is
+ * the only kind of "actual" available to a server with no weights. Even numbers, because a bar width
+ * is snapped to two-point steps.
+ */
+const CONTEXT_SCORES: Record<string, number> = { "8K": 22, "32K": 48, "128K": 76, "256K": 88, "1M": 96 };
+
+/**
+ * Comedy is not measured either, but the premise of the project is that this is the funniest thing in
+ * the repository, so every profile clears eighty. Derived from the id like everything else here, so
+ * a persona added in the admin gets a score nobody had to maintain.
+ */
+function humorScore(model: string): number {
+  return 82 + (seed(model) % 10) * 2;
+}
+
+/**
  * The scores on the three benchmarks.
  *
  * They are fixed values that this project defines, not measurements. The server implements none of
- * the benchmarks, so two of them return zero for every model, which is the accurate result. The
- * middle one is invented here, and it separates the answer profiles: a profile that returns the
- * message it received without changing it scores full marks, and every other profile scores twelve.
+ * the benchmarks, so "verbatim" is the invented one, and it is the one that separates the answer
+ * profiles: a profile that returns the message it received without changing it scores full marks,
+ * and every other profile scores twelve. "humor" and "capacity" are read off the id, which is
+ * invented too.
  */
-export function benchmark(echoes: boolean): BenchScores {
-  return BENCHMARKS.map((name) => (name === "repeat" ? (echoes ? 100 : 12) : 0));
+export function benchmark(model: string, echoes: boolean): BenchScores {
+  return BENCHMARKS.map((name) => {
+    if (name === "verbatim") return echoes ? 100 : 12;
+    if (name === "humor") return humorScore(model);
+    return CONTEXT_SCORES[contextWindow(model)] ?? 0;
+  });
 }
 
 /**
