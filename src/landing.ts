@@ -169,11 +169,11 @@ export function landingPage(ctx: Ctx, request: Request): Response {
   const specRows = cfg.models
     .map((id) => {
       const persona = cfg.personas[id];
-      const best = personaDescription(lang, id, persona?.description ?? "reply: " + describeReply(persona?.reply ?? cfg.reply));
+      const best = personaDescription(lang, id, persona?.description ?? (t(lang, "models.replyLabel") + ": " + describeReply(persona?.reply ?? cfg.reply)));
       return (
         "<tr>" +
         '<td class="spec"><span class="spec-name">' + escapeHtml(id) + "</span>" +
-        '<span class="spec-sub">reply: ' + escapeHtml(describeReply(persona?.reply ?? cfg.reply)) + "</span></td>" +
+        '<span class="spec-sub">' + escapeHtml(t(lang, "models.replyLabel")) + ": " + escapeHtml(describeReply(persona?.reply ?? cfg.reply)) + "</span></td>" +
         '<td class="note">' + escapeHtml(best) + "</td>" +
         '<td class="m">' + escapeHtml(contextWindow(id)) + "</td>" +
         '<td class="m">' + escapeHtml(t(lang, "models.speed").replace("{tps}", String(persona?.tps ?? cfg.tps))) + "</td>" +

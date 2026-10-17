@@ -15,10 +15,13 @@ After v0.4.0 there is no separate "mode" and no standalone "template". The unit 
 ```ts
 interface Persona {
   reply?: Reply;        // string | string[] | Record<string, string>
-  thinking?: string[];
-  description?: string;
+  thinking?: string[];  // the CoT (Chain of Thought) templates
+  description?: string; // public Models page only; edited through the advanced JSON view
+  tps?: number;         // this persona's own streaming rate
 }
 ```
+
+On the page, `reply` is labelled **main-reply** (回复正文) and `thinking` is labelled **CoT (Chain of Thought)** (思维链). The API and the stored document keep the original field names.
 
 So the admin UI is a **persona editor**, and a "template" is one string somewhere inside a `reply`.
 That removes most of the confusion: there is one list to manage (personas), one set of defaults
@@ -210,12 +213,15 @@ Three things turn that from a mystery into something a person can reason about:
 
 - `GET /admin/api/state` returns, for every setting, the **environment** value, the **stored** override
   if one exists, and the **effective** value.
-- The page renders that as a four-column table (`environment | stored | effective | value`).
-- Every row has a **Reset** button that deletes just that override, so the environment value takes over
-  again. "Drop the whole store" deletes the document.
+- The page renders three columns: **setting** (with a plain-language explanation), **environment layer**,
+  and **effective value**. The effective value is the input: editing it writes the override to the store
+  as soon as the field loses focus.
+- Setting a value back to the environment-layer value deletes that override, so the environment value
+  takes over again. The **Reset** button next to the field does the same thing explicitly, and "Drop the
+  whole store" deletes the document.
 
-The admin only ever writes fields you actually changed. Loading the page and pressing save will not
-freeze the current environment values into the store.
+The admin only ever writes fields you actually changed. Loading the page and changing nothing writes
+nothing, and there is no save-all button that would freeze the current environment values into the store.
 
 ## 5. Authentication, in detail
 
@@ -277,7 +283,9 @@ Referrer-Policy: no-referrer
 
 Personas hold operator-authored *templates*, and a template can contain anything — including HTML. It
 is never rendered as markup: it appears in a `<textarea>` and in the preview as text. That is the rule
-to keep if you change the page.
+to keep if you change the page. The advanced JSON view is still plain text in a `<textarea>`; applying it
+only fills the same form, and every value reaches the DOM through `.value` or `textContent`. The server
+then validates the resulting persona exactly as it validates any other request body.
 
 ### 5.5 The login throttle, honestly
 
@@ -404,11 +412,22 @@ like a server with no personas.)
 - **Personas** on the left, with a tag saying where each one comes from (`builtin`, `env`, `store`,
   or `deleted`). The built-in personas are listed like any other and can be edited or deleted: editing
   writes an override into the store, deleting writes a tombstone, and the environment copy is untouched.
-- **The editor** in the middle, with a shape-aware reply box: *one template*, *a pool* (one entry per
-  line) or *a keyword map* (`key = template` per line, `*` for the fallback). The shape is the
-  behaviour, so the editor shows the shape instead of teaching a mode.
-- **Defaults** as a table of environment / stored / effective, with a Reset button per row.
-- **Live preview**: type a message, pick who answers, watch the thinking and the answer stream in.
+  The list grows to its full height and the page, not the list, scrolls.
+- **The editor** in the middle. The main-reply shape is still a choice, but each shape is edited as a
+  list of entries: one template, a pool of entries, or a keyword map with one keyword per entry. Each
+  entry is its own multi-line text box, so one reply can contain several lines; **Add entry**,
+  **Move up**, **Move down** and **Remove** act on one entry at a time. The CoT (Chain of Thought)
+  field is the same kind of list. The **Advanced: edit this persona as JSON** view accepts the same
+  object as `PUT /admin/api/personas/{id}` and applies it to the form, which is the programmatic path
+  without a second write API.
+- **Defaults** as three columns: setting (with a plain-language explanation), environment layer, and
+  effective value. The effective value is editable in place; the change is written to the store when
+  the field loses focus, and setting the value back to the environment value removes the override. A
+  small **Reset** button is shown for a row that has an override.
+- **Live preview**: type a message, pick who answers, watch the CoT and the main-reply stream in.
+
+The persona `description` field no longer has its own row. It only feeds the Purpose column on the
+public Models page, and it remains editable in the advanced JSON view.
 - **Packs**: fetch one from the gallery or paste a URL or the JSON itself, look at the diff, apply it,
   or export the current store as a pack.
 
@@ -494,7 +513,7 @@ partially.
 | `DUMMY_STORE=kv` and the page is still read-only | the `DUMMY_ADMIN_KV` binding is missing | `npx wrangler kv namespace create DUMMY_ADMIN_KV`, add the binding, redeploy (there is a log line saying exactly this) |
 | The login form says the key is wrong but it is not | the cookie is not being stored | you are on plain HTTP on a non-localhost address; browse to `http://localhost` or put TLS in front |
 | A change works for one request and then reverts | the store is on but the request hit another isolate | wait a few seconds; KV is eventually consistent |
-| I edited `wrangler.jsonc` and the server ignored it | the store takes precedence | look at the **stored** column, press Reset on that row |
+| I edited `wrangler.jsonc` and the server ignored it | the store takes precedence | the row shows an **overridden by the store** badge; press Reset on that row |
 | The stored persona is not in `/v1/models` | `models` is an explicit list that does not include it | add it to the `models` default, or reset `models` |
 
 ## 13. Security summary
@@ -515,7 +534,7 @@ partially.
 | --- | --- |
 | a "copy for `wrangler.jsonc`" button | it duplicates the environment table and the store's job; the state API already shows the environment value |
 | per-user accounts | one operator, one key. Use Cloudflare Access when you want identities |
-| a "the environment changed since your override" drift warning | it needs a snapshot per override, and the four-column table already shows both values |
+| a "the environment changed since your override" drift warning | it needs a snapshot per override, and the three-column table already shows both values |
 | server-side pack fetching | the browser can fetch, and the server keeping zero outbound requests is worth more |
 | a JavaScript re-implementation of the engine for the preview | the preview runs the real engine, byte for byte |
 | a full web UI for the public landing page | it is a terminal joke with one box; the admin page is the one place a UI earns its keep |

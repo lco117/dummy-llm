@@ -19,21 +19,23 @@ import { BASE_CSS, escapeHtml } from "./ui.ts";
 
 export { ADMIN_JS };
 
-export const ADMIN_CSS = BASE_CSS + `  .who { font-family: var(--mono); font-size: .9rem; color: var(--faint); }
+export const ADMIN_CSS = BASE_CSS + `  [hidden] { display: none !important; }
+  .who { font-family: var(--mono); font-size: .9rem; color: var(--faint); }
   .brand { align-items: center; }
   .brand .mark { width: 1.7rem; height: 1.7rem; display: block; }
   .brand .mark svg { width: 100%; height: 100%; display: block; }
   .top .chips { margin-left: .3rem; }
   .top form.inline-form { margin-left: auto; }
-  .admin-grid { display: grid; gap: 1rem; grid-template-columns: minmax(13rem, 17rem) 1fr; margin-top: 1.6rem; }
+  body.admin .doc.wide { max-width: 120rem; padding-left: .85rem; padding-right: .85rem; }
+  .admin-grid { display: grid; gap: 1.15rem; grid-template-columns: minmax(15rem, 20rem) 1fr; margin-top: 1.5rem; }
   @media (max-width: 58rem) { .admin-grid { grid-template-columns: 1fr; } }
   .panel h2 { font-family: var(--mono); font-size: 1.05rem; font-weight: 650; letter-spacing: -.01em; color: var(--text); margin-bottom: .9rem; }
-  ul.personas { list-style: none; margin: 0 0 .7rem; padding: 0; display: grid; gap: .2rem; max-height: 24rem; overflow: auto; }
-  ul.personas li { display: flex; align-items: baseline; gap: .5rem; padding: .34rem .5rem; border: 1px solid transparent; border-radius: var(--radius-sm); cursor: pointer; }
+  ul.personas { list-style: none; margin: 0 0 .7rem; padding: 0; display: grid; gap: .2rem; min-width: 0; }
+  ul.personas li { display: flex; align-items: baseline; gap: .5rem; min-width: 0; padding: .34rem .5rem; border: 1px solid transparent; border-radius: var(--radius-sm); cursor: pointer; }
   ul.personas li:hover { background: rgba(255,255,255,.04); }
   ul.personas li.active { border-color: var(--line-strong); background: rgba(77,107,254,.10); }
-  ul.personas li .id { flex: 1; font-family: var(--mono); font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  ul.personas li .tag { font-family: var(--mono); font-size: .7rem; color: var(--faint); border: 1px solid var(--line); border-radius: 999px; padding: 0 .42rem; }
+  ul.personas li .id { flex: 1; min-width: 0; font-family: var(--mono); font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  ul.personas li .tag { flex: 0 0 auto; font-family: var(--mono); font-size: .7rem; color: var(--faint); border: 1px solid var(--line); border-radius: 999px; padding: 0 .42rem; }
   ul.personas li .tag.on { color: var(--accent-hi); border-color: rgba(77,107,254,.4); }
   ul.personas li .tag.gone { color: var(--bad); border-color: rgba(248,113,113,.3); }
   .row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
@@ -59,6 +61,31 @@ export const ADMIN_CSS = BASE_CSS + `  .who { font-family: var(--mono); font-siz
   .row.spaced { margin-top: .9rem; }
   .panel.spaced { margin-top: 1rem; }
   .row select { width: auto; }
+  .edit-meta { display: grid; grid-template-columns: minmax(0, 1fr) 14rem; gap: .8rem; }
+  @media (max-width: 40rem) { .edit-meta { grid-template-columns: 1fr; } }
+  .list-head { display: flex; align-items: center; gap: .6rem; margin: .95rem 0 .45rem; }
+  .list-head .field-label { font-family: var(--mono); font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
+  .list-head .btn { margin-left: auto; }
+  .edit-list { display: grid; gap: .55rem; margin-bottom: .45rem; }
+  .edit-row { border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--slab); padding: .5rem .55rem .55rem; }
+  .edit-row .row-head { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem; margin-bottom: .35rem; }
+  .edit-row .row-head .row-label { font-family: var(--mono); font-size: .74rem; color: var(--faint); }
+  .edit-row .row-head .key-input { flex: 1; min-width: 8rem; max-width: 18rem; }
+  .edit-row .row-tools { display: flex; align-items: center; gap: .25rem; margin-left: auto; }
+  .edit-row textarea { min-height: 4.5rem; line-height: 1.55; }
+  .btn.mini { padding: .18rem .45rem; font-size: .78rem; }
+  .empty-list { color: var(--faint); font-size: .86rem; line-height: 1.6; padding: .1rem 0 .35rem; }
+  .advanced textarea { margin-top: .45rem; }
+  .defaults .setting { width: 44%; }
+  .defaults .env { width: 24%; overflow-wrap: anywhere; word-break: break-word; }
+  .defaults .effective { width: 32%; }
+  .setting-key { display: block; font-family: var(--mono); font-size: .9rem; color: var(--text); }
+  .setting-desc { display: block; margin-top: .25rem; color: var(--muted); font-size: .86rem; line-height: 1.65; max-width: 42rem; }
+  .setting-badge { display: inline-block; margin-left: .45rem; font-family: var(--mono); font-size: .68rem; color: var(--accent-hi); border: 1px solid rgba(77,107,254,.4); border-radius: 999px; padding: 0 .4rem; vertical-align: .1em; }
+  .effective-cell { display: flex; align-items: center; gap: .45rem; }
+  .effective-cell input, .effective-cell select { flex: 1; min-width: 0; }
+  .effective-cell input[type=checkbox] { flex: 0 0 auto; }
+  .effective-cell .btn { flex: 0 0 auto; margin-left: auto; }
   .boot-title { font-size: 1.6rem; margin-bottom: .8rem; }
   .boot { margin-top: 2.2rem; }
   .boot .btn { margin-top: .4rem; }
@@ -90,7 +117,6 @@ interface ClientStrings {
   confirmDelete: string;
   deleted: string;
   nothingChanged: string;
-  savedDefaults: string;
   resetOne: string;
   confirmReset: string;
   storeDropped: string;
@@ -107,6 +133,35 @@ interface ClientStrings {
   nothingToChange: string;
   packsFetch: string;
   chat: { thinking: string; thought: string; copy: string; copied: string };
+  addEntry: string;
+  removeEntry: string;
+  moveUp: string;
+  moveDown: string;
+  entryLabel: string;
+  singleTemplate: string;
+  keyPlaceholder: string;
+  replySingleHint: string;
+  replyPoolHint: string;
+  replyKeysHint: string;
+  replyEmpty: string;
+  cotHint: string;
+  cotEmpty: string;
+  needReply: string;
+  needKey: string;
+  duplicateKey: string;
+  badValue: string;
+  jsonBad: string;
+  jsonApplied: string;
+  overridden: string;
+  savedOne: string;
+  varTps: string;
+  varChunk: string;
+  varDelayMs: string;
+  varTtftMs: string;
+  varLog: string;
+  varPlayground: string;
+  varMaxReplyChars: string;
+  varModels: string;
   loginBadKey: string;
   loginThrottled: string;
 }
@@ -143,7 +198,6 @@ function clientStrings(lang: Lang): string {
     confirmDelete: t(lang, "msg.confirmDelete"),
     deleted: t(lang, "msg.deleted"),
     nothingChanged: t(lang, "msg.nothingChanged"),
-    savedDefaults: t(lang, "msg.savedDefaults"),
     resetOne: t(lang, "msg.resetOne"),
     confirmReset: t(lang, "msg.confirmReset"),
     storeDropped: t(lang, "msg.storeDropped"),
@@ -165,6 +219,35 @@ function clientStrings(lang: Lang): string {
       copy: t(lang, "demo.copy"),
       copied: t(lang, "demo.copied"),
     },
+    addEntry: t(lang, "admin.addEntry"),
+    removeEntry: t(lang, "admin.removeEntry"),
+    moveUp: t(lang, "admin.moveUp"),
+    moveDown: t(lang, "admin.moveDown"),
+    entryLabel: t(lang, "admin.entryLabel"),
+    singleTemplate: t(lang, "admin.singleTemplate"),
+    keyPlaceholder: t(lang, "admin.keyPlaceholder"),
+    replySingleHint: t(lang, "admin.replySingleHint"),
+    replyPoolHint: t(lang, "admin.replyPoolHint"),
+    replyKeysHint: t(lang, "admin.replyKeysHint"),
+    replyEmpty: t(lang, "admin.replyEmpty"),
+    cotHint: t(lang, "admin.cotHint"),
+    cotEmpty: t(lang, "admin.cotEmpty"),
+    needReply: t(lang, "admin.needReply"),
+    needKey: t(lang, "admin.needKey"),
+    duplicateKey: t(lang, "admin.duplicateKey"),
+    badValue: t(lang, "admin.badValue"),
+    jsonBad: t(lang, "admin.jsonBad"),
+    jsonApplied: t(lang, "admin.jsonApplied"),
+    overridden: t(lang, "admin.overridden"),
+    savedOne: t(lang, "admin.savedOne"),
+    varTps: t(lang, "admin.var.tps"),
+    varChunk: t(lang, "admin.var.chunk"),
+    varDelayMs: t(lang, "admin.var.delayMs"),
+    varTtftMs: t(lang, "admin.var.ttftMs"),
+    varLog: t(lang, "admin.var.log"),
+    varPlayground: t(lang, "admin.var.playground"),
+    varMaxReplyChars: t(lang, "admin.var.maxReplyChars"),
+    varModels: t(lang, "admin.var.models"),
     loginBadKey: t(lang, "login.badKey"),
     loginThrottled: t(lang, "login.throttled"),
   };
@@ -225,18 +308,30 @@ export function adminPage(lang: Lang, theme: Theme): string {
 
     '<section class="panel panel-pad">',
     "<h2>" + t(lang, "admin.editor") + "</h2>",
+    '<div class="edit-meta">',
     '<label class="field"><span>' + t(lang, "admin.id") + '</span><input id="p-id" spellcheck="false"></label>',
+    '<label class="field" id="p-tps-field"><span>' + t(lang, "admin.tps") + '</span><input id="p-tps" type="number" min="1" step="1" spellcheck="false" placeholder="' + escapeHtml(t(lang, "admin.tps.placeholder")) + '"></label>',
+    "</div>",
     '<label class="field"><span>' + t(lang, "admin.shape") + '</span><select id="p-shape">',
     '<option value="one">' + t(lang, "admin.shape.one") + "</option>",
     '<option value="pool">' + t(lang, "admin.shape.pool") + "</option>",
     '<option value="keys">' + t(lang, "admin.shape.keys") + "</option>",
     "</select></label>",
-    '<label class="field"><span>' + t(lang, "admin.reply") + '</span><textarea id="p-reply" rows="10" spellcheck="false"></textarea></label>',
+    '<div class="list-head"><span class="field-label">' + t(lang, "admin.reply") + '</span>',
+    '<button class="btn mini" id="p-reply-add" type="button">+ ' + t(lang, "admin.addEntry") + "</button></div>",
+    '<div id="p-reply-list" class="edit-list"></div>',
+    '<p class="hint" id="p-reply-hint"></p>',
     "<details class=\"help\"><summary>" + t(lang, "admin.format") + "</summary>" + helpHtml(lang) + "</details>",
-    '<label class="field"><span>' + t(lang, "admin.thinking") + '</span><textarea id="p-thinking" rows="6" spellcheck="false"></textarea></label>',
-    '<label class="field"><span>' + t(lang, "admin.description") + '</span><input id="p-description" spellcheck="false"></label>',
-    '<label class="field"><span>' + t(lang, "admin.tps") + '</span><input id="p-tps" type="number" min="1" step="1" spellcheck="false"></label>',
-    '<div class="row">',
+    '<div class="list-head"><span class="field-label">' + t(lang, "admin.thinking") + '</span>',
+    '<button class="btn mini" id="p-cot-add" type="button">+ ' + t(lang, "admin.addEntry") + "</button></div>",
+    '<div id="p-cot-list" class="edit-list"></div>',
+    '<p class="hint" id="p-cot-hint"></p>',
+    '<details class="help advanced"><summary>' + t(lang, "admin.jsonSummary") + "</summary>",
+    '<p class="hint">' + t(lang, "admin.jsonHint") + "</p>",
+    '<textarea id="p-json" rows="12" spellcheck="false"></textarea>',
+    '<div class="row spaced"><button class="btn" id="p-json-apply" type="button">' + t(lang, "admin.jsonApply") + "</button></div>",
+    "</details>",
+    '<div class="row spaced">',
     '<button class="btn primary" id="p-save" type="button">' + t(lang, "admin.save") + "</button>",
     '<button class="btn" id="p-revert" type="button">' + t(lang, "admin.revert") + "</button>",
     '<button class="btn danger" id="p-delete" type="button">' + t(lang, "admin.delete") + "</button>",
@@ -246,15 +341,14 @@ export function adminPage(lang: Lang, theme: Theme): string {
     "</div>",
 
     '<section class="sec"><h2>' + t(lang, "admin.defaults") + '<span class="hint">' + t(lang, "admin.defaults.sub") + "</span></h2>",
-    '<table class="tbl"><thead><tr>',
+    '<p class="hint">' + t(lang, "admin.defaults.editHint") + "</p>",
+    '<p class="hint">' + t(lang, "admin.defaults.envHint") + "</p>",
+    '<table class="tbl defaults"><thead><tr>',
     "<th>" + t(lang, "admin.col.setting") + "</th>",
     "<th>" + t(lang, "admin.col.environment") + "</th>",
-    "<th>" + t(lang, "admin.col.stored") + "</th>",
-    "<th>" + t(lang, "admin.col.effective") + "</th>",
-    "<th>" + t(lang, "admin.col.value") + "</th>",
-    "<th></th></tr></thead><tbody id=\"defaults-body\"></tbody></table>",
+    "<th>" + t(lang, "admin.col.effectiveEdit") + "</th>",
+    '</tr></thead><tbody id="defaults-body"></tbody></table>',
     '<div class="row spaced">',
-    '<button class="btn primary" id="d-save" type="button">' + t(lang, "admin.saveDefaults") + "</button>",
     '<button class="btn danger" id="d-reset" type="button">' + t(lang, "admin.dropStore") + "</button>",
     "</div></section>",
 

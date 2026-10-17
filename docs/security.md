@@ -86,6 +86,9 @@ not a proxy to a real model, and not multi-tenant. The realistic risks are:
   out of reach, because the platform does not offer a way in.
 - **Bounds before bytes.** A write is validated (document size, persona count, reply length) before it
   is persisted, and nothing is written partially.
+- **The JSON editor is not a second write path.** It fills the same form; every value reaches the page
+  through `.value` or `textContent`, and the server validates the resulting persona on the same request
+  the form would have sent.
 
 The operator-facing version of this page, with the setup walkthrough, is [admin.md](admin.md).
 
